@@ -88,11 +88,15 @@ class MarbleRenderer:
             return
         width, height = state.grid.canvas_size
         if event.effect == "collapse_flash":
-            draw.rectangle((0, 0, width, height), fill=(130, 24, 24, 35))
+            draw.rectangle((0, 0, width, 8), fill=(180, 45, 36))
+            draw.rectangle((0, height - 8, width, height), fill=(180, 45, 36))
         elif event.effect == "fire_overlay":
-            draw.rectangle((0, height // 2, width, height), fill=(210, 75, 25, 28))
+            for index in range(10):
+                x = width * (0.38 + index * 0.025)
+                y = height * (0.58 + (index % 3) * 0.035)
+                draw.ellipse((x - 18, y - 10, x + 18, y + 10), fill=(220, 75, 28), outline=(255, 190, 75))
         elif event.effect == "edict_overlay":
-            draw.rounded_rectangle((width // 2 - 260, 118, width // 2 + 260, 238), radius=8, fill=(160, 120, 45, 70))
+            draw.rounded_rectangle((width // 2 - 260, 144, width // 2 + 260, 236), radius=8, fill=(116, 86, 36), outline=(255, 220, 130), width=2)
         elif event.effect == "marching_arrows":
             for offset in range(0, 240, 60):
                 x = 210 + offset
@@ -193,4 +197,3 @@ def marble_subtitles(state: MarbleGameState) -> list[SubtitleEntry]:
             )
         )
     return subtitles
-

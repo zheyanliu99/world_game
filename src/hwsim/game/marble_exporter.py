@@ -60,7 +60,11 @@ def generate_marble_demo(scenario_path: str | Path, output_root: str | Path) -> 
         raise RuntimeError("Failed to open FFmpeg stdin")
 
     subtitles: list[SubtitleEntry] = [
-        SubtitleEntry(0, min(4.5, scenario.video_length_seconds), scenario.intro_narration)
+        SubtitleEntry(
+            start_seconds=0,
+            end_seconds=min(4.5, scenario.video_length_seconds),
+            text=scenario.intro_narration,
+        )
     ]
     total_frames = int(scenario.video_length_seconds * scenario.render_fps)
     last_image = None
@@ -91,4 +95,3 @@ def generate_marble_demo(scenario_path: str | Path, output_root: str | Path) -> 
         "thumbnail_path": thumbnail_path,
         "config_copy_path": config_copy_path,
     }
-
