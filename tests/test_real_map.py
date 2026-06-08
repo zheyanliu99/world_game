@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from hwsim.map.real_map import HistoricalOverlay, RealMapConfig, build_prepared_map, owner_for_province
+from hwsim.utils.file_utils import read_json
 
 
 def _tiny_geojson() -> dict:
@@ -59,3 +60,11 @@ def test_owner_for_province_uses_default() -> None:
 
     assert owner_for_province("Unknown Province", overlay) == "cao"
 
+
+def test_default_overlay_only_targets_three_kingdoms() -> None:
+    overlay = read_json("configs/maps/sanguo_historical_overlay.json")
+    owners = {overlay["default_owner"]}
+    owners.update(rule["owner"] for rule in overlay["province_owner_rules"])
+    owners.update(overlay["spawn_province_rules"].keys())
+
+    assert owners == {"cao", "liu_bei", "sun_quan"}

@@ -135,6 +135,13 @@ class CellGrid:
             return False
         return bool(self.land_mask[gy, gx])
 
+    def owner_index_at_canvas(self, x: float, y: float) -> int | None:
+        gx, gy = self.canvas_to_grid(x, y)
+        if gy < 0 or gx < 0 or gy >= self.owner_grid.shape[0] or gx >= self.owner_grid.shape[1]:
+            return None
+        owner_index = int(self.owner_grid[gy, gx])
+        return owner_index if owner_index >= 0 else None
+
     def random_owned_cell(self, faction_id: str, rng: random.Random) -> tuple[int, int] | None:
         owner_index = self.faction_index(faction_id)
         ys, xs = np.where(self.owner_grid == owner_index)
@@ -186,4 +193,3 @@ class MarbleGameState:
 
     def are_allied(self, faction_a: str, faction_b: str) -> bool:
         return any(alliance.includes_pair(faction_a, faction_b) for alliance in self.alliances)
-

@@ -42,7 +42,8 @@ class MarbleRenderer:
             color = np.array(_hex_to_rgb(faction.color), dtype=np.uint8)
             rgb[owner_grid == owner_index] = (color * 0.82).astype(np.uint8)
         edge = _edge_mask(owner_grid, state.grid.land_mask)
-        rgb[edge] = np.array(_hex_to_rgb(self.style.border), dtype=np.uint8)
+        border = np.array(_hex_to_rgb(self.style.border), dtype=np.float32)
+        rgb[edge] = np.clip(rgb[edge].astype(np.float32) * 0.62 + border * 0.38, 0, 255).astype(np.uint8)
         image = Image.fromarray(rgb, mode="RGB")
         return image.resize(state.grid.canvas_size, Image.Resampling.NEAREST)
 
@@ -51,7 +52,7 @@ class MarbleRenderer:
             faction = state.factions[marble.faction_id]
             radius = marble.radius * (1.0 + max(0, marble.power - 1.0) * 0.18)
             box = (marble.x - radius, marble.y - radius, marble.x + radius, marble.y + radius)
-            draw.ellipse(box, fill=faction.color, outline="#FFF3CC", width=2)
+            draw.ellipse(box, fill=faction.color, outline="#FFF3CC", width=1)
 
     def _draw_hud(self, draw: ImageDraw.ImageDraw, state: MarbleGameState, speed_label: str) -> None:
         width, _height = state.grid.canvas_size
@@ -66,7 +67,7 @@ class MarbleRenderer:
         draw.rounded_rectangle(panel, radius=8, fill=(12, 10, 8, 205), outline=(218, 196, 138, 150), width=2)
         draw.text((panel[0] + 22, panel[1] + 18), "格子排名", font=self.fonts["title"], fill=self.style.text)
         counts = state.grid.owned_cell_counts()
-        ranking = sorted(counts.items(), key=lambda item: item[1], reverse=True)[:6]
+        ranking = sorted(counts.items(), key=lambda item: item[1], reverse=True)[:3]
         y = panel[1] + 66
         for index, (faction_id, count) in enumerate(ranking, start=1):
             faction = state.factions[faction_id]

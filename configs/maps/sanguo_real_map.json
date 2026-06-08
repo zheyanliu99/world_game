@@ -7,9 +7,8 @@
   "raw_geojson_file": "data/maps/geoBoundaries-CHN-ADM1_simplified.geojson",
   "prepared_map_file": "data/maps/sanguo_real_map_prepared.json",
   "canvas_size": [1280, 720],
-  "grid_size": [320, 180],
+  "grid_size": [480, 270],
   "margin": 26,
   "historical_overlay_file": "configs/maps/sanguo_historical_overlay.json",
   "attribution": "Boundaries: geoBoundaries (CC BY 4.0), William & Mary geoLab"
 }
-

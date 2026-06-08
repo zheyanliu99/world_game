@@ -1,10 +1,11 @@
 from pathlib import Path
+import random
 
 import numpy as np
 
 from hwsim.core.models import EventConfig, Faction, HistoricalEvent
 from hwsim.physics.models import MarbleScenarioConfig, MarbleUnit, PhysicsConfig
-from hwsim.physics.simulator import MarbleSimulator
+from hwsim.physics.simulator import MarbleSimulator, load_marble_scenario
 
 
 def _faction(faction_id: str, color: str) -> Faction:
@@ -93,6 +94,30 @@ def test_boundary_bounce_reverses_outward_velocity() -> None:
     assert marble.vx > 0
 
 
+def test_water_boundary_bounce_reverses_outward_velocity() -> None:
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[]))
+    marble = MarbleUnit(id=1, faction_id="cao", x=22, y=60, vx=-80, vy=0, radius=4)
+    sim.state.marbles = [marble]
+
+    sim._move_marbles()
+
+    assert marble.vx > 0
+
+
+def test_enemy_frontier_bounces_and_captures() -> None:
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[]))
+    sim.rng = random.Random(1)
+    marble = MarbleUnit(id=1, faction_id="cao", x=55, y=60, vx=80, vy=0, radius=4, power=2.0)
+    sim.state.marbles = [marble]
+    before = int((sim.state.grid.owner_grid == sim.state.grid.faction_index("cao")).sum())
+
+    sim._move_marbles()
+
+    after = int((sim.state.grid.owner_grid == sim.state.grid.faction_index("cao")).sum())
+    assert marble.vx < 0
+    assert after > before
+
+
 def test_marble_simulation_is_seed_deterministic() -> None:
     first = MarbleSimulator(_scenario(seed=11), _prepared_map(), EventConfig(events=[]))
     second = MarbleSimulator(_scenario(seed=11), _prepared_map(), EventConfig(events=[]))
@@ -130,3 +155,10 @@ def test_marble_event_modifier_is_applied() -> None:
     assert sim.state.stat_multiplier("cao", "speed") == 1.5
     assert sim.state.triggered_events[0].event_id == "boost_184"
 
+
+def test_default_marble_scenario_is_three_kingdoms_only() -> None:
+    scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
+
+    assert set(scenario.factions) == {"cao", "liu_bei", "sun_quan"}
+    assert scenario.physics.base_radius <= 3
+    assert scenario.physics.capture_radius <= 9

@@ -46,12 +46,24 @@ def prepare_real_map(config_path: str | Path, force: bool = False) -> Path:
     if force or not raw_path.exists():
         _download_geoboundaries(config, raw_path)
 
-    if force or not prepared_path.exists():
+    if force or not prepared_path.exists() or not _prepared_matches_config(prepared_path, config):
         geojson = read_json(raw_path)
         prepared = build_prepared_map(geojson, config, overlay)
         write_json(prepared_path, prepared)
 
     return prepared_path
+
+
+def _prepared_matches_config(prepared_path: Path, config: RealMapConfig) -> bool:
+    try:
+        prepared = read_json(prepared_path)
+    except (OSError, json.JSONDecodeError):
+        return False
+    return (
+        tuple(prepared.get("canvas_size", ())) == tuple(config.canvas_size)
+        and tuple(prepared.get("grid_size", ())) == tuple(config.grid_size)
+        and prepared.get("map_id") == config.map_id
+    )
 
 
 def build_prepared_map(
@@ -216,4 +228,3 @@ class _Projector:
             self.offset_x + (lon - self.min_lon) * self.scale,
             self.offset_y + (self.max_lat - lat) * self.scale,
         )
-
