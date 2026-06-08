@@ -50,12 +50,7 @@
       "name_cn": "官渡之战",
       "category": "major_battle",
       "importance": 9,
-      "trigger_conditions": [
-        {"type": "faction_alive", "faction": "cao"},
-        {"type": "faction_alive", "faction": "yuan_shao"},
-        {"type": "faction_controls_any", "faction": "cao", "regions": ["yanzhou", "yuzhou", "sili"]},
-        {"type": "faction_controls_any", "faction": "yuan_shao", "regions": ["jizhou", "youzhou", "bingzhou"]}
-      ],
+      "trigger_conditions": [{"type": "faction_alive", "faction": "cao"}],
       "effects": [
         {"type": "multiply_troops", "target": "yuan_shao", "value": 0.55},
         {"type": "add_morale", "target": "cao", "value": 20},
@@ -78,12 +73,7 @@
       "name_cn": "赤壁之战",
       "category": "major_battle",
       "importance": 10,
-      "trigger_conditions": [
-        {"type": "faction_alive", "faction": "cao"},
-        {"type": "faction_alive", "faction": "sun_quan"},
-        {"type": "faction_alive", "faction": "liu_bei"},
-        {"type": "faction_troops_gte", "faction": "cao", "value": 60000}
-      ],
+      "trigger_conditions": [{"type": "faction_alive", "faction": "cao"}],
       "effects": [
         {"type": "multiply_troops", "target": "cao", "value": 0.62},
         {"type": "add_morale", "target": "cao", "value": -25},
@@ -107,7 +97,7 @@
       "name_cn": "刘备入蜀",
       "category": "political",
       "importance": 8,
-      "trigger_conditions": [{"type": "faction_alive", "faction": "liu_bei"}],
+      "trigger_conditions": [],
       "effects": [
         {"type": "transfer_region", "region": "yizhou", "owner": "liu_bei"},
         {"type": "transfer_region", "region": "hanzhong", "owner": "liu_bei"},
@@ -155,10 +145,7 @@
       "name_cn": "夷陵之战",
       "category": "major_battle",
       "importance": 8,
-      "trigger_conditions": [
-        {"type": "faction_alive", "faction": "liu_bei"},
-        {"type": "faction_alive", "faction": "sun_quan"}
-      ],
+      "trigger_conditions": [],
       "effects": [
         {"type": "multiply_troops", "target": "liu_bei", "value": 0.82},
         {"type": "add_morale", "target": "liu_bei", "value": -10},
@@ -180,7 +167,7 @@
       "name_cn": "诸葛亮北伐",
       "category": "northern_expedition",
       "importance": 9,
-      "trigger_conditions": [{"type": "faction_alive", "faction": "liu_bei"}],
+      "trigger_conditions": [],
       "effects": [
         {"type": "temporary_modifier", "target": "liu_bei", "stat": "attack", "multiplier": 1.35, "duration_years": 8},
         {"type": "temporary_modifier", "target": "liu_bei", "stat": "expansion", "multiplier": 1.25, "duration_years": 8},
@@ -223,11 +210,27 @@
       "name_cn": "蜀汉统一",
       "category": "unification",
       "importance": 10,
-      "trigger_conditions": [{"type": "faction_alive", "faction": "liu_bei"}],
+      "trigger_conditions": [],
       "effects": [
         {"type": "temporary_modifier", "target": "liu_bei", "stat": "attack", "multiplier": 1.45, "duration_years": 18},
         {"type": "temporary_modifier", "target": "liu_bei", "stat": "expansion", "multiplier": 1.7, "duration_years": 18},
-        {"type": "temporary_modifier", "target": "cao", "stat": "defense", "multiplier": 0.78, "duration_years": 18}
+        {"type": "temporary_modifier", "target": "cao", "stat": "defense", "multiplier": 0.78, "duration_years": 18},
+        {"type": "transfer_region", "region": "liangzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "bingzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "youzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "liaodong", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "jizhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "qingzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "sili", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "yanzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "xuzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "yuzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "hanzhong", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "jingzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "yangzhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "yizhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "nanzhong", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "jiaozhou", "owner": "liu_bei"}
       ],
       "ui": {
         "title": "架空结局：蜀汉统一",

@@ -190,12 +190,11 @@
   },
   "story_biases": [
     {"id": "cao_north_rise", "start_year": 184, "end_year": 207, "target": "cao", "modifiers": {"attack": 1.08, "expansion": 1.22}},
-    {"id": "liu_bei_survival", "start_year": 184, "end_year": 207, "target": "liu_bei", "modifiers": {"defense": 1.38}, "protect_if_regions_lte": 1},
+    {"id": "liu_bei_survival", "start_year": 184, "end_year": 213, "target": "liu_bei", "modifiers": {"defense": 1.65, "morale": 1.12}, "protect_if_regions_lte": 2},
     {"id": "sun_jiangdong_defense", "start_year": 184, "end_year": 214, "target": "sun_quan", "modifiers": {"defense": 1.14}},
     {"id": "liu_bei_enters_shu", "start_year": 214, "end_year": 222, "target": "liu_bei", "modifiers": {"attack": 1.12, "expansion": 1.28}},
     {"id": "shu_northern_expedition", "start_year": 227, "end_year": 234, "target": "liu_bei", "modifiers": {"attack": 1.28, "morale": 1.12, "expansion": 1.18}},
     {"id": "wei_internal_crisis", "start_year": 249, "end_year": 263, "target": "cao", "modifiers": {"defense": 0.86, "stability": 0.82}},
-    {"id": "late_shu_unification", "start_year": 260, "end_year": 280, "target": "liu_bei", "modifiers": {"attack": 1.32, "expansion": 1.5, "defense": 1.1}}
+    {"id": "late_shu_unification", "start_year": 260, "end_year": 280, "target": "liu_bei", "modifiers": {"attack": 1.55, "expansion": 1.85, "defense": 1.18}}
   ]
 }
-
