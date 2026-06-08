@@ -380,6 +380,13 @@ orders are stored as structured JSON, while the strategy text is saved as agent
 context and used for simple player-plan assistance when no explicit orders are
 selected.
 
+The web map reuses the Marble-mode real-map cache
+`data/maps/sanguo_real_map_prepared.json` when available, grouped through
+`configs/maps/sanguo_state_regions.json` into coarse historical 州 labels. If
+the prepared cache is missing, the server makes a best-effort attempt to rebuild
+it from `configs/maps/sanguo_real_map.json`; otherwise it falls back to the
+older region-polygon canvas.
+
 Resource transfer is implemented through regional supply. Caravans move pooled
 food, weapons, or gold into a target region; local supply then improves battle
 and recovery outcomes in that region.

@@ -245,14 +245,16 @@ h2 {
 
 .command-dock {
   position: absolute;
-  left: 24px;
-  right: 24px;
+  top: 340px;
+  right: 22px;
   bottom: 22px;
+  width: 360px;
   display: grid;
-  grid-template-columns: minmax(360px, 1fr) minmax(340px, 0.9fr);
-  gap: 16px;
-  max-height: 292px;
-  padding: 14px;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  overflow: auto;
 }
 
 .command-panel,
@@ -270,7 +272,7 @@ h2 {
 
 .top-actions {
   display: grid;
-  grid-template-columns: 72px 72px minmax(96px, 122px);
+  grid-template-columns: 1fr 1fr 1.35fr;
   gap: 8px;
 }
 
@@ -318,9 +320,9 @@ textarea:focus {
 
 .unit-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
-  max-height: 154px;
+  max-height: 170px;
   overflow: auto;
   padding-right: 4px;
 }
@@ -416,8 +418,8 @@ textarea:focus {
 .log-panel {
   position: absolute;
   left: 50%;
-  bottom: 334px;
-  width: min(660px, calc(100vw - 660px));
+  bottom: 42px;
+  width: min(620px, calc(100vw - 470px));
   min-width: 420px;
   transform: translateX(-50%);
   padding: 11px 18px 12px;
@@ -517,6 +519,10 @@ textarea:focus {
   }
 
   .command-dock {
+    top: auto;
+    left: 24px;
+    right: 24px;
+    width: auto;
     grid-template-columns: 1fr;
     max-height: 332px;
     overflow: auto;
@@ -627,7 +633,7 @@ textarea:focus {
   .log-panel {
     left: 12px;
     right: 12px;
-    bottom: 468px;
+    bottom: 396px;
     width: auto;
     transform: none;
     padding: 10px 12px;

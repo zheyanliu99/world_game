@@ -156,6 +156,29 @@ class FactionView(BaseModel):
     ai_intent: str = ""
 
 
+class RealMapProvinceView(BaseModel):
+    id: int
+    name: str
+    region_id: str
+    centroid: tuple[float, float]
+    cell_count: int
+
+
+class RealMapStateLabel(BaseModel):
+    id: str
+    name_cn: str
+    centroid: tuple[float, float]
+
+
+class RealMapView(BaseModel):
+    canvas_size: tuple[int, int]
+    grid_size: tuple[int, int]
+    province_id_grid: list[list[int]]
+    provinces: list[RealMapProvinceView]
+    state_labels: list[RealMapStateLabel]
+    attribution: str = ""
+
+
 class GameView(BaseModel):
     game_id: str
     round: int
@@ -163,6 +186,7 @@ class GameView(BaseModel):
     player_faction: str
     finished: bool
     winner: str | None
+    real_map: RealMapView | None = None
     regions: list[Region]
     region_owners: dict[str, str]
     region_development: dict[str, float]

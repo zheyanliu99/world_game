@@ -36,6 +36,8 @@ let game = null;
 let selectedPolicy = "balanced";
 let orderDrafts = [];
 let diplomacyDrafts = [];
+let realMapBitmap = null;
+let realMapSignature = "";
 
 const elements = {
   canvas: document.getElementById("mapCanvas"),
@@ -121,6 +123,7 @@ function setStatus(text) {
 
 function render() {
   if (!game) return;
+  window.__hwsimGame = game;
   elements.roundLine.textContent = `${game.round} / ${game.max_rounds} 回合`;
   elements.strategyInput.value = game.current_player_command || elements.strategyInput.value;
   elements.edictText.textContent = game.finished
@@ -330,6 +333,14 @@ function renderWinner() {
 }
 
 function drawMap() {
+  if (game.real_map) {
+    drawRealMap();
+    return;
+  }
+  drawSimpleMap();
+}
+
+function drawSimpleMap() {
   const canvas = elements.canvas;
   const parent = canvas.parentElement;
   const rect = parent.getBoundingClientRect();
@@ -359,6 +370,273 @@ function drawMap() {
   game.regions.forEach((region) => drawRegionLabel(ctx, region, offsetX, offsetY, scale));
   drawSupply(ctx, offsetX, offsetY, scale);
   drawUnits(ctx, offsetX, offsetY, scale);
+}
+
+function drawRealMap() {
+  const canvas = elements.canvas;
+  const parent = canvas.parentElement;
+  const rect = parent.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+  canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  ctx.fillStyle = "#251f19";
+  ctx.fillRect(0, 0, rect.width, rect.height);
+  drawPaperNoise(ctx, rect.width, rect.height);
+
+  const map = game.real_map;
+  const mapWidth = map.canvas_size[0];
+  const mapHeight = map.canvas_size[1];
+  const compact = rect.width <= 760;
+  const medium = rect.width > 760 && rect.width <= 1180;
+  const scale = Math.min(rect.width / mapWidth, rect.height / mapHeight) * (compact ? 0.88 : medium ? 0.9 : 0.98);
+  const offsetX = (rect.width - mapWidth * scale) / 2 + (rect.width > 1180 ? -10 : 0);
+  let offsetY = (rect.height - mapHeight * scale) / 2 + (rect.width > 1180 ? 20 : 86);
+  if (compact) {
+    offsetY = 382;
+  }
+
+  const bitmap = realMapToCanvas();
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(bitmap, offsetX, offsetY, mapWidth * scale, mapHeight * scale);
+  drawRealMapStateLabels(ctx, offsetX, offsetY, scale);
+  drawRealSupply(ctx, offsetX, offsetY, scale);
+  drawRealUnits(ctx, offsetX, offsetY, scale);
+  drawRealCapitalLabels(ctx, offsetX, offsetY, scale);
+  drawRealAttribution(ctx, rect.height);
+}
+
+function realMapToCanvas() {
+  const ownerSignature = Object.entries(game.region_owners).sort().map(([region, owner]) => `${region}:${owner}`).join("|");
+  if (realMapBitmap && realMapSignature === ownerSignature) {
+    return realMapBitmap;
+  }
+  const map = game.real_map;
+  const grid = map.province_id_grid;
+  const gridHeight = grid.length;
+  const gridWidth = grid[0].length;
+  const provinceById = Object.fromEntries(map.provinces.map((province) => [province.id, province]));
+  const canvas = document.createElement("canvas");
+  canvas.width = gridWidth;
+  canvas.height = gridHeight;
+  const ctx = canvas.getContext("2d");
+  const image = ctx.createImageData(gridWidth, gridHeight);
+  const border = [212, 198, 161];
+
+  for (let y = 0; y < gridHeight; y += 1) {
+    for (let x = 0; x < gridWidth; x += 1) {
+      const provinceId = grid[y][x];
+      const index = (y * gridWidth + x) * 4;
+      if (provinceId < 0) {
+        image.data[index] = 37;
+        image.data[index + 1] = 31;
+        image.data[index + 2] = 25;
+        image.data[index + 3] = 255;
+        continue;
+      }
+      const province = provinceById[provinceId];
+      const owner = game.region_owners[province.region_id] || provinceOwnerFallback(province.region_id);
+      const color = hexToRgb(game.factions[owner]?.color || "#777777");
+      const edge = realMapEdgeKind(grid, provinceById, x, y, provinceId, owner);
+      const shade = edge === "state" ? 0.42 : edge === "owner" ? 0.62 : 0.82;
+      const borderMix = edge === "state" ? 0.58 : edge === "owner" ? 0.38 : 0;
+      image.data[index] = Math.round(color[0] * shade + border[0] * borderMix);
+      image.data[index + 1] = Math.round(color[1] * shade + border[1] * borderMix);
+      image.data[index + 2] = Math.round(color[2] * shade + border[2] * borderMix);
+      image.data[index + 3] = 255;
+    }
+  }
+  ctx.putImageData(image, 0, 0);
+  realMapBitmap = canvas;
+  realMapSignature = ownerSignature;
+  return canvas;
+}
+
+function realMapEdgeKind(grid, provinceById, x, y, provinceId, owner) {
+  const neighbors = [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]];
+  const province = provinceById[provinceId];
+  let ownerEdge = false;
+  let stateEdge = false;
+  for (const [nx, ny] of neighbors) {
+    if (ny < 0 || nx < 0 || ny >= grid.length || nx >= grid[0].length) {
+      ownerEdge = true;
+      continue;
+    }
+    const otherId = grid[ny][nx];
+    if (otherId !== provinceId) {
+      if (otherId < 0) {
+        ownerEdge = true;
+        continue;
+      }
+      const other = provinceById[otherId];
+      const otherOwner = game.region_owners[other.region_id] || provinceOwnerFallback(other.region_id);
+      if (otherOwner !== owner) ownerEdge = true;
+      if (other.region_id !== province.region_id) stateEdge = true;
+    }
+  }
+  if (stateEdge) return "state";
+  if (ownerEdge) return "owner";
+  return "none";
+}
+
+function provinceOwnerFallback(regionId) {
+  if (["yizhou", "hanzhong", "nanzhong"].includes(regionId)) return "liu_bei";
+  if (["yangzhou", "jiaozhou", "jingzhou"].includes(regionId)) return "sun_quan";
+  return "cao";
+}
+
+function drawRealMapStateLabels(ctx, offsetX, offsetY, scale) {
+  const labels = game.real_map.state_labels.filter((label) => game.region_owners[label.id]);
+  labels.forEach((label) => {
+    const x = offsetX + label.centroid[0] * scale;
+    const y = offsetY + label.centroid[1] * scale;
+    const fontSize = Math.max(12, Math.min(22, 14 * scale + 6));
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `900 ${fontSize}px "Songti SC", serif`;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.42)";
+    ctx.fillStyle = "rgba(238,220,170,0.66)";
+    ctx.strokeText(label.name_cn, x, y);
+    ctx.fillText(label.name_cn, x, y);
+    ctx.restore();
+  });
+}
+
+function drawRealCapitalLabels(ctx, offsetX, offsetY, scale) {
+  Object.entries(game.factions).forEach(([factionId, faction]) => {
+    const center = realFactionCentroid(factionId);
+    if (!center) return;
+    const x = offsetX + center[0] * scale;
+    const y = offsetY + center[1] * scale;
+    const fontSize = Math.max(12, Math.min(24, 15 * scale + 6));
+    const label = faction.name;
+    ctx.save();
+    ctx.font = `900 ${fontSize}px "Songti SC", serif`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+    const metrics = ctx.measureText(label);
+    const textWidth = metrics.width;
+    const textHeight = fontSize;
+    const panelX = x - textWidth / 2 - 8;
+    const panelY = y - textHeight - 18;
+    drawRoundedPanel(ctx, panelX, panelY, textWidth + 16, textHeight + 9, 5, "rgba(9,8,6,0.82)", faction.color);
+    ctx.fillStyle = "rgba(0,0,0,0.66)";
+    ctx.fillText(label, x - textWidth / 2 + 1, panelY + textHeight + 1);
+    ctx.fillStyle = "#f6eac9";
+    ctx.fillText(label, x - textWidth / 2, panelY + textHeight);
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(3, 4 * scale), 0, Math.PI * 2);
+    ctx.fillStyle = faction.color;
+    ctx.fill();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,243,204,0.9)";
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
+function realFactionCentroid(factionId) {
+  let total = 0;
+  let sumX = 0;
+  let sumY = 0;
+  game.real_map.provinces.forEach((province) => {
+    const owner = game.region_owners[province.region_id] || provinceOwnerFallback(province.region_id);
+    if (owner !== factionId) return;
+    const weight = province.cell_count || 1;
+    total += weight;
+    sumX += province.centroid[0] * weight;
+    sumY += province.centroid[1] * weight;
+  });
+  if (!total) return null;
+  return [sumX / total, sumY / total];
+}
+
+function drawRealSupply(ctx, offsetX, offsetY, scale) {
+  Object.entries(game.regional_supply).forEach(([regionId, supply]) => {
+    const total = Object.values(supply).reduce((sum, value) => sum + value, 0);
+    const center = displayCenterForRegion(regionId);
+    if (!total || !center) return;
+    const x = offsetX + center[0] * scale;
+    const y = offsetY + center[1] * scale + 24;
+    const width = Math.min(58, 18 + total * 0.7);
+    ctx.fillStyle = "rgba(9,8,6,0.82)";
+    ctx.fillRect(x - width / 2, y, width, 7);
+    ctx.fillStyle = "#d6b35f";
+    ctx.fillRect(x - width / 2, y, width * 0.72, 7);
+  });
+}
+
+function drawRealUnits(ctx, offsetX, offsetY, scale) {
+  const grouped = {};
+  game.units.forEach((unit) => {
+    grouped[unit.region_id] ||= [];
+    grouped[unit.region_id].push(unit);
+  });
+  Object.entries(grouped).forEach(([regionId, units]) => {
+    const center = displayCenterForRegion(regionId);
+    if (!center) return;
+    units.forEach((unit, index) => {
+      const angle = (Math.PI * 2 * index) / Math.max(1, units.length);
+      const radius = 18 + Math.floor(index / 6) * 8;
+      const x = offsetX + center[0] * scale + Math.cos(angle) * radius * scale;
+      const y = offsetY + center[1] * scale + Math.sin(angle) * radius * scale;
+      drawUnitShape(ctx, unit, x, y, Math.max(4, 7 * scale));
+    });
+  });
+}
+
+function drawRealAttribution(ctx, height) {
+  if (!game.real_map.attribution) return;
+  ctx.save();
+  ctx.fillStyle = "rgba(191,175,140,0.32)";
+  ctx.font = "700 13px Georgia, serif";
+  ctx.fillText(game.real_map.attribution, 24, height - 10);
+  ctx.restore();
+}
+
+function drawRoundedPanel(ctx, x, y, width, height, radius, fill, stroke) {
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, width, height, radius);
+  } else {
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+  }
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+}
+
+function displayCenterForRegion(regionId) {
+  const label = game.real_map?.state_labels.find((item) => item.id === regionId);
+  if (label) return label.centroid;
+  const virtualCenters = {
+    hanzhong: [625, 384],
+    nanzhong: [610, 574],
+    xuzhou: [820, 396],
+    yanzhou: [785, 332],
+    liaodong: [910, 188],
+  };
+  if (virtualCenters[regionId]) return virtualCenters[regionId];
+  const region = regionMap()[regionId];
+  if (!region || !game.real_map) return null;
+  return [
+    (region.center[0] / 1920) * game.real_map.canvas_size[0],
+    (region.center[1] / 1080) * game.real_map.canvas_size[1],
+  ];
 }
 
 function drawPaperNoise(ctx, width, height) {
@@ -521,11 +799,16 @@ function regionMap() {
 }
 
 function hexToRgba(hex, alpha) {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function hexToRgb(hex) {
   const clean = hex.replace("#", "");
   const r = parseInt(clean.slice(0, 2), 16);
   const g = parseInt(clean.slice(2, 4), 16);
   const b = parseInt(clean.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
+  return [r, g, b];
 }
 
 elements.newGameBtn.addEventListener("click", startGame);

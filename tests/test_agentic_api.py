@@ -24,6 +24,8 @@ def test_agentic_api_create_command_resolve_and_reset() -> None:
     game_id = game["game_id"]
     assert game["round"] == 0
     assert game["player_faction"] == "liu_bei"
+    assert game["real_map"]["grid_size"] == [480, 270]
+    assert len(game["real_map"]["provinces"]) >= 30
 
     command = client.post(
         f"/api/games/{game_id}/command",

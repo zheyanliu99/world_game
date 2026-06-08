@@ -19,12 +19,17 @@ from hwsim.agentic.models import (
     GameView,
     PendingAttack,
     Policy,
+    RealMapProvinceView,
+    RealMapStateLabel,
+    RealMapView,
     ResourceType,
     Resources,
     RoundLog,
 )
 from hwsim.core.models import Faction, MapConfig, Region, ScenarioConfig
 from hwsim.map.map_loader import load_bundle
+from hwsim.map.real_map import prepare_real_map
+from hwsim.utils.file_utils import read_json, resolve_path
 
 
 FACTION_IDS = ("cao", "liu_bei", "sun_quan")
@@ -33,6 +38,9 @@ MAX_ROUNDS = 20
 ACTION_POINTS = 5
 DOMINANCE_SHARE = 0.75
 DEFAULT_SCENARIO = Path("configs/scenarios/sanguo_shu_unification_demo.json")
+REAL_MAP_CONFIG = Path("configs/maps/sanguo_real_map.json")
+REAL_MAP_FILE = Path("data/maps/sanguo_real_map_prepared.json")
+REAL_STATE_FILE = Path("configs/maps/sanguo_state_regions.json")
 
 ACTION_COSTS = {
     "rest": 1,
@@ -109,6 +117,7 @@ class AgenticGameEngine:
         self.map_config = map_config
         self.agent_provider = agent_provider or MockAgentProvider()
         self.fallback_provider = fallback_provider or MockAgentProvider()
+        self.real_map_view = self._load_real_map_view()
 
     @classmethod
     def from_default_scenario(
@@ -225,6 +234,7 @@ class AgenticGameEngine:
             player_faction=state.player_faction,
             finished=state.finished,
             winner=state.winner,
+            real_map=self.real_map_view,
             regions=list(self.map_config.regions),
             region_owners=state.region_owners,
             region_development=state.region_development,
@@ -275,6 +285,85 @@ class AgenticGameEngine:
                     )
                 )
         return units
+
+    def _load_real_map_view(self) -> RealMapView | None:
+        prepared_path = resolve_path(REAL_MAP_FILE)
+        state_path = resolve_path(REAL_STATE_FILE)
+        if not state_path.exists():
+            return None
+        if not prepared_path.exists():
+            try:
+                prepared_path = prepare_real_map(REAL_MAP_CONFIG)
+            except Exception:
+                return None
+        prepared = read_json(prepared_path)
+        state_records = read_json(state_path).get("states", [])
+        provinces: list[RealMapProvinceView] = []
+        state_points: dict[str, list[tuple[float, float, int]]] = defaultdict(list)
+        for province in prepared.get("provinces", []):
+            name = str(province.get("name", ""))
+            region_id = self._display_region_for_province(name, province.get("owner"), state_records)
+            centroid_raw = province.get("centroid") or [0, 0]
+            centroid = (float(centroid_raw[0]), float(centroid_raw[1]))
+            cell_count = int(province.get("cell_count", 0))
+            provinces.append(
+                RealMapProvinceView(
+                    id=int(province["id"]),
+                    name=name,
+                    region_id=region_id,
+                    centroid=centroid,
+                    cell_count=cell_count,
+                )
+            )
+            state_points[region_id].append((centroid[0], centroid[1], max(1, cell_count)))
+
+        state_names = {str(record.get("id")): str(record.get("name_cn", record.get("id"))) for record in state_records}
+        state_labels = [
+            RealMapStateLabel(id=region_id, name_cn=state_names.get(region_id, self._region_name(region_id)), centroid=self._weighted_centroid(points))
+            for region_id, points in sorted(state_points.items())
+            if region_id in self._region_ids()
+        ]
+        return RealMapView(
+            canvas_size=tuple(prepared.get("canvas_size", (1280, 720))),
+            grid_size=tuple(prepared.get("grid_size", (480, 270))),
+            province_id_grid=prepared.get("province_id_grid", []),
+            provinces=provinces,
+            state_labels=state_labels,
+            attribution=str(prepared.get("attribution", "")),
+        )
+
+    def _display_region_for_province(self, name: str, owner: str | None, state_records: list[dict]) -> str:
+        lower_name = name.lower()
+        for record in state_records:
+            region_id = str(record.get("id", ""))
+            contains = [str(item).lower() for item in record.get("contains", [])]
+            if region_id in self._region_ids() and any(fragment in lower_name for fragment in contains):
+                return region_id
+        if any(fragment in lower_name for fragment in ("hong kong", "macau", "guangdong", "guangxi", "hainan")):
+            return "jiaozhou"
+        if owner == "liu_bei":
+            return "yizhou"
+        if owner == "sun_quan":
+            return "yangzhou"
+        return "sili"
+
+    def _weighted_centroid(self, points: list[tuple[float, float, int]]) -> tuple[float, float]:
+        total = sum(weight for _x, _y, weight in points)
+        if total <= 0:
+            return 0.0, 0.0
+        return (
+            sum(x * weight for x, _y, weight in points) / total,
+            sum(y * weight for _x, y, weight in points) / total,
+        )
+
+    def _region_ids(self) -> set[str]:
+        return {region.id for region in self.map_config.regions}
+
+    def _region_name(self, region_id: str) -> str:
+        for region in self.map_config.regions:
+            if region.id == region_id:
+                return region.name_cn
+        return region_id
 
     def _collect_plans(self, state: AgenticGameState, round_number: int) -> dict[str, AgentPlan]:
         plans: dict[str, AgentPlan] = {}
