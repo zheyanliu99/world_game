@@ -1,0 +1,30 @@
+{
+  "default_owner": "cao",
+  "province_owner_rules": [
+    {"contains": ["Sichuan", "Chongqing"], "owner": "liu_zhang"},
+    {"contains": ["Yunnan", "Guizhou"], "owner": "nanman"},
+    {"contains": ["Hubei", "Hunan"], "owner": "liu_biao"},
+    {"contains": ["Jiangsu", "Shanghai", "Zhejiang", "Fujian", "Jiangxi"], "owner": "sun_quan"},
+    {"contains": ["Guangdong", "Guangxi", "Hainan"], "owner": "shi_xie"},
+    {"contains": ["Shaanxi"], "owner": "dong_zhuo"},
+    {"contains": ["Gansu", "Qinghai", "Ningxia", "Xinjiang"], "owner": "ma_teng"},
+    {"contains": ["Hebei", "Beijing", "Tianjin", "Shanxi", "Inner Mongolia"], "owner": "yuan_shao"},
+    {"contains": ["Liaoning", "Jilin", "Heilongjiang"], "owner": "gongsun_zan"},
+    {"contains": ["Shandong", "Henan", "Anhui"], "owner": "cao"},
+    {"contains": ["Tibet"], "owner": "ma_teng"}
+  ],
+  "spawn_province_rules": {
+    "cao": ["Henan", "Shandong", "Anhui"],
+    "liu_bei": ["Hubei", "Henan"],
+    "sun_quan": ["Jiangsu", "Zhejiang", "Shanghai"],
+    "yuan_shao": ["Hebei", "Beijing", "Tianjin"],
+    "dong_zhuo": ["Shaanxi"],
+    "liu_biao": ["Hubei", "Hunan"],
+    "liu_zhang": ["Sichuan", "Chongqing"],
+    "ma_teng": ["Gansu", "Qinghai"],
+    "gongsun_zan": ["Liaoning"],
+    "shi_xie": ["Guangdong", "Guangxi"],
+    "nanman": ["Yunnan", "Guizhou"]
+  }
+}
+

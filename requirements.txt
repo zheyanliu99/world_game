@@ -2,5 +2,5 @@ imageio-ffmpeg>=0.5.1
 numpy>=1.26
 pillow>=10.0
 pydantic>=2.6,<3
+pygame-ce>=2.5
 pytest>=8.0
-

@@ -9,12 +9,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from hwsim.core.simulator import Simulator  # noqa: E402
+from hwsim.game.marble_exporter import generate_marble_demo  # noqa: E402
 from hwsim.map.map_loader import load_bundle  # noqa: E402
 from hwsim.render.frame_renderer import render_result_frames  # noqa: E402
 from hwsim.render.subtitle_writer import write_srt  # noqa: E402
 from hwsim.render.thumbnail_renderer import render_thumbnail  # noqa: E402
 from hwsim.render.video_composer import compose_video  # noqa: E402
-from hwsim.utils.file_utils import copy_file, ensure_dir  # noqa: E402
+from hwsim.utils.file_utils import copy_file, ensure_dir, read_json  # noqa: E402
 
 
 def main() -> None:
@@ -23,6 +24,16 @@ def main() -> None:
     args = parser.parse_args()
 
     scenario_path = Path(args.scenario)
+    raw_scenario = read_json(scenario_path)
+    if raw_scenario.get("simulation_mode") == "marble":
+        result = generate_marble_demo(scenario_path, ROOT / "outputs")
+        print(f"Generated {result['frames']} frames")
+        print(f"Video: {result['video_path']}")
+        print(f"Subtitles: {result['subtitle_path']}")
+        print(f"Thumbnail: {result['thumbnail_path']}")
+        print(f"Config copy: {result['config_copy_path']}")
+        return
+
     scenario, map_config, event_config, style = load_bundle(scenario_path)
     result = Simulator(scenario, map_config, event_config).run()
 
@@ -49,4 +60,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

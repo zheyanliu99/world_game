@@ -1,0 +1,170 @@
+{
+  "events": [
+    {
+      "id": "yellow_turban_184",
+      "year": 184,
+      "name_cn": "黄巾起义",
+      "category": "rebellion",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.12, "duration_years": 10},
+        {"type": "marble_modifier", "target": "yuan_shao", "stat": "spawn_rate", "multiplier": 1.12, "duration_years": 10},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "defense", "multiplier": 1.15, "duration_years": 12}
+      ],
+      "ui": {
+        "title": "184年 黄巾起义",
+        "subtitle": "天下大乱，弹球军团开始扩张",
+        "focus_regions": [],
+        "effect": "collapse_flash",
+        "duration_seconds": 3
+      },
+      "narration": "黄巾起义后，地图被切成真实地理格子，各阵营开始用弹球争夺土地。"
+    },
+    {
+      "id": "guandu_200",
+      "year": 200,
+      "name_cn": "官渡之战",
+      "category": "major_battle",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "power", "multiplier": 1.18, "duration_years": 10},
+        {"type": "marble_modifier", "target": "yuan_shao", "stat": "spawn_rate", "multiplier": 0.86, "duration_years": 10},
+        {"type": "add_resources", "target": "cao", "value": 120}
+      ],
+      "ui": {
+        "title": "200年 官渡之战",
+        "subtitle": "曹操获得北方推进窗口",
+        "focus_regions": [],
+        "effect": "marching_arrows",
+        "duration_seconds": 3
+      },
+      "narration": "官渡之后，曹操的弹球获得短期战力加成，但随机碰撞仍然可能改变战局。"
+    },
+    {
+      "id": "chibi_208",
+      "year": 208,
+      "name_cn": "赤壁之战",
+      "category": "major_battle",
+      "importance": 10,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.86, "duration_years": 7},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.22, "duration_years": 8},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.22, "duration_years": 8},
+        {"type": "create_alliance", "factions": ["sun_quan", "liu_bei"], "duration_years": 8}
+      ],
+      "ui": {
+        "title": "208年 赤壁之战",
+        "subtitle": "孙刘获得喘息，曹军南下速度下降",
+        "focus_regions": [],
+        "effect": "fire_overlay",
+        "duration_seconds": 4
+      },
+      "narration": "赤壁之战不会直接改写格子归属，只会改变速度、征兵和碰撞优势。"
+    },
+    {
+      "id": "liu_bei_enters_shu_214",
+      "year": 214,
+      "name_cn": "刘备入蜀",
+      "category": "political",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.25, "duration_years": 10},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.12, "duration_years": 8},
+        {"type": "add_resources", "target": "liu_bei", "value": 180}
+      ],
+      "ui": {
+        "title": "214年 刘备入蜀",
+        "subtitle": "蜀地资源让刘备开始增殖",
+        "focus_regions": [],
+        "effect": "marching_arrows",
+        "duration_seconds": 3
+      },
+      "narration": "刘备入蜀在这个系统里表现为资源和增殖速度提升，而不是强行改色。"
+    },
+    {
+      "id": "cao_pi_emperor_220",
+      "year": 220,
+      "name_cn": "曹丕称帝",
+      "category": "succession",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "rename_faction", "target": "cao", "name_cn": "曹魏"},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.16, "duration_years": 14}
+      ],
+      "ui": {
+        "title": "220年 曹丕称帝",
+        "subtitle": "曹魏建立，征兵效率提升",
+        "focus_regions": [],
+        "effect": "edict_overlay",
+        "duration_seconds": 3
+      },
+      "narration": "曹丕称帝让曹魏的征兵效率提高，但地盘仍由弹球碰撞决定。"
+    },
+    {
+      "id": "yiling_222",
+      "year": 222,
+      "name_cn": "夷陵之战",
+      "category": "major_battle",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "power", "multiplier": 0.9, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "power", "multiplier": 1.08, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "222年 夷陵之战",
+        "subtitle": "蜀汉攻势降温，但不会直接崩盘",
+        "focus_regions": [],
+        "effect": "fire_overlay",
+        "duration_seconds": 3
+      },
+      "narration": "夷陵之战让蜀汉弹球战力短暂下降，给东吴留下反弹机会。"
+    },
+    {
+      "id": "northern_expeditions_227",
+      "year": 227,
+      "name_cn": "诸葛亮北伐",
+      "category": "northern_expedition",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.12, "duration_years": 9},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.18, "duration_years": 9}
+      ],
+      "ui": {
+        "title": "227年 诸葛亮北伐",
+        "subtitle": "蜀汉获得北上碰撞窗口",
+        "focus_regions": [],
+        "effect": "marching_arrows",
+        "duration_seconds": 4
+      },
+      "narration": "北伐阶段，蜀汉的弹球速度和占格半径提升，能否打穿仍看随机物理。"
+    },
+    {
+      "id": "gaopingling_249",
+      "year": 249,
+      "name_cn": "高平陵之变",
+      "category": "political",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "defense", "multiplier": 0.88, "duration_years": 10},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 0.92, "duration_years": 10}
+      ],
+      "ui": {
+        "title": "249年 高平陵之变",
+        "subtitle": "曹魏内部动荡，边界更容易被染色",
+        "focus_regions": [],
+        "effect": "collapse_flash",
+        "duration_seconds": 3
+      },
+      "narration": "高平陵之变削弱曹魏防御，让边界格子更容易被其他阵营抢走。"
+    }
+  ]
+}
+
