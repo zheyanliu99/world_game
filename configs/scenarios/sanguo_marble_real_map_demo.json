@@ -5,7 +5,7 @@
   "output_basename": "sanguo_marble_demo_001",
   "start_year": 184,
   "end_year": 280,
-  "video_length_seconds": 45,
+  "video_length_seconds": 15,
   "render_fps": 60,
   "output_fps": 60,
   "target_winner": "liu_bei",

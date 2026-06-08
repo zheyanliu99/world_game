@@ -52,9 +52,6 @@ class MarbleRenderer:
             radius = marble.radius * (1.0 + max(0, marble.power - 1.0) * 0.18)
             box = (marble.x - radius, marble.y - radius, marble.x + radius, marble.y + radius)
             draw.ellipse(box, fill=faction.color, outline="#FFF3CC", width=2)
-            if radius >= 5:
-                label = faction.display_name(state.current_year)[:1]
-                self._centered_text(draw, label, (int(marble.x), int(marble.y)), self.fonts["small"], "#fff7d4")
 
     def _draw_hud(self, draw: ImageDraw.ImageDraw, state: MarbleGameState, speed_label: str) -> None:
         width, _height = state.grid.canvas_size
@@ -181,19 +178,28 @@ def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
 
 
 def marble_subtitles(state: MarbleGameState) -> list[SubtitleEntry]:
+    intro_end = min(3.0, state.scenario.video_length_seconds)
     subtitles = [
         SubtitleEntry(
             start_seconds=0,
-            end_seconds=min(4.5, state.scenario.video_length_seconds),
+            end_seconds=intro_end,
             text=state.scenario.intro_narration,
         )
     ]
-    for event in state.triggered_events:
+    cursor = intro_end
+    for event in sorted(state.triggered_events, key=lambda item: item.start_seconds):
+        start = max(event.start_seconds, cursor + 0.08)
+        if start >= state.scenario.video_length_seconds:
+            break
+        end = min(state.scenario.video_length_seconds, start + min(2.7, event.duration_seconds))
+        if end <= start:
+            continue
         subtitles.append(
             SubtitleEntry(
-                start_seconds=event.start_seconds,
-                end_seconds=event.end_seconds,
+                start_seconds=start,
+                end_seconds=end,
                 text=event.narration,
             )
         )
+        cursor = end
     return subtitles
