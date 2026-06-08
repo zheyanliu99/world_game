@@ -1,0 +1,242 @@
+{
+  "events": [
+    {
+      "id": "yellow_turban_184",
+      "year": 184,
+      "name_cn": "黄巾起义",
+      "category": "rebellion",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "add_morale", "target": "dong_zhuo", "value": -12},
+        {"type": "add_stability", "target": "dong_zhuo", "value": -18},
+        {"type": "temporary_modifier", "target": "cao", "stat": "expansion", "multiplier": 1.1, "duration_years": 8},
+        {"type": "temporary_modifier", "target": "yuan_shao", "stat": "expansion", "multiplier": 1.1, "duration_years": 8}
+      ],
+      "ui": {
+        "title": "184年 黄巾起义",
+        "subtitle": "天下大乱，群雄并起",
+        "focus_regions": ["sili", "yanzhou", "jizhou"],
+        "effect": "collapse_flash",
+        "duration_seconds": 5
+      },
+      "narration": "黄巾起义后，汉室权威崩裂，各地军阀开始争夺地盘。"
+    },
+    {
+      "id": "coalition_against_dong_190",
+      "year": 190,
+      "name_cn": "讨董联盟",
+      "category": "alliance",
+      "importance": 7,
+      "trigger_conditions": [{"type": "faction_alive", "faction": "dong_zhuo"}],
+      "effects": [
+        {"type": "add_morale", "target": "dong_zhuo", "value": -12},
+        {"type": "add_legitimacy", "target": "cao", "value": 8},
+        {"type": "add_legitimacy", "target": "yuan_shao", "value": 8},
+        {"type": "temporary_modifier", "target": "dong_zhuo", "stat": "defense", "multiplier": 0.9, "duration_years": 6}
+      ],
+      "ui": {
+        "title": "190年 讨董联盟",
+        "subtitle": "反董声势高涨，关中开始动摇",
+        "focus_regions": ["sili"],
+        "effect": "default_banner",
+        "duration_seconds": 4
+      },
+      "narration": "诸侯讨董让中央残余势力持续失血，曹操和袁绍获得早期声望。"
+    },
+    {
+      "id": "guandu_200",
+      "year": 200,
+      "name_cn": "官渡之战",
+      "category": "major_battle",
+      "importance": 9,
+      "trigger_conditions": [
+        {"type": "faction_alive", "faction": "cao"},
+        {"type": "faction_alive", "faction": "yuan_shao"},
+        {"type": "faction_controls_any", "faction": "cao", "regions": ["yanzhou", "yuzhou", "sili"]},
+        {"type": "faction_controls_any", "faction": "yuan_shao", "regions": ["jizhou", "youzhou", "bingzhou"]}
+      ],
+      "effects": [
+        {"type": "multiply_troops", "target": "yuan_shao", "value": 0.55},
+        {"type": "add_morale", "target": "cao", "value": 20},
+        {"type": "add_morale", "target": "yuan_shao", "value": -18},
+        {"type": "temporary_modifier", "target": "cao", "stat": "expansion", "multiplier": 1.25, "duration_years": 8},
+        {"type": "transfer_region", "region": "jizhou", "owner": "cao"}
+      ],
+      "ui": {
+        "title": "200年 官渡之战",
+        "subtitle": "曹操击败袁绍，北方格局开始倾斜",
+        "focus_regions": ["jizhou", "yanzhou"],
+        "effect": "marching_arrows",
+        "duration_seconds": 5
+      },
+      "narration": "官渡之战爆发，曹操击败袁绍，北方格局彻底改变。"
+    },
+    {
+      "id": "chibi_208",
+      "year": 208,
+      "name_cn": "赤壁之战",
+      "category": "major_battle",
+      "importance": 10,
+      "trigger_conditions": [
+        {"type": "faction_alive", "faction": "cao"},
+        {"type": "faction_alive", "faction": "sun_quan"},
+        {"type": "faction_alive", "faction": "liu_bei"},
+        {"type": "faction_troops_gte", "faction": "cao", "value": 60000}
+      ],
+      "effects": [
+        {"type": "multiply_troops", "target": "cao", "value": 0.62},
+        {"type": "add_morale", "target": "cao", "value": -25},
+        {"type": "temporary_modifier", "target": "cao", "stat": "south_attack", "multiplier": 0.55, "duration_years": 6},
+        {"type": "temporary_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.35, "duration_years": 6},
+        {"type": "temporary_modifier", "target": "liu_bei", "stat": "expansion", "multiplier": 1.35, "duration_years": 6},
+        {"type": "create_alliance", "factions": ["sun_quan", "liu_bei"], "duration_years": 8}
+      ],
+      "ui": {
+        "title": "208年 赤壁之战",
+        "subtitle": "一场大火，烧出了三分天下",
+        "focus_regions": ["jingzhou", "yangzhou"],
+        "effect": "fire_overlay",
+        "duration_seconds": 6
+      },
+      "narration": "赤壁大火让曹操南征失败，孙刘联盟获得喘息机会。"
+    },
+    {
+      "id": "liu_bei_enters_shu_214",
+      "year": 214,
+      "name_cn": "刘备入蜀",
+      "category": "political",
+      "importance": 8,
+      "trigger_conditions": [{"type": "faction_alive", "faction": "liu_bei"}],
+      "effects": [
+        {"type": "transfer_region", "region": "yizhou", "owner": "liu_bei"},
+        {"type": "transfer_region", "region": "hanzhong", "owner": "liu_bei"},
+        {"type": "add_economy", "target": "liu_bei", "value": 20},
+        {"type": "add_troops", "target": "liu_bei", "value": 30000},
+        {"type": "add_stability", "target": "liu_bei", "value": 10}
+      ],
+      "ui": {
+        "title": "214年 刘备入蜀",
+        "subtitle": "刘备终于获得稳定根据地",
+        "focus_regions": ["yizhou", "hanzhong"],
+        "effect": "marching_arrows",
+        "duration_seconds": 5
+      },
+      "narration": "刘备入蜀后终于拥有稳定根据地，蜀汉的反击条件开始成型。"
+    },
+    {
+      "id": "cao_pi_emperor_220",
+      "year": 220,
+      "name_cn": "曹丕称帝",
+      "category": "succession",
+      "importance": 8,
+      "trigger_conditions": [
+        {"type": "faction_alive", "faction": "cao"},
+        {"type": "faction_controls_any", "faction": "cao", "regions": ["sili", "yanzhou", "yuzhou"]}
+      ],
+      "effects": [
+        {"type": "rename_faction", "target": "cao", "name_cn": "曹魏"},
+        {"type": "temporary_modifier", "target": "cao", "stat": "recruitment", "multiplier": 1.25, "duration_years": 12},
+        {"type": "add_stability", "target": "cao", "value": 15},
+        {"type": "add_legitimacy", "target": "cao", "value": 25}
+      ],
+      "ui": {
+        "title": "220年 曹丕称帝",
+        "subtitle": "汉室终结，曹魏建立",
+        "focus_regions": ["sili", "yanzhou"],
+        "effect": "edict_overlay",
+        "duration_seconds": 5
+      },
+      "narration": "曹丕称帝后，曹魏获得中央集权加成，但三国鼎立也正式成形。"
+    },
+    {
+      "id": "yiling_222",
+      "year": 222,
+      "name_cn": "夷陵之战",
+      "category": "major_battle",
+      "importance": 8,
+      "trigger_conditions": [
+        {"type": "faction_alive", "faction": "liu_bei"},
+        {"type": "faction_alive", "faction": "sun_quan"}
+      ],
+      "effects": [
+        {"type": "multiply_troops", "target": "liu_bei", "value": 0.82},
+        {"type": "add_morale", "target": "liu_bei", "value": -10},
+        {"type": "add_morale", "target": "sun_quan", "value": 10},
+        {"type": "temporary_modifier", "target": "liu_bei", "stat": "attack", "multiplier": 0.9, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "222年 夷陵之战",
+        "subtitle": "蜀汉东征受挫，但并未彻底崩盘",
+        "focus_regions": ["jingzhou", "yangzhou"],
+        "effect": "fire_overlay",
+        "duration_seconds": 5
+      },
+      "narration": "夷陵之战让蜀汉东征受挫，但这条时间线里，蜀汉没有彻底崩盘。"
+    },
+    {
+      "id": "northern_expeditions_227",
+      "year": 227,
+      "name_cn": "诸葛亮北伐",
+      "category": "northern_expedition",
+      "importance": 9,
+      "trigger_conditions": [{"type": "faction_alive", "faction": "liu_bei"}],
+      "effects": [
+        {"type": "temporary_modifier", "target": "liu_bei", "stat": "attack", "multiplier": 1.35, "duration_years": 8},
+        {"type": "temporary_modifier", "target": "liu_bei", "stat": "expansion", "multiplier": 1.25, "duration_years": 8},
+        {"type": "add_morale", "target": "liu_bei", "value": 20},
+        {"type": "temporary_modifier", "target": "cao", "stat": "defense", "multiplier": 0.9, "duration_years": 8}
+      ],
+      "ui": {
+        "title": "227年 诸葛亮北伐",
+        "subtitle": "蜀汉开始最后的反攻窗口",
+        "focus_regions": ["hanzhong", "sili"],
+        "effect": "marching_arrows",
+        "duration_seconds": 6
+      },
+      "narration": "诸葛亮北伐打开反攻窗口，蜀汉开始从汉中向北推进。"
+    },
+    {
+      "id": "gaopingling_249",
+      "year": 249,
+      "name_cn": "高平陵之变",
+      "category": "political",
+      "importance": 8,
+      "trigger_conditions": [{"type": "faction_alive", "faction": "cao"}],
+      "effects": [
+        {"type": "add_stability", "target": "cao", "value": -25},
+        {"type": "temporary_modifier", "target": "cao", "stat": "defense", "multiplier": 0.85, "duration_years": 8},
+        {"type": "temporary_modifier", "target": "cao", "stat": "stability", "multiplier": 0.85, "duration_years": 8}
+      ],
+      "ui": {
+        "title": "249年 高平陵之变",
+        "subtitle": "曹魏内部权力被司马氏撕裂",
+        "focus_regions": ["sili", "yanzhou"],
+        "effect": "collapse_flash",
+        "duration_seconds": 5
+      },
+      "narration": "高平陵之变后，曹魏内部出现权力危机，前线防御开始松动。"
+    },
+    {
+      "id": "shu_unification_263",
+      "year": 263,
+      "name_cn": "蜀汉统一",
+      "category": "unification",
+      "importance": 10,
+      "trigger_conditions": [{"type": "faction_alive", "faction": "liu_bei"}],
+      "effects": [
+        {"type": "temporary_modifier", "target": "liu_bei", "stat": "attack", "multiplier": 1.45, "duration_years": 18},
+        {"type": "temporary_modifier", "target": "liu_bei", "stat": "expansion", "multiplier": 1.7, "duration_years": 18},
+        {"type": "temporary_modifier", "target": "cao", "stat": "defense", "multiplier": 0.78, "duration_years": 18}
+      ],
+      "ui": {
+        "title": "架空结局：蜀汉统一",
+        "subtitle": "这一次，历史走向了完全不同的结局",
+        "focus_regions": ["sili", "yanzhou", "jizhou"],
+        "effect": "edict_overlay",
+        "duration_seconds": 7
+      },
+      "narration": "进入最后阶段后，蜀汉与东吴夹击曹魏，蜀汉最终反推中原，改写历史。"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "canvas_size": [1920, 1080],
+  "background": "#251F19",
+  "paper": "#3A3025",
+  "border": "#D4C6A1",
+  "text": "#F6EAC9",
+  "muted_text": "#BFAF8C",
+  "subtitle_background": "#14110D",
+  "subtitle_text": "#FFF2C7",
+  "event_title": "#FFE7A0",
+  "event_subtitle": "#F9DFAF",
+  "font_candidates": [
+    "/System/Library/Fonts/PingFang.ttc",
+    "/System/Library/Fonts/Supplemental/Songti.ttc",
+    "/System/Library/Fonts/Supplemental/STHeiti Medium.ttc",
+    "/Library/Fonts/Arial Unicode.ttf"
+  ]
+}
+

@@ -1,0 +1,182 @@
+{
+  "canvas_size": [1920, 1080],
+  "regions": [
+    {
+      "id": "liangzhou",
+      "name_cn": "凉州",
+      "center": [690, 330],
+      "polygon": [[540, 250], [780, 210], [880, 330], [780, 455], [575, 430]],
+      "terrain": "mountain",
+      "population": 44,
+      "economy": 42,
+      "initial_owner": "ma_teng",
+      "neighbors": ["bingzhou", "sili", "hanzhong"]
+    },
+    {
+      "id": "bingzhou",
+      "name_cn": "并州",
+      "center": [1010, 280],
+      "polygon": [[900, 170], [1090, 170], [1165, 300], [1055, 415], [875, 360]],
+      "terrain": "plain",
+      "population": 54,
+      "economy": 50,
+      "initial_owner": "yuan_shao",
+      "neighbors": ["liangzhou", "youzhou", "jizhou", "sili"]
+    },
+    {
+      "id": "youzhou",
+      "name_cn": "幽州",
+      "center": [1290, 170],
+      "polygon": [[1130, 85], [1380, 70], [1510, 170], [1430, 295], [1190, 280]],
+      "terrain": "plain",
+      "population": 58,
+      "economy": 53,
+      "initial_owner": "yuan_shao",
+      "neighbors": ["bingzhou", "jizhou", "liaodong"]
+    },
+    {
+      "id": "liaodong",
+      "name_cn": "辽东",
+      "center": [1600, 165],
+      "polygon": [[1480, 75], [1695, 95], [1770, 225], [1630, 320], [1445, 260]],
+      "terrain": "plain",
+      "population": 35,
+      "economy": 34,
+      "initial_owner": "gongsun_zan",
+      "neighbors": ["youzhou", "qingzhou"]
+    },
+    {
+      "id": "jizhou",
+      "name_cn": "冀州",
+      "center": [1210, 360],
+      "polygon": [[1085, 290], [1300, 285], [1410, 390], [1325, 505], [1100, 475], [1030, 375]],
+      "terrain": "plain",
+      "population": 82,
+      "economy": 76,
+      "initial_owner": "yuan_shao",
+      "neighbors": ["youzhou", "bingzhou", "qingzhou", "yanzhou", "sili"]
+    },
+    {
+      "id": "qingzhou",
+      "name_cn": "青州",
+      "center": [1480, 410],
+      "polygon": [[1400, 300], [1585, 315], [1685, 440], [1575, 550], [1390, 505], [1325, 395]],
+      "terrain": "plain",
+      "population": 67,
+      "economy": 63,
+      "initial_owner": "cao",
+      "neighbors": ["liaodong", "youzhou", "jizhou", "yanzhou", "xuzhou"]
+    },
+    {
+      "id": "sili",
+      "name_cn": "司隶",
+      "center": [1005, 505],
+      "polygon": [[840, 410], [1055, 415], [1135, 535], [1045, 655], [860, 620], [780, 505]],
+      "terrain": "pass",
+      "population": 76,
+      "economy": 78,
+      "initial_owner": "dong_zhuo",
+      "neighbors": ["liangzhou", "bingzhou", "jizhou", "yanzhou", "yuzhou", "jingzhou", "hanzhong"]
+    },
+    {
+      "id": "yanzhou",
+      "name_cn": "兖州",
+      "center": [1235, 520],
+      "polygon": [[1130, 475], [1320, 505], [1395, 610], [1295, 710], [1110, 660], [1050, 545]],
+      "terrain": "plain",
+      "population": 78,
+      "economy": 75,
+      "initial_owner": "cao",
+      "neighbors": ["jizhou", "qingzhou", "xuzhou", "yuzhou", "sili"]
+    },
+    {
+      "id": "xuzhou",
+      "name_cn": "徐州",
+      "center": [1500, 620],
+      "polygon": [[1390, 510], [1585, 550], [1680, 670], [1595, 800], [1395, 760], [1300, 635]],
+      "terrain": "plain",
+      "population": 73,
+      "economy": 70,
+      "initial_owner": "liu_bei",
+      "neighbors": ["qingzhou", "yanzhou", "yuzhou", "yangzhou"]
+    },
+    {
+      "id": "yuzhou",
+      "name_cn": "豫州",
+      "center": [1190, 680],
+      "polygon": [[1045, 650], [1295, 710], [1375, 825], [1240, 920], [1015, 855], [940, 725]],
+      "terrain": "plain",
+      "population": 80,
+      "economy": 73,
+      "initial_owner": "cao",
+      "neighbors": ["sili", "yanzhou", "xuzhou", "jingzhou", "yangzhou"]
+    },
+    {
+      "id": "hanzhong",
+      "name_cn": "汉中",
+      "center": [800, 660],
+      "polygon": [[650, 570], [860, 620], [940, 725], [820, 830], [630, 790], [560, 675]],
+      "terrain": "mountain",
+      "population": 46,
+      "economy": 45,
+      "initial_owner": "zhang_lu",
+      "neighbors": ["liangzhou", "sili", "jingzhou", "yizhou"]
+    },
+    {
+      "id": "jingzhou",
+      "name_cn": "荆州",
+      "center": [990, 835],
+      "polygon": [[820, 830], [1015, 855], [1240, 920], [1160, 1030], [915, 1015], [750, 930]],
+      "terrain": "river",
+      "population": 74,
+      "economy": 72,
+      "initial_owner": "liu_biao",
+      "neighbors": ["sili", "hanzhong", "yuzhou", "yangzhou", "yizhou", "jiaozhou"]
+    },
+    {
+      "id": "yangzhou",
+      "name_cn": "扬州",
+      "center": [1420, 850],
+      "polygon": [[1240, 920], [1375, 825], [1595, 800], [1735, 930], [1620, 1045], [1350, 1030]],
+      "terrain": "river",
+      "population": 78,
+      "economy": 82,
+      "initial_owner": "sun_quan",
+      "neighbors": ["xuzhou", "yuzhou", "jingzhou", "jiaozhou"]
+    },
+    {
+      "id": "yizhou",
+      "name_cn": "益州",
+      "center": [610, 825],
+      "polygon": [[430, 690], [630, 790], [750, 930], [630, 1050], [390, 1010], [305, 845]],
+      "terrain": "mountain",
+      "population": 70,
+      "economy": 76,
+      "initial_owner": "liu_zhang",
+      "neighbors": ["hanzhong", "jingzhou", "nanzhong"]
+    },
+    {
+      "id": "nanzhong",
+      "name_cn": "南中",
+      "center": [520, 995],
+      "polygon": [[390, 1010], [630, 1050], [760, 1125], [505, 1195], [320, 1115]],
+      "terrain": "mountain",
+      "population": 36,
+      "economy": 34,
+      "initial_owner": "nanman",
+      "neighbors": ["yizhou", "jiaozhou"]
+    },
+    {
+      "id": "jiaozhou",
+      "name_cn": "交州",
+      "center": [1000, 1115],
+      "polygon": [[760, 1125], [915, 1015], [1160, 1030], [1350, 1135], [1120, 1250], [880, 1240]],
+      "terrain": "river",
+      "population": 42,
+      "economy": 46,
+      "initial_owner": "shi_xie",
+      "neighbors": ["jingzhou", "yangzhou", "nanzhong"]
+    }
+  ]
+}
+
