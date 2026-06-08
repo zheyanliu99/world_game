@@ -1,11 +1,11 @@
 {
   "simulation_mode": "marble",
   "scenario_id": "sanguo_marble_real_map_demo",
-  "title": "真实地图弹球三国：魏蜀吴边界战争",
+  "title": "真实地图人口三国：魏蜀吴与群雄边界战争",
   "output_basename": "sanguo_marble_demo_001",
   "start_year": 184,
   "end_year": 280,
-  "video_length_seconds": 60,
+  "video_length_seconds": 120,
   "render_fps": 60,
   "output_fps": 60,
   "target_winner": null,
@@ -13,25 +13,37 @@
   "director_strength": "light",
   "random_seed": 42,
   "real_map_file": "configs/maps/sanguo_real_map.json",
+  "state_file": "configs/maps/sanguo_state_regions.json",
   "event_file": "configs/events/sanguo_marble_events.json",
   "style_file": "configs/styles/default_style.json",
-  "intro_narration": "这一次，只看魏蜀吴三国弹球，在真实地图边界上随机反弹、抢格子。",
+  "intro_narration": "这一次，人口单位在真实地图边界上随机反弹、增殖、投降，魏蜀吴与群雄一起争州。",
   "physics": {
     "fps": 60,
     "substeps": 2,
-    "min_speed": 118,
-    "max_speed": 220,
+    "min_speed": 120,
+    "max_speed": 235,
     "bounce_jitter": 0.2,
-    "capture_radius": 7,
-    "base_radius": 2.4,
-    "max_marbles_per_faction": 125,
-    "max_units_start_fraction": 0.24,
-    "max_units_growth_power": 1.15,
-    "spawn_interval_frames": 12,
-    "spawn_cost": 22,
-    "resource_gain_per_100_cells": 4.6,
-    "initial_marbles_per_faction": 12,
-    "collision_damage": 0.1
+    "strategic_bounce_strength": 0.32,
+    "capture_radius": 6,
+    "base_radius": 1.8,
+    "max_marbles_per_faction": 260,
+    "max_units_start_fraction": 0.08,
+    "max_units_growth_power": 1.45,
+    "population_growth_rate_per_year": 0.018,
+    "max_population_growth_multiplier": 5.5,
+    "state_control_threshold": 0.8,
+    "state_control_population_gain_per_100_cells": 2.6,
+    "spawn_interval_frames": 10,
+    "spawn_cost": 16,
+    "resource_gain_per_100_cells": 5.2,
+    "initial_marbles_per_faction": 10,
+    "collision_damage": 0.08
+  },
+  "strategic_targets": {
+    "cao": "liu_bei",
+    "liu_bei": "cao",
+    "sun_quan": "cao",
+    "qunxiong": "cao"
   },
   "factions": {
     "cao": {
@@ -84,6 +96,23 @@
       "population": 2535000,
       "population_spawn_weight": 0.76,
       "capital_region": "jiangsu"
+    },
+    "qunxiong": {
+      "name_cn": "群雄",
+      "display_name_by_year": {},
+      "color": "#7D6474",
+      "troops": 70000,
+      "morale": 66,
+      "economy": 58,
+      "stability": 48,
+      "legitimacy": 35,
+      "attack": 0.98,
+      "defense": 1.0,
+      "naval": 0.7,
+      "expansion": 1.08,
+      "population": 3000000,
+      "population_spawn_weight": 0.82,
+      "capital_region": "gansu"
     }
   }
 }

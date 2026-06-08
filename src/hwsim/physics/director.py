@@ -63,13 +63,19 @@ class MarbleEventDirector:
                 self._apply_betrayal(state, effect)
             elif effect.type == "create_alliance":
                 if len(effect.factions) == 2:
+                    pair = tuple(sorted(effect.factions))
+                    state.alliances = [alliance for alliance in state.alliances if alliance.factions != pair]
                     state.alliances.append(
                         Alliance(
-                            factions=tuple(sorted(effect.factions)),
+                            factions=pair,
                             expires_year=state.current_year + effect.duration_years,
                             source_event=event.id,
                         )
                     )
+            elif effect.type == "break_alliance":
+                if len(effect.factions) == 2:
+                    pair = tuple(sorted(effect.factions))
+                    state.alliances = [alliance for alliance in state.alliances if alliance.factions != pair]
             elif effect.type == "rename_faction":
                 if effect.target and effect.name_cn:
                     state.factions[effect.target].current_name_cn = effect.name_cn

@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from hwsim.core.models import EventConfig, Faction, HistoricalEvent, StyleConfig, TriggeredEvent
+from hwsim.core.models import Alliance, EventConfig, Faction, HistoricalEvent, StyleConfig, TriggeredEvent
 from hwsim.game.marble_renderer import MarbleRenderer
 from hwsim.physics.models import MarbleScenarioConfig, MarbleUnit, PhysicsConfig
 from hwsim.physics.simulator import MarbleSimulator, load_marble_scenario
@@ -77,23 +77,35 @@ def _prepared_map() -> dict:
             {"id": 0, "name": "Alpha", "owner": "cao", "centroid": [40, 60], "cell_count": 32},
             {"id": 1, "name": "Beta", "owner": "liu_bei", "centroid": [80, 60], "cell_count": 32},
         ],
+        "state_regions": [
+            {"id": "alpha_state", "name_cn": "甲州", "contains": ["Alpha"], "population_weight": 1.0},
+            {"id": "beta_state", "name_cn": "乙州", "contains": ["Beta"], "population_weight": 1.0},
+        ],
         "province_id_grid": province_grid.tolist(),
     }
 
 
-def _three_kingdom_prepared_map() -> dict:
-    province_grid = np.full((12, 18), -1, dtype=int)
+def _four_kingdom_prepared_map() -> dict:
+    province_grid = np.full((12, 24), -1, dtype=int)
     province_grid[1:11, 1:7] = 0
     province_grid[1:11, 7:12] = 1
     province_grid[1:11, 12:17] = 2
+    province_grid[1:11, 17:23] = 3
     return {
-        "canvas_size": [180, 120],
-        "grid_size": [18, 12],
+        "canvas_size": [240, 120],
+        "grid_size": [24, 12],
         "attribution": "fixture",
         "provinces": [
             {"id": 0, "name": "Sichuan Province", "owner": "liu_bei", "centroid": [40, 60], "cell_count": 60},
             {"id": 1, "name": "Henan Province", "owner": "cao", "centroid": [95, 55], "cell_count": 50},
             {"id": 2, "name": "Jiangsu Province", "owner": "sun_quan", "centroid": [145, 62], "cell_count": 50},
+            {"id": 3, "name": "Gansu Province", "owner": "qunxiong", "centroid": [200, 60], "cell_count": 60},
+        ],
+        "state_regions": [
+            {"id": "yizhou", "name_cn": "益州", "contains": ["Sichuan"], "population_weight": 1.0},
+            {"id": "sili", "name_cn": "司隶", "contains": ["Henan"], "population_weight": 1.0},
+            {"id": "yangzhou", "name_cn": "扬州", "contains": ["Jiangsu"], "population_weight": 1.0},
+            {"id": "liangzhou", "name_cn": "凉州", "contains": ["Gansu"], "population_weight": 1.0},
         ],
         "province_id_grid": province_grid.tolist(),
     }
@@ -214,6 +226,19 @@ def test_speed_modifier_moves_existing_marbles_faster() -> None:
     assert marble.x == 42
 
 
+def test_strategic_bounce_steers_toward_target_after_wall_hit() -> None:
+    scenario = _scenario()
+    scenario.physics.strategic_bounce_strength = 0.75
+    scenario.strategic_targets = {"cao": "liu_bei"}
+    sim = MarbleSimulator(scenario, _prepared_map(), EventConfig(events=[]))
+    marble = MarbleUnit(id=1, faction_id="cao", x=30, y=60, vx=-60, vy=-60, radius=2)
+    sim.state.marbles = [marble]
+
+    sim._reflect_axes(marble, reflect_x=False, reflect_y=True, steer=True)
+
+    assert marble.vx > 0
+
+
 def test_marble_event_add_balls_increases_unit_count() -> None:
     event = HistoricalEvent.model_validate(
         {
@@ -272,6 +297,38 @@ def test_betrayal_incident_converts_nearby_land_and_balls() -> None:
     assert sim.state.marbles[0].faction_id == "liu_bei"
 
 
+def test_alliance_prevents_land_capture_until_break_event() -> None:
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[]))
+    sim.state.alliances.append(Alliance(factions=("cao", "liu_bei"), expires_year=220, source_event="test"))
+    marble = MarbleUnit(id=1, faction_id="cao", x=62, y=60, vx=0, vy=0, radius=4, power=2.0)
+    sim.state.marbles = [marble]
+    liu_index = sim.state.grid.faction_index("liu_bei")
+    before = int((sim.state.grid.owner_grid == liu_index).sum())
+
+    sim._capture_cells_for_marble(marble)
+
+    assert int((sim.state.grid.owner_grid == liu_index).sum()) == before
+
+    break_event = HistoricalEvent.model_validate(
+        {
+            "id": "break_184",
+            "year": 184,
+            "name_cn": "break",
+            "category": "test",
+            "importance": 1,
+            "trigger_conditions": [],
+            "effects": [{"type": "break_alliance", "factions": ["cao", "liu_bei"]}],
+            "ui": {"title": "break", "subtitle": "break", "duration_seconds": 1},
+            "narration": "break",
+        }
+    )
+    sim.director.events = [break_event]
+    sim.director.update(sim.state)
+    sim._capture_cells_for_marble(marble)
+
+    assert int((sim.state.grid.owner_grid == liu_index).sum()) < before
+
+
 def test_marble_event_modifiers_expire() -> None:
     event = HistoricalEvent.model_validate(
         {
@@ -301,46 +358,70 @@ def test_marble_event_modifiers_expire() -> None:
     assert sim.state.stat_multiplier("cao", "spawn_rate") == 1.0
 
 
-def test_default_marble_scenario_is_three_kingdoms_only() -> None:
+def test_default_marble_scenario_has_four_factions_and_two_minute_export() -> None:
     scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
 
-    assert set(scenario.factions) == {"cao", "liu_bei", "sun_quan"}
-    assert scenario.physics.base_radius <= 2.5
-    assert scenario.physics.capture_radius <= 7
-    assert scenario.video_length_seconds == 60
+    assert set(scenario.factions) == {"cao", "liu_bei", "sun_quan", "qunxiong"}
+    assert scenario.physics.base_radius <= 1.8
+    assert scenario.physics.capture_radius <= 6
+    assert scenario.physics.strategic_bounce_strength > 0
+    assert scenario.video_length_seconds == 120
     assert scenario.output_fps == 60
     assert scenario.render_fps == 60
 
 
 def test_population_weights_scale_initial_and_max_units() -> None:
     scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
-    sim = MarbleSimulator(scenario, _three_kingdom_prepared_map(), EventConfig(events=[]))
+    sim = MarbleSimulator(scenario, _four_kingdom_prepared_map(), EventConfig(events=[]))
 
     initial_counts = {
         faction_id: sum(1 for marble in sim.state.marbles if marble.faction_id == faction_id)
         for faction_id in scenario.factions
     }
 
-    assert initial_counts["cao"] > initial_counts["sun_quan"] > initial_counts["liu_bei"]
+    assert initial_counts["cao"] >= initial_counts["qunxiong"] >= initial_counts["sun_quan"] > initial_counts["liu_bei"]
     start_caps = {faction_id: sim._max_marble_count(faction_id) for faction_id in scenario.factions}
 
     sim.state.frame = sim.state.total_frames
     end_caps = {faction_id: sim._max_marble_count(faction_id) for faction_id in scenario.factions}
 
-    assert end_caps["cao"] > end_caps["sun_quan"] > end_caps["liu_bei"]
-    assert sum(end_caps.values()) >= 250
+    assert end_caps["cao"] > end_caps["qunxiong"] >= end_caps["sun_quan"] > end_caps["liu_bei"]
+    assert sum(end_caps.values()) >= 700
     assert sum(start_caps.values()) < sum(end_caps.values())
+
+
+def test_state_control_adds_population_income() -> None:
+    scenario = _scenario()
+    scenario.physics.state_control_population_gain_per_100_cells = 20
+    scenario.physics.spawn_cost = 10_000
+    sim = MarbleSimulator(scenario, _prepared_map(), EventConfig(events=[]))
+    sim.state.resources = {"cao": 0.0, "liu_bei": 0.0}
+
+    sim._spawn_resources()
+
+    assert sim.state.resources["cao"] > 0
 
 
 def test_capital_labels_use_largest_owned_component_center() -> None:
     scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
-    sim = MarbleSimulator(scenario, _three_kingdom_prepared_map(), EventConfig(events=[]))
+    sim = MarbleSimulator(scenario, _four_kingdom_prepared_map(), EventConfig(events=[]))
     renderer = MarbleRenderer(StyleConfig())
 
     positions = renderer._capital_label_positions(sim.state)
 
-    assert set(positions) == {"cao", "liu_bei", "sun_quan"}
+    assert set(positions) == {"cao", "liu_bei", "sun_quan", "qunxiong"}
     assert positions["cao"] == (95.0, 60.0)
+
+
+def test_state_labels_have_configured_names() -> None:
+    scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
+    sim = MarbleSimulator(scenario, _four_kingdom_prepared_map(), EventConfig(events=[]))
+    renderer = MarbleRenderer(StyleConfig())
+
+    labels = renderer._state_label_positions(sim.state)
+
+    assert labels["yizhou"][0] == "益州"
+    assert labels["liangzhou"][0] == "凉州"
 
 
 def test_capital_label_moves_to_largest_isolated_part() -> None:

@@ -16,11 +16,16 @@ class PhysicsConfig(BaseModel):
     min_speed: float = 72
     max_speed: float = 145
     bounce_jitter: float = 0.28
+    strategic_bounce_strength: float = 0.0
     capture_radius: float = 15
     base_radius: float = 5
     max_marbles_per_faction: int = 32
     max_units_start_fraction: float = 1.0
     max_units_growth_power: float = 1.0
+    population_growth_rate_per_year: float = 0.0
+    max_population_growth_multiplier: float = 1.0
+    state_control_threshold: float = 0.8
+    state_control_population_gain_per_100_cells: float = 0.0
     spawn_interval_frames: int = 45
     spawn_cost: float = 55
     resource_gain_per_100_cells: float = 2.0
@@ -43,10 +48,12 @@ class MarbleScenarioConfig(BaseModel):
     director_strength: str = "light"
     random_seed: int = 42
     real_map_file: Path
+    state_file: Path | None = None
     event_file: Path
     style_file: Path
     intro_narration: str
     physics: PhysicsConfig = Field(default_factory=PhysicsConfig)
+    strategic_targets: dict[str, str] = Field(default_factory=dict)
     factions: dict[str, Faction]
 
 
@@ -80,6 +87,8 @@ class CellGrid:
     owner_grid: np.ndarray
     faction_ids: list[str]
     province_records: list[dict]
+    state_id_grid: np.ndarray | None = None
+    state_records: list[dict] = field(default_factory=list)
     attribution: str = ""
 
     @property
@@ -106,14 +115,41 @@ class CellGrid:
             owner_index = faction_index.get(owner, 0)
             owner_grid[province_grid == province_id] = owner_index
         owner_grid[province_grid < 0] = -1
+        state_records = [dict(record) for record in prepared.get("state_regions", [])]
+        state_grid = cls._build_state_grid(province_grid, prepared["provinces"], state_records)
         return cls(
             canvas_size=tuple(prepared["canvas_size"]),
             province_id_grid=province_grid,
             owner_grid=owner_grid,
             faction_ids=faction_ids,
             province_records=prepared["provinces"],
+            state_id_grid=state_grid,
+            state_records=state_records,
             attribution=prepared.get("attribution", ""),
         )
+
+    @staticmethod
+    def _build_state_grid(
+        province_grid: np.ndarray,
+        province_records: list[dict],
+        state_records: list[dict],
+    ) -> np.ndarray | None:
+        if not state_records:
+            return None
+        state_grid = np.full(province_grid.shape, -1, dtype=np.int16)
+        for state_index, state in enumerate(state_records):
+            contains = [str(item).lower() for item in state.get("contains", [])]
+            cell_count = 0
+            for province in province_records:
+                province_name = str(province.get("name", "")).lower()
+                if contains and not any(fragment in province_name for fragment in contains):
+                    continue
+                province_id = int(province["id"])
+                mask = province_grid == province_id
+                state_grid[mask] = state_index
+                cell_count += int(mask.sum())
+            state["cell_count"] = cell_count
+        return state_grid
 
     def faction_index(self, faction_id: str) -> int:
         return self.faction_ids.index(faction_id)

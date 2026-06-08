@@ -52,7 +52,7 @@ E      export configured run
 Esc    quit
 ```
 
-Export a one-minute, 60fps Marble-mode video:
+Export a two-minute, 60fps Marble-mode video:
 
 ```bash
 .venv/bin/python scripts/generate_demo.py --scenario configs/scenarios/sanguo_marble_real_map_demo.json
@@ -71,19 +71,27 @@ Map boundaries are downloaded from geoBoundaries gbOpen China ADM1 and cached
 under `data/maps/`, which is ignored by git. Attribution: geoBoundaries
 CC BY 4.0, William & Mary geoLab.
 
-The default Wei/Shu/Wu ball production uses Three Kingdoms registered
-population figures as configurable gameplay weights: Cao Wei 4,432,881,
-Shu Han 1,082,000, and Eastern Wu 2,535,000. These weights affect initial
-balls, resource income, and readable max unit caps; they are not exact
-historical population reconstruction.
+The default Wei/Shu/Wu population-unit production uses Three Kingdoms
+registered population figures as configurable gameplay weights: Cao Wei
+4,432,881, Shu Han 1,082,000, and Eastern Wu 2,535,000. These weights affect
+initial population units, resource income, and readable max unit caps; they are
+not exact historical population reconstruction. The fourth faction, `群雄`,
+represents everyone outside the three kingdoms.
 
 The default Marble event timeline also includes incident and betrayal effects.
-Betrayal incidents can flip nearby cells and convert nearby balls to another
-kingdom, while temporary speed boosts affect balls already on the map. The
-one-minute default is tuned to end with at least 250 balls on screen.
-Ball capacity ramps upward over the timeline, so the screen fills as years pass.
-Capital labels update by year and sit at the center of each kingdom's largest
-connected territory, rather than a fixed province.
+Betrayal/surrender incidents can flip nearby cells and convert nearby population
+units to another kingdom, while temporary speed boosts affect units already on
+the map and draw short wind trails. Ball capacity ramps upward with exponential
+population recovery, so the screen fills as years pass.
+
+The real map is also grouped into coarse historical 州 overlays such as 益州,
+荆州, 扬州, and 凉州. Thin state borders and state labels are rendered on the map.
+If one kingdom controls more than 80% of a state, that state adds extra linear
+population income on top of the global exponential recovery. Capital labels
+update by year and sit at the center of each kingdom's largest connected
+territory, rather than a fixed province. Strategic bounce steering can bend a
+non-enemy-wall rebound toward a configured enemy target, and timed alliances can
+prevent allied border capture until an event breaks the alliance.
 
 ## Development
 

@@ -1,0 +1,76 @@
+{
+  "states": [
+    {
+      "id": "yizhou",
+      "name_cn": "益州",
+      "contains": ["Sichuan", "Chongqing", "Yunnan", "Guizhou", "Tibet"],
+      "population_weight": 1.05
+    },
+    {
+      "id": "jingzhou",
+      "name_cn": "荆州",
+      "contains": ["Hubei", "Hunan"],
+      "population_weight": 1.2
+    },
+    {
+      "id": "yangzhou",
+      "name_cn": "扬州",
+      "contains": ["Jiangsu", "Shanghai", "Zhejiang", "Fujian", "Jiangxi", "Taiwan"],
+      "population_weight": 1.25
+    },
+    {
+      "id": "jiaozhou",
+      "name_cn": "交州",
+      "contains": ["Guangdong", "Guangxi", "Hainan"],
+      "population_weight": 0.9
+    },
+    {
+      "id": "liangzhou",
+      "name_cn": "凉州",
+      "contains": ["Gansu", "Qinghai", "Ningxia", "Xinjiang"],
+      "population_weight": 0.65
+    },
+    {
+      "id": "yongzhou",
+      "name_cn": "雍州",
+      "contains": ["Shaanxi"],
+      "population_weight": 0.9
+    },
+    {
+      "id": "sili",
+      "name_cn": "司隶",
+      "contains": ["Henan"],
+      "population_weight": 1.35
+    },
+    {
+      "id": "yuzhou",
+      "name_cn": "豫州",
+      "contains": ["Anhui"],
+      "population_weight": 1.15
+    },
+    {
+      "id": "qingzhou",
+      "name_cn": "青州",
+      "contains": ["Shandong"],
+      "population_weight": 1.25
+    },
+    {
+      "id": "jizhou",
+      "name_cn": "冀州",
+      "contains": ["Hebei", "Beijing", "Tianjin"],
+      "population_weight": 1.2
+    },
+    {
+      "id": "bingzhou",
+      "name_cn": "并州",
+      "contains": ["Shanxi", "Inner Mongolia"],
+      "population_weight": 0.8
+    },
+    {
+      "id": "youzhou",
+      "name_cn": "幽州",
+      "contains": ["Liaoning", "Jilin", "Heilongjiang"],
+      "population_weight": 0.7
+    }
+  ]
+}

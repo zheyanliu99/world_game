@@ -7,17 +7,19 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from hwsim.core.models import StyleConfig, SubtitleEntry
-from hwsim.physics.models import MarbleGameState
+from hwsim.physics.models import MarbleGameState, MarbleUnit
 
 
 class MarbleRenderer:
     def __init__(self, style: StyleConfig) -> None:
         self.style = style
         self._capital_cache: dict[tuple[int, int], dict[str, tuple[float, float]]] = {}
+        self._state_label_cache: dict[int, dict[str, tuple[str, float, float]]] = {}
         self.fonts = {
             "year": self._font(42),
             "title": self._font(34),
             "small": self._font(20),
+            "state": self._font(22),
             "capital": self._font(24),
             "subtitle": self._font(27),
             "event_title": self._font(38),
@@ -27,6 +29,7 @@ class MarbleRenderer:
     def render(self, state: MarbleGameState, subtitle: str = "", speed_label: str = "") -> Image.Image:
         image = self._territory_image(state).convert("RGBA")
         draw = ImageDraw.Draw(image)
+        self._draw_state_labels(draw, state)
         self._draw_marbles(draw, state)
         self._draw_capital_labels(draw, state)
         self._draw_hud(draw, state, speed_label)
@@ -48,15 +51,68 @@ class MarbleRenderer:
         edge = _edge_mask(owner_grid, state.grid.land_mask)
         border = np.array(_hex_to_rgb(self.style.border), dtype=np.float32)
         rgb[edge] = np.clip(rgb[edge].astype(np.float32) * 0.62 + border * 0.38, 0, 255).astype(np.uint8)
+        if state.grid.state_id_grid is not None:
+            state_edge = _state_edge_mask(state.grid.state_id_grid, state.grid.land_mask)
+            rgb[state_edge] = np.clip(rgb[state_edge].astype(np.float32) * 0.42 + border * 0.58, 0, 255).astype(np.uint8)
         image = Image.fromarray(rgb, mode="RGB")
         return image.resize(state.grid.canvas_size, Image.Resampling.NEAREST)
 
     def _draw_marbles(self, draw: ImageDraw.ImageDraw, state: MarbleGameState) -> None:
         for marble in state.marbles:
             faction = state.factions[marble.faction_id]
+            speed_mult = state.stat_multiplier(marble.faction_id, "speed")
+            if speed_mult > 1.01:
+                self._draw_wind_trail(draw, marble, speed_mult)
             radius = marble.radius * (1.0 + max(0, marble.power - 1.0) * 0.18)
             box = (marble.x - radius, marble.y - radius, marble.x + radius, marble.y + radius)
             draw.ellipse(box, fill=faction.color, outline="#FFF3CC", width=1)
+
+    def _draw_wind_trail(self, draw: ImageDraw.ImageDraw, marble: MarbleUnit, speed_mult: float) -> None:
+        speed = max(0.001, (marble.vx * marble.vx + marble.vy * marble.vy) ** 0.5)
+        unit_x = marble.vx / speed
+        unit_y = marble.vy / speed
+        trail_length = min(15.0, 5.0 + (speed_mult - 1.0) * 12.0)
+        for index, alpha in enumerate((78, 42), start=1):
+            start = index * 0.42
+            x1 = marble.x - unit_x * trail_length * start
+            y1 = marble.y - unit_y * trail_length * start
+            x2 = marble.x - unit_x * trail_length * (start + 0.28)
+            y2 = marble.y - unit_y * trail_length * (start + 0.28)
+            draw.line((x1, y1, x2, y2), fill=(245, 238, 206, alpha), width=1)
+
+    def _draw_state_labels(self, draw: ImageDraw.ImageDraw, state: MarbleGameState) -> None:
+        for label, x, y in self._state_label_positions(state).values():
+            font = self.fonts["state"]
+            bbox = draw.textbbox((0, 0), label, font=font)
+            label_x = x - (bbox[2] - bbox[0]) / 2
+            label_y = y - (bbox[3] - bbox[1]) / 2
+            draw.text((label_x + 1, label_y + 1), label, font=font, fill=(0, 0, 0, 105))
+            draw.text((label_x, label_y), label, font=font, fill=(238, 220, 170, 155))
+
+    def _state_label_positions(self, state: MarbleGameState) -> dict[str, tuple[str, float, float]]:
+        state_grid = state.grid.state_id_grid
+        if state_grid is None:
+            return {}
+        cache_key = id(state_grid)
+        cached = self._state_label_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        positions: dict[str, tuple[str, float, float]] = {}
+        cell_w, cell_h = state.grid.cell_size
+        for state_index, state_record in enumerate(state.grid.state_records):
+            ys, xs = np.where(state_grid == state_index)
+            if len(xs) == 0:
+                continue
+            state_id = str(state_record.get("id", state_index))
+            label = str(state_record.get("name_cn", state_id))
+            positions[state_id] = (
+                label,
+                (float(xs.mean()) + 0.5) * cell_w,
+                (float(ys.mean()) + 0.5) * cell_h,
+            )
+        self._state_label_cache = {cache_key: positions}
+        return positions
 
     def _draw_capital_labels(self, draw: ImageDraw.ImageDraw, state: MarbleGameState) -> None:
         for faction_id, (x, y) in self._capital_label_positions(state).items():
@@ -152,17 +208,17 @@ class MarbleRenderer:
             draw.rounded_rectangle((254, 32, 375, 82), radius=8, fill=(12, 10, 8, 190), outline=(218, 196, 138, 120), width=1)
             draw.text((274, 43), speed_label, font=self.fonts["small"], fill=self.style.text)
 
-        panel = (width - 290, 22, width - 24, 288)
+        panel = (width - 306, 22, width - 24, 326)
         draw.rounded_rectangle(panel, radius=8, fill=(12, 10, 8, 205), outline=(218, 196, 138, 150), width=2)
         draw.text((panel[0] + 22, panel[1] + 18), "格子排名", font=self.fonts["title"], fill=self.style.text)
         counts = state.grid.owned_cell_counts()
-        ranking = sorted(counts.items(), key=lambda item: item[1], reverse=True)[:3]
+        ranking = sorted(counts.items(), key=lambda item: item[1], reverse=True)[:4]
         y = panel[1] + 66
         for index, (faction_id, count) in enumerate(ranking, start=1):
             faction = state.factions[faction_id]
             draw.rectangle((panel[0] + 24, y + 6, panel[0] + 44, y + 26), fill=faction.color)
             units = sum(1 for marble in state.marbles if marble.faction_id == faction_id)
-            text = f"{index}. {faction.display_name(state.current_year)} {count}格/{units}球"
+            text = f"{index}. {faction.display_name(state.current_year)} {count}格/{units}人口"
             draw.text((panel[0] + 55, y), text, font=self.fonts["small"], fill=self.style.text)
             y += 31
 
@@ -259,6 +315,14 @@ def _edge_mask(owner_grid: np.ndarray, land_mask: np.ndarray) -> np.ndarray:
     edge[:, 1:] |= owner_grid[:, 1:] != owner_grid[:, :-1]
     edge[1:, :] |= owner_grid[1:, :] != owner_grid[:-1, :]
     return edge & land_mask
+
+
+def _state_edge_mask(state_grid: np.ndarray, land_mask: np.ndarray) -> np.ndarray:
+    edge = np.zeros(state_grid.shape, dtype=bool)
+    valid = state_grid >= 0
+    edge[:, 1:] |= state_grid[:, 1:] != state_grid[:, :-1]
+    edge[1:, :] |= state_grid[1:, :] != state_grid[:-1, :]
+    return edge & land_mask & valid
 
 
 def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
