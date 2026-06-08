@@ -27,6 +27,12 @@ class PhysicsConfig(BaseModel):
     state_control_threshold: float = 0.8
     state_control_population_gain_per_100_cells: float = 0.0
     min_land_share_to_capture: float = 0.0
+    partial_surrender_land_share: float = 0.0
+    whole_surrender_land_share: float = 0.0
+    partial_surrender_chance: float = 0.0
+    whole_surrender_chance: float = 0.0
+    partial_surrender_fraction: float = 0.0
+    surrender_unit_fraction: float = 0.0
     collapse_resource_decay: float = 0.0
     collapse_unit_loss_interval_frames: int = 0
     state_capture_population_loss_fraction: float = 0.0
@@ -215,6 +221,7 @@ class MarbleGameState:
     alliances: list[Alliance] = field(default_factory=list)
     triggered_events: list[TriggeredEvent] = field(default_factory=list)
     active_event: TriggeredEvent | None = None
+    last_surrender_check_year: int | None = None
 
     @property
     def seconds(self) -> float:

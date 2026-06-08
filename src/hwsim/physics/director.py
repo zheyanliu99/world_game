@@ -61,6 +61,8 @@ class MarbleEventDirector:
                     state.pending_ball_adds.append((effect.target, max(0, int(effect.value or 0))))
             elif effect.type == "betrayal":
                 self._apply_betrayal(state, effect)
+            elif effect.type == "surrender_faction":
+                self._apply_faction_surrender(state, effect)
             elif effect.type == "create_alliance":
                 if len(effect.factions) == 2:
                     pair = tuple(sorted(effect.factions))
@@ -129,6 +131,43 @@ class MarbleEventDirector:
         for marble in candidates[:convert_count]:
             marble.faction_id = effect.owner
             marble.cooldown_frames = max(marble.cooldown_frames, 24)
+
+    def _apply_faction_surrender(self, state: MarbleGameState, effect: Effect) -> None:
+        if not effect.target or not effect.owner:
+            return
+        if effect.target not in state.grid.faction_ids or effect.owner not in state.grid.faction_ids:
+            return
+        from_index = state.grid.faction_index(effect.target)
+        to_index = state.grid.faction_index(effect.owner)
+        fraction = effect.value if effect.value is not None else 1.0
+        fraction = min(1.0, max(0.0, float(fraction)))
+        ys, xs = self._owned_cells(state, from_index)
+        if len(xs) == 0:
+            return
+        if fraction >= 1.0:
+            state.grid.owner_grid[state.grid.owner_grid == from_index] = to_index
+        else:
+            convert_count = max(1, int(round(len(xs) * fraction)))
+            for y, x in zip(ys[:convert_count], xs[:convert_count], strict=False):
+                state.grid.owner_grid[int(y), int(x)] = to_index
+        for marble in state.marbles:
+            if marble.faction_id == effect.target:
+                marble.faction_id = effect.owner
+                marble.cooldown_frames = max(marble.cooldown_frames, 45)
+        transfer = state.resources.get(effect.target, 0.0) * fraction
+        state.resources[effect.target] = max(0.0, state.resources.get(effect.target, 0.0) - transfer)
+        state.resources[effect.owner] = state.resources.get(effect.owner, 0.0) + transfer
+
+    def _owned_cells(self, state: MarbleGameState, owner_index: int) -> tuple[list[int], list[int]]:
+        ys = []
+        xs = []
+        height, width = state.grid.owner_grid.shape
+        for y in range(height):
+            for x in range(width):
+                if int(state.grid.owner_grid[y, x]) == owner_index:
+                    ys.append(y)
+                    xs.append(x)
+        return ys, xs
 
     def _province_centroid(self, state: MarbleGameState, name_fragment: str) -> tuple[float, float] | None:
         needle = name_fragment.lower()

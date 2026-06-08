@@ -8,7 +8,7 @@
   "video_length_seconds": 180,
   "render_fps": 60,
   "output_fps": 60,
-  "target_winner": null,
+  "target_winner": "liu_bei",
   "historical_deviation": 0.82,
   "director_strength": "light",
   "random_seed": 42,
@@ -16,7 +16,7 @@
   "state_file": "configs/maps/sanguo_state_regions.json",
   "event_file": "configs/events/sanguo_marble_events.json",
   "style_file": "configs/styles/default_style.json",
-  "intro_narration": "这一次，人口单位在真实地图边界上随机反弹、增殖、投降，魏蜀吴三国争州。低于十分之一疆域的国家将失去扩张能力并逐步衰亡。",
+  "intro_narration": "这一次，人口单位在真实地图边界上随机反弹、增殖、投降，魏蜀吴三国争州。低于二成疆域会频繁局部归降，低于一成则可能举国归降。",
   "physics": {
     "fps": 60,
     "substeps": 2,
@@ -34,6 +34,12 @@
     "state_control_threshold": 0.8,
     "state_control_population_gain_per_100_cells": 3.0,
     "min_land_share_to_capture": 0.1,
+    "partial_surrender_land_share": 0.2,
+    "whole_surrender_land_share": 0.1,
+    "partial_surrender_chance": 0.65,
+    "whole_surrender_chance": 0.75,
+    "partial_surrender_fraction": 0.32,
+    "surrender_unit_fraction": 0.5,
     "collapse_resource_decay": 0.09,
     "collapse_unit_loss_interval_frames": 120,
     "state_capture_population_loss_fraction": 0.25,
@@ -45,7 +51,7 @@
     "collision_damage": 0.08
   },
   "strategic_targets": {
-    "cao": "liu_bei",
+    "cao": "sun_quan",
     "liu_bei": "cao",
     "sun_quan": "cao"
   },

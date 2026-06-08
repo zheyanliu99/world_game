@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from hwsim.core.models import EventConfig
+from hwsim.core.models import EventConfig, TriggeredEvent
 from hwsim.map.real_map import load_real_map_config, prepare_real_map
 from hwsim.physics.director import MarbleEventDirector
 from hwsim.physics.models import CellGrid, MarbleGameState, MarbleScenarioConfig, MarbleUnit
@@ -54,6 +54,7 @@ class MarbleSimulator:
                 self._resolve_collisions()
             if self._is_population_tick():
                 self._apply_collapse_pressure()
+                self._apply_land_share_surrenders()
                 self._update_state_control_transfers()
             for marble in self.state.marbles:
                 marble.age_frames += 1
@@ -272,6 +273,132 @@ class MarbleSimulator:
                 for marble in sorted(candidates, key=lambda item: (item.power, -item.age_frames))[:loss_count]
             }
             self.state.marbles = [marble for marble in self.state.marbles if marble.id not in doomed_ids]
+
+    def _apply_land_share_surrenders(self) -> None:
+        if self.state.last_surrender_check_year == self.state.current_year:
+            return
+        self.state.last_surrender_check_year = self.state.current_year
+        partial_threshold = self.scenario.physics.partial_surrender_land_share
+        whole_threshold = self.scenario.physics.whole_surrender_land_share
+        if partial_threshold <= 0 and whole_threshold <= 0:
+            return
+        shares = {faction_id: self._land_share(faction_id) for faction_id in self.state.grid.faction_ids}
+        for faction_id, share in sorted(shares.items(), key=lambda item: item[1]):
+            if share <= 0:
+                continue
+            winner = self._surrender_recipient(faction_id)
+            if winner is None:
+                continue
+            if whole_threshold > 0 and share < whole_threshold:
+                if self.rng.random() < min(1.0, max(0.0, self.scenario.physics.whole_surrender_chance)):
+                    self._surrender_faction(faction_id, winner)
+                    continue
+            if partial_threshold > 0 and share < partial_threshold:
+                if self.rng.random() < min(1.0, max(0.0, self.scenario.physics.partial_surrender_chance)):
+                    self._partial_surrender(faction_id, winner)
+
+    def _surrender_recipient(self, loser: str) -> str | None:
+        if self.scenario.target_winner and self.scenario.target_winner != loser:
+            if self.scenario.target_winner in self.state.grid.faction_ids:
+                return self.scenario.target_winner
+        counts = self.state.grid.owned_cell_counts()
+        candidates = [(faction_id, count) for faction_id, count in counts.items() if faction_id != loser and count > 0]
+        if not candidates:
+            return None
+        return max(candidates, key=lambda item: item[1])[0]
+
+    def _partial_surrender(self, loser: str, winner: str) -> None:
+        loser_index = self.state.grid.faction_index(loser)
+        winner_index = self.state.grid.faction_index(winner)
+        owner_grid = self.state.grid.owner_grid
+        state_grid = self.state.grid.state_id_grid
+        if state_grid is None:
+            candidate_mask = owner_grid == loser_index
+            state_index = None
+        else:
+            state_counts: list[tuple[int, int]] = []
+            for state_index in range(len(self.state.grid.state_records)):
+                count = int(((state_grid == state_index) & (owner_grid == loser_index)).sum())
+                if count > 0:
+                    state_counts.append((state_index, count))
+            if not state_counts:
+                return
+            state_index = max(state_counts, key=lambda item: item[1])[0]
+            candidate_mask = (state_grid == state_index) & (owner_grid == loser_index)
+        ys, xs = np.where(candidate_mask)
+        if len(xs) == 0:
+            return
+        fraction = min(1.0, max(0.01, self.scenario.physics.partial_surrender_fraction))
+        convert_count = max(1, int(round(len(xs) * fraction)))
+        picks = list(range(len(xs)))
+        self.rng.shuffle(picks)
+        for pick in picks[:convert_count]:
+            owner_grid[int(ys[pick]), int(xs[pick])] = winner_index
+        self._convert_surrendered_units(loser, winner, state_index, self.scenario.physics.surrender_unit_fraction)
+        self._transfer_population_pool(loser, winner, fraction * 0.5)
+        self._add_surrender_event("partial", loser, winner)
+
+    def _surrender_faction(self, loser: str, winner: str) -> None:
+        loser_index = self.state.grid.faction_index(loser)
+        winner_index = self.state.grid.faction_index(winner)
+        self.state.grid.owner_grid[self.state.grid.owner_grid == loser_index] = winner_index
+        for marble in self.state.marbles:
+            if marble.faction_id == loser:
+                marble.faction_id = winner
+                marble.cooldown_frames = max(marble.cooldown_frames, 45)
+        self._transfer_population_pool(loser, winner, 1.0)
+        self._add_surrender_event("whole", loser, winner)
+
+    def _convert_surrendered_units(
+        self,
+        loser: str,
+        winner: str,
+        state_index: int | None,
+        fraction: float,
+    ) -> None:
+        fraction = min(1.0, max(0.0, fraction))
+        if fraction <= 0:
+            return
+        candidates = [
+            marble
+            for marble in self.state.marbles
+            if marble.faction_id == loser and (state_index is None or self._marble_state_index(marble) == state_index)
+        ]
+        if not candidates:
+            return
+        convert_count = max(1, int(round(len(candidates) * fraction)))
+        self.rng.shuffle(candidates)
+        for marble in candidates[:convert_count]:
+            marble.faction_id = winner
+            marble.cooldown_frames = max(marble.cooldown_frames, 35)
+
+    def _transfer_population_pool(self, loser: str, winner: str, fraction: float) -> None:
+        fraction = min(1.0, max(0.0, fraction))
+        transfer = self.state.resources.get(loser, 0.0) * fraction
+        self.state.resources[loser] = max(0.0, self.state.resources.get(loser, 0.0) - transfer)
+        self.state.resources[winner] = self.state.resources.get(winner, 0.0) + transfer
+
+    def _add_surrender_event(self, kind: str, loser: str, winner: str) -> None:
+        loser_name = self.state.factions[loser].display_name(self.state.current_year)
+        winner_name = self.state.factions[winner].display_name(self.state.current_year)
+        title = "举国归降" if kind == "whole" else "局部归降"
+        subtitle = f"{loser_name}人口与土地转向{winner_name}"
+        event = TriggeredEvent(
+            event_id=f"system_{kind}_surrender_{loser}_{winner}_{self.state.current_year}_{self.state.frame}",
+            year=self.state.current_year,
+            name_cn=title,
+            title=title,
+            subtitle=subtitle,
+            narration=subtitle,
+            effect="betrayal_flash",
+            focus_regions=[],
+            duration_seconds=3.0,
+            importance=9 if kind == "whole" else 7,
+            start_seconds=self.state.seconds,
+            end_seconds=self.state.seconds + 3.0,
+        )
+        self.state.triggered_events.append(event)
+        self.state.active_event = event
 
     def _update_state_control_transfers(self) -> None:
         current_controllers = self._current_state_controllers(self.state)

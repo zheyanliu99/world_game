@@ -326,6 +326,35 @@ def test_alliance_prevents_land_capture_until_break_event() -> None:
     assert int((sim.state.grid.owner_grid == liu_index).sum()) < before
 
 
+def test_surrender_faction_event_converts_all_land_and_population() -> None:
+    event = HistoricalEvent.model_validate(
+        {
+            "id": "surrender_184",
+            "year": 184,
+            "name_cn": "surrender",
+            "category": "test",
+            "importance": 1,
+            "trigger_conditions": [],
+            "effects": [{"type": "surrender_faction", "target": "cao", "owner": "liu_bei", "value": 1.0}],
+            "ui": {"title": "surrender", "subtitle": "surrender", "duration_seconds": 1},
+            "narration": "surrender",
+        }
+    )
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[event]))
+    sim.state.resources = {"cao": 100.0, "liu_bei": 20.0}
+    sim.state.marbles = [MarbleUnit(id=1, faction_id="cao", x=40, y=60, vx=0, vy=0, radius=4)]
+
+    sim.director.update(sim.state)
+
+    cao = sim.state.grid.faction_index("cao")
+    liu = sim.state.grid.faction_index("liu_bei")
+    assert not bool((sim.state.grid.owner_grid == cao).any())
+    assert int((sim.state.grid.owner_grid == liu).sum()) == int((sim.state.grid.owner_grid >= 0).sum())
+    assert sim.state.marbles[0].faction_id == "liu_bei"
+    assert sim.state.resources["cao"] == 0
+    assert sim.state.resources["liu_bei"] == 120
+
+
 def test_marble_event_modifiers_expire() -> None:
     event = HistoricalEvent.model_validate(
         {
@@ -363,7 +392,10 @@ def test_default_marble_scenario_has_three_factions_and_three_minute_export() ->
     assert scenario.physics.capture_radius <= 6
     assert scenario.physics.strategic_bounce_strength > 0
     assert scenario.physics.min_land_share_to_capture == 0.1
+    assert scenario.physics.partial_surrender_land_share == 0.2
+    assert scenario.physics.whole_surrender_land_share == 0.1
     assert scenario.physics.state_capture_population_loss_fraction > 0
+    assert scenario.target_winner == "liu_bei"
     assert scenario.video_length_seconds == 180
     assert scenario.output_fps == 60
     assert scenario.render_fps == 60
@@ -412,6 +444,56 @@ def test_faction_below_ten_percent_cannot_capture_and_loses_population() -> None
 
     assert sim.state.resources["cao"] == 75
     assert not sim.state.marbles
+
+
+def test_low_land_share_triggers_yearly_partial_surrender_to_target_winner() -> None:
+    scenario = _scenario()
+    scenario.target_winner = "liu_bei"
+    scenario.physics.partial_surrender_land_share = 0.2
+    scenario.physics.partial_surrender_chance = 1.0
+    scenario.physics.partial_surrender_fraction = 0.5
+    scenario.physics.surrender_unit_fraction = 1.0
+    sim = MarbleSimulator(scenario, _prepared_map(), EventConfig(events=[]))
+    cao = sim.state.grid.faction_index("cao")
+    liu = sim.state.grid.faction_index("liu_bei")
+    land = sim.state.grid.province_id_grid >= 0
+    sim.state.grid.owner_grid[land] = liu
+    sim.state.grid.owner_grid[2:4, 2:4] = cao
+    sim.state.resources["cao"] = 100
+    sim.state.resources["liu_bei"] = 0
+    sim.state.marbles = [MarbleUnit(id=1, faction_id="cao", x=25, y=25, vx=0, vy=0, radius=4)]
+
+    before = int((sim.state.grid.owner_grid == cao).sum())
+    sim._apply_land_share_surrenders()
+
+    after = int((sim.state.grid.owner_grid == cao).sum())
+    assert after < before
+    assert sim.state.marbles[0].faction_id == "liu_bei"
+    assert sim.state.resources["cao"] < 100
+    assert sim.state.resources["liu_bei"] > 0
+
+    sim._apply_land_share_surrenders()
+
+    assert int((sim.state.grid.owner_grid == cao).sum()) == after
+
+
+def test_below_ten_percent_can_surrender_whole_country() -> None:
+    scenario = _scenario()
+    scenario.target_winner = "liu_bei"
+    scenario.physics.whole_surrender_land_share = 0.1
+    scenario.physics.whole_surrender_chance = 1.0
+    sim = MarbleSimulator(scenario, _prepared_map(), EventConfig(events=[]))
+    cao = sim.state.grid.faction_index("cao")
+    liu = sim.state.grid.faction_index("liu_bei")
+    land = sim.state.grid.province_id_grid >= 0
+    sim.state.grid.owner_grid[land] = liu
+    sim.state.grid.owner_grid[2, 2] = cao
+    sim.state.resources["cao"] = 100
+
+    sim._apply_land_share_surrenders()
+
+    assert not bool((sim.state.grid.owner_grid == cao).any())
+    assert int((sim.state.grid.owner_grid == liu).sum()) == int(land.sum())
 
 
 def test_state_capture_transfers_population_to_winner() -> None:

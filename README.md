@@ -82,9 +82,11 @@ The default Marble event timeline also includes incident and betrayal effects.
 Betrayal/surrender incidents can flip nearby cells and convert nearby population
 units to another kingdom, while temporary speed boosts affect units already on
 the map and draw short wind trails. Ball capacity ramps upward with exponential
-population recovery, so the screen fills as years pass. If a kingdom drops below
-10% of total land, it can no longer capture new territory and starts losing
-population units and population resources until it recovers or dies out.
+population recovery, so the screen fills as years pass. The default director
+targets a 蜀汉 end state: late events favor Shu, and the final arc can resolve
+the map into one ruler. If a kingdom drops below 20% of total land, yearly
+collapse checks can make part of its territory and population surrender. Below
+10%, it can no longer capture new territory and may surrender the whole country.
 
 The real map is also grouped into coarse historical 州 overlays such as 益州,
 荆州, 扬州, and 凉州. Thin state borders and state labels are rendered on the map.
