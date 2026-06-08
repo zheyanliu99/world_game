@@ -42,10 +42,10 @@ class MarbleSimulator:
     def step(self, frames: int = 1) -> MarbleGameState:
         for _ in range(frames):
             self.director.update(self.state)
+            self._consume_pending_ball_adds()
             self._spawn_resources()
             for _substep in range(max(1, self.scenario.physics.substeps)):
                 self._move_marbles()
-                self._capture_cells()
                 self._resolve_collisions()
             for marble in self.state.marbles:
                 marble.age_frames += 1
@@ -68,7 +68,7 @@ class MarbleSimulator:
             resources={faction_id: 100.0 for faction_id in faction_ids},
         )
         for faction_id in faction_ids:
-            for _ in range(self.scenario.physics.initial_marbles_per_faction):
+            for _ in range(self._initial_marble_count(faction_id)):
                 self._spawn_marble(state, faction_id, free=True)
         return state
 
@@ -78,15 +78,28 @@ class MarbleSimulator:
         counts = self.state.grid.owned_cell_counts()
         for faction_id, count in counts.items():
             spawn_rate = self.state.stat_multiplier(faction_id, "spawn_rate")
-            income = count / 100 * self.scenario.physics.resource_gain_per_100_cells * spawn_rate
+            population_income = 0.55 + self._population_weight(faction_id) * 0.65
+            income = count / 100 * self.scenario.physics.resource_gain_per_100_cells * spawn_rate * population_income
             self.state.resources[faction_id] = self.state.resources.get(faction_id, 0) + income
             while (
                 self.state.resources[faction_id] >= self.scenario.physics.spawn_cost
-                and self._marble_count(faction_id) < self.scenario.physics.max_marbles_per_faction
+                and self._marble_count(faction_id) < self._max_marble_count(faction_id)
             ):
                 if self._spawn_marble(self.state, faction_id, free=False):
                     self.state.resources[faction_id] -= self.scenario.physics.spawn_cost
                 else:
+                    break
+
+    def _consume_pending_ball_adds(self) -> None:
+        if not self.state.pending_ball_adds:
+            return
+        pending = self.state.pending_ball_adds
+        self.state.pending_ball_adds = []
+        for faction_id, amount in pending:
+            for _ in range(amount):
+                if self._marble_count(faction_id) >= self._max_marble_count(faction_id):
+                    break
+                if not self._spawn_marble(self.state, faction_id, free=True):
                     break
 
     def _spawn_marble(self, state: MarbleGameState, faction_id: str, free: bool) -> bool:
@@ -121,8 +134,8 @@ class MarbleSimulator:
             old_x, old_y = marble.x, marble.y
             next_x = marble.x + marble.vx * dt
             next_y = marble.y + marble.vy * dt
-            hit_x = next_x < marble.radius or next_x > width - marble.radius
-            hit_y = next_y < marble.radius or next_y > height - marble.radius
+            hit_x = next_x - marble.radius < 0 or next_x + marble.radius > width
+            hit_y = next_y - marble.radius < 0 or next_y + marble.radius > height
 
             if hit_x or hit_y:
                 marble.x = min(max(next_x, marble.radius), width - marble.radius)
@@ -132,10 +145,10 @@ class MarbleSimulator:
 
             blocker = self._movement_blocker(marble, next_x, next_y)
             if blocker == "enemy":
-                marble.x, marble.y = next_x, next_y
-                self._capture_cells_for_marble(marble)
                 marble.x, marble.y = old_x, old_y
-                self._reflect_from_block(marble, old_x, old_y, dt)
+                reflect_x, reflect_y = self._reflection_axes_for_block(marble, old_x, old_y, dt)
+                self._capture_cells_for_marble(marble, center=(next_x, next_y))
+                self._reflect_axes(marble, reflect_x=reflect_x, reflect_y=reflect_y)
             elif blocker == "land":
                 marble.x, marble.y = old_x, old_y
                 self._reflect_from_block(marble, old_x, old_y, dt)
@@ -146,11 +159,12 @@ class MarbleSimulator:
         for marble in self.state.marbles:
             self._capture_cells_for_marble(marble)
 
-    def _capture_cells_for_marble(self, marble: MarbleUnit) -> None:
+    def _capture_cells_for_marble(self, marble: MarbleUnit, center: tuple[float, float] | None = None) -> None:
         cell_w, cell_h = self.state.grid.cell_size
         radius_cells = max(1, int(math.ceil(self.scenario.physics.capture_radius / min(cell_w, cell_h))))
         owner_index = self.state.grid.faction_index(marble.faction_id)
-        gx, gy = self.state.grid.canvas_to_grid(marble.x, marble.y)
+        center_x, center_y = center if center is not None else (marble.x, marble.y)
+        gx, gy = self.state.grid.canvas_to_grid(center_x, center_y)
         capture_mult = self.state.stat_multiplier(marble.faction_id, "capture")
         for dy in range(-radius_cells, radius_cells + 1):
             for dx in range(-radius_cells, radius_cells + 1):
@@ -241,13 +255,7 @@ class MarbleSimulator:
 
     def _movement_blocker(self, marble: MarbleUnit, x: float, y: float) -> str | None:
         owner_index = self.state.grid.faction_index(marble.faction_id)
-        samples = [
-            (x, y),
-            (x + math.copysign(marble.radius, marble.vx or 1), y),
-            (x, y + math.copysign(marble.radius, marble.vy or 1)),
-            (x + math.copysign(marble.radius, marble.vx or 1), y + math.copysign(marble.radius, marble.vy or 1)),
-        ]
-        for sample_x, sample_y in samples:
+        for sample_x, sample_y in self._collision_samples(marble, x, y):
             if not self.state.grid.is_land_at_canvas(sample_x, sample_y):
                 return "land"
             sample_owner = self.state.grid.owner_index_at_canvas(sample_x, sample_y)
@@ -258,15 +266,35 @@ class MarbleSimulator:
                 return "enemy"
         return None
 
-    def _reflect_from_block(self, marble: MarbleUnit, old_x: float, old_y: float, dt: float) -> None:
+    def _collision_samples(self, marble: MarbleUnit, x: float, y: float) -> list[tuple[float, float]]:
+        samples = [(x, y)]
+        radius = marble.radius
+        for index in range(12):
+            angle = math.tau * index / 12
+            samples.append((x + math.cos(angle) * radius, y + math.sin(angle) * radius))
+        speed = math.hypot(marble.vx, marble.vy)
+        if speed > 0:
+            samples.append((x + marble.vx / speed * radius, y + marble.vy / speed * radius))
+        return samples
+
+    def _reflection_axes_for_block(
+        self,
+        marble: MarbleUnit,
+        old_x: float,
+        old_y: float,
+        dt: float,
+    ) -> tuple[bool, bool]:
         x_only_blocked = self._movement_blocker(marble, old_x + marble.vx * dt, old_y) is not None
         y_only_blocked = self._movement_blocker(marble, old_x, old_y + marble.vy * dt) is not None
         if x_only_blocked and not y_only_blocked:
-            self._reflect_axes(marble, reflect_x=True, reflect_y=False)
-        elif y_only_blocked and not x_only_blocked:
-            self._reflect_axes(marble, reflect_x=False, reflect_y=True)
-        else:
-            self._reflect_axes(marble, reflect_x=True, reflect_y=True)
+            return True, False
+        if y_only_blocked and not x_only_blocked:
+            return False, True
+        return True, True
+
+    def _reflect_from_block(self, marble: MarbleUnit, old_x: float, old_y: float, dt: float) -> None:
+        reflect_x, reflect_y = self._reflection_axes_for_block(marble, old_x, old_y, dt)
+        self._reflect_axes(marble, reflect_x=reflect_x, reflect_y=reflect_y)
 
     def _reflect_axes(self, marble: MarbleUnit, reflect_x: bool, reflect_y: bool) -> None:
         if reflect_x:
@@ -281,3 +309,27 @@ class MarbleSimulator:
 
     def _marble_count(self, faction_id: str) -> int:
         return sum(1 for marble in self.state.marbles if marble.faction_id == faction_id)
+
+    def _population_weight(self, faction_id: str) -> float:
+        faction = self.state.factions.get(faction_id) if hasattr(self, "state") else self.scenario.factions.get(faction_id)
+        if faction is None:
+            return 1.0
+        if faction.population_spawn_weight is not None:
+            return max(0.1, float(faction.population_spawn_weight))
+        populations = [item.population for item in self.scenario.factions.values() if item.population]
+        if not faction.population or not populations:
+            return 1.0
+        return max(0.1, math.sqrt(faction.population / max(populations)))
+
+    def _population_capacity_scale(self, faction_id: str) -> float:
+        return 0.35 + self._population_weight(faction_id) * 0.65
+
+    def _initial_marble_count(self, faction_id: str) -> int:
+        base = self.scenario.physics.initial_marbles_per_faction
+        return max(1, int(round(base * self._population_capacity_scale(faction_id))))
+
+    def _max_marble_count(self, faction_id: str) -> int:
+        base = self.scenario.physics.max_marbles_per_faction
+        scaled = base * self._population_capacity_scale(faction_id)
+        scaled *= self.state.stat_multiplier(faction_id, "max_units")
+        return max(self._initial_marble_count(faction_id), int(round(scaled)))

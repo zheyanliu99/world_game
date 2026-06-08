@@ -56,6 +56,9 @@ class MarbleEventDirector:
             elif effect.type == "add_resources":
                 if effect.target:
                     state.resources[effect.target] = state.resources.get(effect.target, 0) + float(effect.value or 0)
+            elif effect.type == "add_balls":
+                if effect.target:
+                    state.pending_ball_adds.append((effect.target, max(0, int(effect.value or 0))))
             elif effect.type == "create_alliance":
                 if len(effect.factions) == 2:
                     state.alliances.append(

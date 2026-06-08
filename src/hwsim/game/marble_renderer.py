@@ -16,6 +16,7 @@ class MarbleRenderer:
             "year": self._font(42),
             "title": self._font(34),
             "small": self._font(20),
+            "capital": self._font(24),
             "subtitle": self._font(27),
             "event_title": self._font(38),
             "event_subtitle": self._font(24),
@@ -25,6 +26,7 @@ class MarbleRenderer:
         image = self._territory_image(state).convert("RGBA")
         draw = ImageDraw.Draw(image)
         self._draw_marbles(draw, state)
+        self._draw_capital_labels(draw, state)
         self._draw_hud(draw, state, speed_label)
         if state.active_event:
             self._draw_event(draw, state)
@@ -53,6 +55,45 @@ class MarbleRenderer:
             radius = marble.radius * (1.0 + max(0, marble.power - 1.0) * 0.18)
             box = (marble.x - radius, marble.y - radius, marble.x + radius, marble.y + radius)
             draw.ellipse(box, fill=faction.color, outline="#FFF3CC", width=1)
+
+    def _draw_capital_labels(self, draw: ImageDraw.ImageDraw, state: MarbleGameState) -> None:
+        for faction_id, (x, y) in self._capital_label_positions(state).items():
+            faction = state.factions[faction_id]
+            label = faction.display_name(state.current_year)
+            font = self.fonts["capital"]
+            bbox = draw.textbbox((0, 0), label, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            label_x = x - text_w / 2
+            label_y = y - text_h - 16
+            panel = (
+                label_x - 7,
+                label_y - 4,
+                label_x + text_w + 7,
+                label_y + text_h + 5,
+            )
+            draw.rounded_rectangle(panel, radius=5, fill=(9, 8, 6, 205), outline=faction.color, width=1)
+            draw.text((label_x + 1, label_y + 1), label, font=font, fill=(0, 0, 0, 160))
+            draw.text((label_x, label_y), label, font=font, fill=self.style.text)
+            draw.ellipse((x - 4, y - 4, x + 4, y + 4), fill=faction.color, outline="#FFF3CC", width=1)
+
+    def _capital_label_positions(self, state: MarbleGameState) -> dict[str, tuple[float, float]]:
+        positions: dict[str, tuple[float, float]] = {}
+        for faction_id, faction in state.factions.items():
+            if not faction.capital_region:
+                continue
+            needle = faction.capital_region.lower()
+            matches = [
+                province
+                for province in state.grid.province_records
+                if needle in str(province.get("name", "")).lower()
+            ]
+            if not matches:
+                continue
+            province = max(matches, key=lambda item: int(item.get("cell_count", 0)))
+            centroid = province.get("centroid", (0, 0))
+            positions[faction_id] = (float(centroid[0]), float(centroid[1]))
+        return positions
 
     def _draw_hud(self, draw: ImageDraw.ImageDraw, state: MarbleGameState, speed_label: str) -> None:
         width, _height = state.grid.canvas_size

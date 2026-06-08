@@ -166,6 +166,7 @@ class MarbleGameState:
     frame: int = 0
     marbles: list[MarbleUnit] = field(default_factory=list)
     resources: dict[str, float] = field(default_factory=dict)
+    pending_ball_adds: list[tuple[str, int]] = field(default_factory=list)
     active_modifiers: list[MarbleModifier] = field(default_factory=list)
     alliances: list[Alliance] = field(default_factory=list)
     triggered_events: list[TriggeredEvent] = field(default_factory=list)

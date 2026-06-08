@@ -30,7 +30,9 @@
       "trigger_conditions": [],
       "effects": [
         {"type": "marble_modifier", "target": "cao", "stat": "power", "multiplier": 1.12, "duration_years": 9},
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.1, "duration_years": 9}
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.08, "duration_years": 6},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.1, "duration_years": 9},
+        {"type": "add_balls", "target": "cao", "value": 3}
       ],
       "ui": {
         "title": "200年 官渡之战",
@@ -50,7 +52,9 @@
       "trigger_conditions": [],
       "effects": [
         {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.9, "duration_years": 7},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.06, "duration_years": 5},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.12, "duration_years": 7},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.05, "duration_years": 5},
         {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.12, "duration_years": 7}
       ],
       "ui": {
@@ -72,7 +76,8 @@
       "effects": [
         {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 9},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.1, "duration_years": 9},
-        {"type": "add_resources", "target": "liu_bei", "value": 90}
+        {"type": "add_resources", "target": "liu_bei", "value": 90},
+        {"type": "add_balls", "target": "liu_bei", "value": 4}
       ],
       "ui": {
         "title": "214年 刘备入蜀",
@@ -92,7 +97,8 @@
       "trigger_conditions": [],
       "effects": [
         {"type": "rename_faction", "target": "cao", "name_cn": "曹魏"},
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.1, "duration_years": 10}
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.1, "duration_years": 10},
+        {"type": "marble_modifier", "target": "cao", "stat": "max_units", "multiplier": 1.12, "duration_years": 10}
       ],
       "ui": {
         "title": "220年 曹丕称帝",

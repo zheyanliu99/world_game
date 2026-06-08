@@ -52,7 +52,7 @@ E      export configured run
 Esc    quit
 ```
 
-Export a 60fps Marble-mode video:
+Export a one-minute, 60fps Marble-mode video:
 
 ```bash
 .venv/bin/python scripts/generate_demo.py --scenario configs/scenarios/sanguo_marble_real_map_demo.json
@@ -70,6 +70,12 @@ outputs/sanguo_marble_demo_001_config.json
 Map boundaries are downloaded from geoBoundaries gbOpen China ADM1 and cached
 under `data/maps/`, which is ignored by git. Attribution: geoBoundaries
 CC BY 4.0, William & Mary geoLab.
+
+The default Wei/Shu/Wu ball production uses Three Kingdoms registered
+population figures as configurable gameplay weights: Cao Wei 4,432,881,
+Shu Han 1,082,000, and Eastern Wu 2,535,000. These weights affect initial
+balls, resource income, and readable max unit caps; they are not exact
+historical population reconstruction.
 
 ## Development
 

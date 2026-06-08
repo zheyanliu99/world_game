@@ -20,6 +20,8 @@ class Faction(BaseModel):
     defense: float
     naval: float
     expansion: float
+    population: int | None = None
+    population_spawn_weight: float | None = None
     alive: bool = True
     capital_region: str | None = None
     current_name_cn: str | None = None
@@ -215,4 +217,3 @@ class SimulationResult(BaseModel):
 
 
 JsonDict = dict[str, Any]
-
