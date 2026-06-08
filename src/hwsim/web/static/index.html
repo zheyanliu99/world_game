@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agentic Three Kingdoms</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>Agentic Three Kingdoms</h1>
+          <div id="roundLine" class="round-line">Round 0 / 20</div>
+        </div>
+        <div class="top-actions">
+          <button id="newGameBtn" type="button">New Game</button>
+          <button id="saveBtn" type="button">Save Command</button>
+          <button id="resolveBtn" type="button" class="primary">Resolve Round</button>
+        </div>
+      </section>
+
+      <section class="game-grid">
+        <div class="map-wrap">
+          <canvas id="mapCanvas" aria-label="Three Kingdoms strategy map"></canvas>
+          <div id="winnerBanner" class="winner-banner" hidden></div>
+        </div>
+
+        <aside class="side-panel">
+          <section class="command-panel">
+            <div class="panel-head">
+              <h2>Shu Command</h2>
+              <span id="statusPill" class="status-pill">Ready</span>
+            </div>
+            <textarea id="strategyInput" rows="5">Form alliance with Wu, defend Hanzhong, scout Jingzhou, and prepare weapons for a northern attack.</textarea>
+            <div id="policyButtons" class="segmented"></div>
+          </section>
+
+          <section class="orders-panel">
+            <div class="panel-head">
+              <h2>Units</h2>
+              <button id="clearOrdersBtn" type="button" class="quiet">Clear</button>
+            </div>
+            <div id="unitList" class="unit-list"></div>
+            <div class="diplomacy-row">
+              <button id="allyWuBtn" type="button">Ally Wu</button>
+              <button id="breakWuBtn" type="button">Break Wu</button>
+            </div>
+            <div id="orderDrafts" class="drafts"></div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="lower-grid">
+        <section class="score-panel">
+          <h2>Factions</h2>
+          <div id="factionList" class="faction-list"></div>
+        </section>
+        <section class="intent-panel">
+          <h2>Agent Intent</h2>
+          <div id="intentList" class="intent-list"></div>
+        </section>
+        <section class="log-panel">
+          <h2>Round Log</h2>
+          <div id="logList" class="log-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
