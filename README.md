@@ -81,6 +81,9 @@ The default Marble event timeline also includes incident and betrayal effects.
 Betrayal incidents can flip nearby cells and convert nearby balls to another
 kingdom, while temporary speed boosts affect balls already on the map. The
 one-minute default is tuned to end with at least 250 balls on screen.
+Ball capacity ramps upward over the timeline, so the screen fills as years pass.
+Capital labels update by year and sit at the center of each kingdom's largest
+connected territory, rather than a fixed province.
 
 ## Development
 

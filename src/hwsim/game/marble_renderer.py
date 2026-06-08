@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import deque
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,7 @@ from hwsim.physics.models import MarbleGameState
 class MarbleRenderer:
     def __init__(self, style: StyleConfig) -> None:
         self.style = style
+        self._capital_cache: dict[tuple[int, int], dict[str, tuple[float, float]]] = {}
         self.fonts = {
             "year": self._font(42),
             "title": self._font(34),
@@ -78,22 +80,68 @@ class MarbleRenderer:
             draw.ellipse((x - 4, y - 4, x + 4, y + 4), fill=faction.color, outline="#FFF3CC", width=1)
 
     def _capital_label_positions(self, state: MarbleGameState) -> dict[str, tuple[float, float]]:
+        cache_key = (id(state.grid.owner_grid), state.current_year)
+        cached = self._capital_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         positions: dict[str, tuple[float, float]] = {}
-        for faction_id, faction in state.factions.items():
-            if not faction.capital_region:
-                continue
-            needle = faction.capital_region.lower()
-            matches = [
-                province
-                for province in state.grid.province_records
-                if needle in str(province.get("name", "")).lower()
-            ]
-            if not matches:
-                continue
-            province = max(matches, key=lambda item: int(item.get("cell_count", 0)))
-            centroid = province.get("centroid", (0, 0))
-            positions[faction_id] = (float(centroid[0]), float(centroid[1]))
+        for faction_id in state.factions:
+            centroid = self._largest_owned_component_centroid(state, faction_id)
+            if centroid is not None:
+                positions[faction_id] = centroid
+        self._capital_cache = {cache_key: positions}
         return positions
+
+    def _largest_owned_component_centroid(
+        self,
+        state: MarbleGameState,
+        faction_id: str,
+    ) -> tuple[float, float] | None:
+        owner_index = state.grid.faction_index(faction_id)
+        owner_grid = state.grid.owner_grid
+        mask = owner_grid == owner_index
+        if not bool(mask.any()):
+            return None
+
+        height, width = owner_grid.shape
+        visited = np.zeros(owner_grid.shape, dtype=bool)
+        best_count = 0
+        best_sum_x = 0
+        best_sum_y = 0
+        start_ys, start_xs = np.where(mask)
+        for start_y, start_x in zip(start_ys, start_xs, strict=True):
+            if visited[start_y, start_x]:
+                continue
+            queue: deque[tuple[int, int]] = deque([(int(start_x), int(start_y))])
+            visited[start_y, start_x] = True
+            count = 0
+            sum_x = 0
+            sum_y = 0
+            while queue:
+                x, y = queue.popleft()
+                count += 1
+                sum_x += x
+                sum_y += y
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                    if nx < 0 or ny < 0 or nx >= width or ny >= height:
+                        continue
+                    if visited[ny, nx] or not mask[ny, nx]:
+                        continue
+                    visited[ny, nx] = True
+                    queue.append((nx, ny))
+            if count > best_count:
+                best_count = count
+                best_sum_x = sum_x
+                best_sum_y = sum_y
+
+        if best_count == 0:
+            return None
+        cell_w, cell_h = state.grid.cell_size
+        return (
+            (best_sum_x / best_count + 0.5) * cell_w,
+            (best_sum_y / best_count + 0.5) * cell_h,
+        )
 
     def _draw_hud(self, draw: ImageDraw.ImageDraw, state: MarbleGameState, speed_label: str) -> None:
         width, _height = state.grid.canvas_size
@@ -130,10 +178,7 @@ class MarbleRenderer:
             draw.rectangle((0, 0, width, 8), fill=(180, 45, 36))
             draw.rectangle((0, height - 8, width, height), fill=(180, 45, 36))
         elif event.effect == "fire_overlay":
-            for index in range(10):
-                x = width * (0.38 + index * 0.025)
-                y = height * (0.58 + (index % 3) * 0.035)
-                draw.ellipse((x - 18, y - 10, x + 18, y + 10), fill=(220, 75, 28), outline=(255, 190, 75))
+            pass
         elif event.effect == "edict_overlay":
             draw.rounded_rectangle((width // 2 - 260, 144, width // 2 + 260, 236), radius=8, fill=(116, 86, 36), outline=(255, 220, 130), width=2)
         elif event.effect == "marching_arrows":
@@ -142,9 +187,7 @@ class MarbleRenderer:
                 draw.line((x, 160, x + 48, 132), fill=(255, 220, 120, 160), width=6)
                 draw.polygon([(x + 48, 132), (x + 31, 130), (x + 40, 147)], fill=(255, 220, 120, 160))
         elif event.effect == "betrayal_flash":
-            for offset in range(-120, width, 90):
-                draw.line((offset, height * 0.18, offset + 170, height * 0.34), fill=(255, 70, 45, 150), width=5)
-                draw.line((offset + 34, height * 0.34, offset + 132, height * 0.18), fill=(255, 194, 84, 130), width=3)
+            pass
 
         banner = (width // 2 - 360, 42, width // 2 + 360, 136)
         draw.rounded_rectangle(banner, radius=8, fill=(10, 8, 6, 225), outline=(238, 204, 130, 180), width=2)

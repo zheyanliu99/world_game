@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-from hwsim.core.models import EventConfig, Faction, HistoricalEvent, StyleConfig
+from hwsim.core.models import EventConfig, Faction, HistoricalEvent, StyleConfig, TriggeredEvent
 from hwsim.game.marble_renderer import MarbleRenderer
 from hwsim.physics.models import MarbleScenarioConfig, MarbleUnit, PhysicsConfig
 from hwsim.physics.simulator import MarbleSimulator, load_marble_scenario
@@ -322,11 +322,17 @@ def test_population_weights_scale_initial_and_max_units() -> None:
     }
 
     assert initial_counts["cao"] > initial_counts["sun_quan"] > initial_counts["liu_bei"]
-    assert sim._max_marble_count("cao") > sim._max_marble_count("sun_quan") > sim._max_marble_count("liu_bei")
-    assert sum(sim._max_marble_count(faction_id) for faction_id in scenario.factions) >= 250
+    start_caps = {faction_id: sim._max_marble_count(faction_id) for faction_id in scenario.factions}
+
+    sim.state.frame = sim.state.total_frames
+    end_caps = {faction_id: sim._max_marble_count(faction_id) for faction_id in scenario.factions}
+
+    assert end_caps["cao"] > end_caps["sun_quan"] > end_caps["liu_bei"]
+    assert sum(end_caps.values()) >= 250
+    assert sum(start_caps.values()) < sum(end_caps.values())
 
 
-def test_capital_labels_have_valid_target_provinces() -> None:
+def test_capital_labels_use_largest_owned_component_center() -> None:
     scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
     sim = MarbleSimulator(scenario, _three_kingdom_prepared_map(), EventConfig(events=[]))
     renderer = MarbleRenderer(StyleConfig())
@@ -334,4 +340,41 @@ def test_capital_labels_have_valid_target_provinces() -> None:
     positions = renderer._capital_label_positions(sim.state)
 
     assert set(positions) == {"cao", "liu_bei", "sun_quan"}
-    assert positions["cao"] == (95.0, 55.0)
+    assert positions["cao"] == (95.0, 60.0)
+
+
+def test_capital_label_moves_to_largest_isolated_part() -> None:
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[]))
+    renderer = MarbleRenderer(StyleConfig())
+    cao = sim.state.grid.faction_index("cao")
+    liu = sim.state.grid.faction_index("liu_bei")
+    land = sim.state.grid.province_id_grid >= 0
+    sim.state.grid.owner_grid[land] = liu
+    sim.state.grid.owner_grid[2, 2] = cao
+    sim.state.grid.owner_grid[5:9, 3:6] = cao
+
+    positions = renderer._capital_label_positions(sim.state)
+
+    assert positions["cao"] == (45.0, 70.0)
+
+
+def test_fire_overlay_does_not_draw_orange_map_blobs() -> None:
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[]))
+    sim.state.active_event = TriggeredEvent(
+        event_id="fire",
+        year=sim.state.current_year,
+        name_cn="fire",
+        title="fire",
+        subtitle="fire",
+        narration="fire",
+        effect="fire_overlay",
+        focus_regions=[],
+        duration_seconds=1,
+        importance=1,
+    )
+    renderer = MarbleRenderer(StyleConfig(canvas_size=sim.state.grid.canvas_size))
+
+    image = renderer.render(sim.state)
+    pixels = np.array(image)
+
+    assert not bool(((pixels[:, :, 0] == 220) & (pixels[:, :, 1] == 75) & (pixels[:, :, 2] == 28)).any())

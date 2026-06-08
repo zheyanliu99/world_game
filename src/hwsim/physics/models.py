@@ -19,6 +19,8 @@ class PhysicsConfig(BaseModel):
     capture_radius: float = 15
     base_radius: float = 5
     max_marbles_per_faction: int = 32
+    max_units_start_fraction: float = 1.0
+    max_units_growth_power: float = 1.0
     spawn_interval_frames: int = 45
     spawn_cost: float = 55
     resource_gain_per_100_cells: float = 2.0

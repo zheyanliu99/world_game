@@ -339,5 +339,10 @@ class MarbleSimulator:
     def _max_marble_count(self, faction_id: str) -> int:
         base = self.scenario.physics.max_marbles_per_faction
         scaled = base * self._population_capacity_scale(faction_id)
+        start_fraction = min(1.0, max(0.05, self.scenario.physics.max_units_start_fraction))
+        progress = min(1.0, max(0.0, self.state.frame / max(1, self.state.total_frames)))
+        growth_power = max(0.1, self.scenario.physics.max_units_growth_power)
+        timeline_scale = start_fraction + (1.0 - start_fraction) * progress**growth_power
+        scaled *= timeline_scale
         scaled *= self.state.stat_multiplier(faction_id, "max_units")
         return max(self._initial_marble_count(faction_id), int(round(scaled)))

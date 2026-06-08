@@ -25,10 +25,12 @@
     "capture_radius": 7,
     "base_radius": 2.4,
     "max_marbles_per_faction": 125,
+    "max_units_start_fraction": 0.24,
+    "max_units_growth_power": 1.15,
     "spawn_interval_frames": 12,
     "spawn_cost": 22,
     "resource_gain_per_100_cells": 4.6,
-    "initial_marbles_per_faction": 28,
+    "initial_marbles_per_faction": 12,
     "collision_damage": 0.1
   },
   "factions": {
