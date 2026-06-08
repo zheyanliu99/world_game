@@ -26,6 +26,11 @@ class PhysicsConfig(BaseModel):
     max_population_growth_multiplier: float = 1.0
     state_control_threshold: float = 0.8
     state_control_population_gain_per_100_cells: float = 0.0
+    min_land_share_to_capture: float = 0.0
+    collapse_resource_decay: float = 0.0
+    collapse_unit_loss_interval_frames: int = 0
+    state_capture_population_loss_fraction: float = 0.0
+    state_capture_unit_fraction: float = 0.0
     spawn_interval_frames: int = 45
     spawn_cost: float = 55
     resource_gain_per_100_cells: float = 2.0
@@ -206,6 +211,7 @@ class MarbleGameState:
     resources: dict[str, float] = field(default_factory=dict)
     pending_ball_adds: list[tuple[str, int]] = field(default_factory=list)
     active_modifiers: list[MarbleModifier] = field(default_factory=list)
+    state_controllers: dict[str, str] = field(default_factory=dict)
     alliances: list[Alliance] = field(default_factory=list)
     triggered_events: list[TriggeredEvent] = field(default_factory=list)
     active_event: TriggeredEvent | None = None

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import urllib.request
 from pathlib import Path
@@ -42,11 +43,12 @@ def prepare_real_map(config_path: str | Path, force: bool = False) -> Path:
     raw_path = resolve_path(config.raw_geojson_file)
     prepared_path = resolve_path(config.prepared_map_file)
     overlay = HistoricalOverlay.model_validate(read_json(resolve_path(config.historical_overlay_file)))
+    overlay_signature = _overlay_signature(overlay)
 
     if force or not raw_path.exists():
         _download_geoboundaries(config, raw_path)
 
-    if force or not prepared_path.exists() or not _prepared_matches_config(prepared_path, config):
+    if force or not prepared_path.exists() or not _prepared_matches_config(prepared_path, config, overlay_signature):
         geojson = read_json(raw_path)
         prepared = build_prepared_map(geojson, config, overlay)
         write_json(prepared_path, prepared)
@@ -54,7 +56,7 @@ def prepare_real_map(config_path: str | Path, force: bool = False) -> Path:
     return prepared_path
 
 
-def _prepared_matches_config(prepared_path: Path, config: RealMapConfig) -> bool:
+def _prepared_matches_config(prepared_path: Path, config: RealMapConfig, overlay_signature: str) -> bool:
     try:
         prepared = read_json(prepared_path)
     except (OSError, json.JSONDecodeError):
@@ -63,7 +65,13 @@ def _prepared_matches_config(prepared_path: Path, config: RealMapConfig) -> bool
         tuple(prepared.get("canvas_size", ())) == tuple(config.canvas_size)
         and tuple(prepared.get("grid_size", ())) == tuple(config.grid_size)
         and prepared.get("map_id") == config.map_id
+        and prepared.get("overlay_signature") == overlay_signature
     )
+
+
+def _overlay_signature(overlay: HistoricalOverlay) -> str:
+    payload = json.dumps(overlay.model_dump(mode="json"), sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 def build_prepared_map(
@@ -121,6 +129,7 @@ def build_prepared_map(
 
     return {
         "map_id": config.map_id,
+        "overlay_signature": _overlay_signature(overlay),
         "source_name": config.source_name,
         "source_url": config.source_url,
         "attribution": config.attribution,

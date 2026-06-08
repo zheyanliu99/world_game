@@ -52,6 +52,9 @@ class MarbleSimulator:
             for _substep in range(max(1, self.scenario.physics.substeps)):
                 self._move_marbles()
                 self._resolve_collisions()
+            if self._is_population_tick():
+                self._apply_collapse_pressure()
+                self._update_state_control_transfers()
             for marble in self.state.marbles:
                 marble.age_frames += 1
                 marble.cooldown_frames = max(0, marble.cooldown_frames - 1)
@@ -72,13 +75,14 @@ class MarbleSimulator:
             factions={key: value.model_copy(deep=True) for key, value in self.scenario.factions.items()},
             resources={faction_id: 100.0 for faction_id in faction_ids},
         )
+        state.state_controllers = self._current_state_controllers(state)
         for faction_id in faction_ids:
             for _ in range(self._initial_marble_count(faction_id)):
                 self._spawn_marble(state, faction_id, free=True)
         return state
 
     def _spawn_resources(self) -> None:
-        if self.state.frame % max(1, self.scenario.physics.spawn_interval_frames) != 0:
+        if not self._is_population_tick():
             return
         counts = self.state.grid.owned_cell_counts()
         growth_multiplier = self._population_growth_multiplier()
@@ -203,6 +207,8 @@ class MarbleSimulator:
             self._capture_cells_for_marble(marble)
 
     def _capture_cells_for_marble(self, marble: MarbleUnit, center: tuple[float, float] | None = None) -> None:
+        if not self._can_capture_new_land(marble.faction_id):
+            return
         cell_w, cell_h = self.state.grid.cell_size
         radius_cells = max(1, int(math.ceil(self.scenario.physics.capture_radius / min(cell_w, cell_h))))
         owner_index = self.state.grid.faction_index(marble.faction_id)
@@ -229,6 +235,119 @@ class MarbleSimulator:
                 chance = min(0.96, 0.72 * capture_mult * marble.power / max(0.2, defense))
                 if self.rng.random() < chance:
                     self.state.grid.owner_grid[y, x] = owner_index
+
+    def _is_population_tick(self) -> bool:
+        return self.state.frame % max(1, self.scenario.physics.spawn_interval_frames) == 0
+
+    def _can_capture_new_land(self, faction_id: str) -> bool:
+        threshold = self.scenario.physics.min_land_share_to_capture
+        return threshold <= 0 or self._land_share(faction_id) >= threshold
+
+    def _land_share(self, faction_id: str) -> float:
+        total = int((self.state.grid.owner_grid >= 0).sum())
+        if total <= 0:
+            return 0.0
+        owner_index = self.state.grid.faction_index(faction_id)
+        return float((self.state.grid.owner_grid == owner_index).sum()) / total
+
+    def _apply_collapse_pressure(self) -> None:
+        threshold = self.scenario.physics.min_land_share_to_capture
+        if threshold <= 0:
+            return
+        resource_decay = min(1.0, max(0.0, self.scenario.physics.collapse_resource_decay))
+        loss_interval = self.scenario.physics.collapse_unit_loss_interval_frames
+        for faction_id in self.state.grid.faction_ids:
+            if self._land_share(faction_id) >= threshold:
+                continue
+            if resource_decay > 0:
+                self.state.resources[faction_id] = self.state.resources.get(faction_id, 0.0) * (1.0 - resource_decay)
+            if loss_interval <= 0 or self.state.frame % loss_interval != 0:
+                continue
+            candidates = [marble for marble in self.state.marbles if marble.faction_id == faction_id]
+            if not candidates:
+                continue
+            loss_count = max(1, int(round(len(candidates) * max(0.03, resource_decay))))
+            doomed_ids = {
+                marble.id
+                for marble in sorted(candidates, key=lambda item: (item.power, -item.age_frames))[:loss_count]
+            }
+            self.state.marbles = [marble for marble in self.state.marbles if marble.id not in doomed_ids]
+
+    def _update_state_control_transfers(self) -> None:
+        current_controllers = self._current_state_controllers(self.state)
+        for state_id, new_owner in current_controllers.items():
+            previous_owner = self.state.state_controllers.get(state_id)
+            if previous_owner is None:
+                self.state.state_controllers[state_id] = new_owner
+                continue
+            if previous_owner == new_owner:
+                continue
+            self._transfer_state_population(state_id, previous_owner, new_owner)
+            self.state.state_controllers[state_id] = new_owner
+
+    def _transfer_state_population(self, state_id: str, loser: str, winner: str) -> None:
+        if loser not in self.state.factions or winner not in self.state.factions:
+            return
+        loss_fraction = min(1.0, max(0.0, self.scenario.physics.state_capture_population_loss_fraction))
+        if loss_fraction > 0:
+            current_population_pool = self.state.resources.get(loser, 0.0)
+            transfer = current_population_pool * loss_fraction
+            self.state.resources[loser] = max(0.0, current_population_pool - transfer)
+            self.state.resources[winner] = self.state.resources.get(winner, 0.0) + transfer
+
+        convert_fraction = min(1.0, max(0.0, self.scenario.physics.state_capture_unit_fraction))
+        state_index = self._state_index_for_id(state_id)
+        if convert_fraction <= 0 or state_index is None or self.state.grid.state_id_grid is None:
+            return
+        candidates = [
+            marble
+            for marble in self.state.marbles
+            if marble.faction_id == loser and self._marble_state_index(marble) == state_index
+        ]
+        if not candidates:
+            return
+        convert_count = max(1, int(round(len(candidates) * convert_fraction)))
+        for marble in candidates[:convert_count]:
+            marble.faction_id = winner
+            marble.cooldown_frames = max(marble.cooldown_frames, 30)
+
+    def _current_state_controllers(self, state: MarbleGameState) -> dict[str, str]:
+        state_grid = state.grid.state_id_grid
+        if state_grid is None or not state.grid.state_records:
+            return {}
+        controllers: dict[str, str] = {}
+        threshold = min(1.0, max(0.1, state.scenario.physics.state_control_threshold))
+        for state_index, state_record in enumerate(state.grid.state_records):
+            mask = state_grid == state_index
+            total = int(mask.sum())
+            if total <= 0:
+                continue
+            owner_values, owner_counts = np_unique_nonnegative(state.grid.owner_grid[mask])
+            if not owner_values:
+                continue
+            top_position = max(range(len(owner_counts)), key=owner_counts.__getitem__)
+            if owner_counts[top_position] / total < threshold:
+                continue
+            faction_id = state.grid.faction_id(owner_values[top_position])
+            if faction_id:
+                controllers[str(state_record.get("id", state_index))] = faction_id
+        return controllers
+
+    def _state_index_for_id(self, state_id: str) -> int | None:
+        for index, state_record in enumerate(self.state.grid.state_records):
+            if str(state_record.get("id", index)) == state_id:
+                return index
+        return None
+
+    def _marble_state_index(self, marble: MarbleUnit) -> int | None:
+        state_grid = self.state.grid.state_id_grid
+        if state_grid is None:
+            return None
+        gx, gy = self.state.grid.canvas_to_grid(marble.x, marble.y)
+        if gy < 0 or gx < 0 or gy >= state_grid.shape[0] or gx >= state_grid.shape[1]:
+            return None
+        state_index = int(state_grid[gy, gx])
+        return state_index if state_index >= 0 else None
 
     def _resolve_collisions(self) -> None:
         buckets: dict[tuple[int, int], list[int]] = defaultdict(list)

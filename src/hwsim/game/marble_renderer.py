@@ -245,10 +245,12 @@ class MarbleRenderer:
         elif event.effect == "betrayal_flash":
             pass
 
-        banner = (width // 2 - 360, 42, width // 2 + 360, 136)
+        ranking_left = width - 306
+        banner = (width // 2 - 360, 42, min(width // 2 + 320, ranking_left - 24), 136)
+        banner_center_x = (banner[0] + banner[2]) // 2
         draw.rounded_rectangle(banner, radius=8, fill=(10, 8, 6, 225), outline=(238, 204, 130, 180), width=2)
-        self._centered_text(draw, event.title, (width // 2, 72), self.fonts["event_title"], self.style.event_title)
-        self._centered_text(draw, event.subtitle, (width // 2, 112), self.fonts["event_subtitle"], self.style.event_subtitle)
+        self._centered_text(draw, event.title, (banner_center_x, 72), self.fonts["event_title"], self.style.event_title)
+        self._centered_text(draw, event.subtitle, (banner_center_x, 112), self.fonts["event_subtitle"], self.style.event_subtitle)
 
     def _draw_subtitle(self, image: Image.Image, subtitle: str) -> None:
         overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))

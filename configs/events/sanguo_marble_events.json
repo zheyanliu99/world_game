@@ -3,501 +3,676 @@
     {
       "id": "yellow_turban_184",
       "year": 184,
-      "name_cn": "黄巾起义",
-      "category": "rebellion",
+      "name_cn": "黄巾余波",
+      "category": "population",
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.22, "duration_years": 8},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "defense", "multiplier": 1.08, "duration_years": 8},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.06, "duration_years": 8},
-        {"type": "marble_modifier", "target": "qunxiong", "stat": "spawn_rate", "multiplier": 1.35, "duration_years": 10},
-        {"type": "add_balls", "target": "cao", "value": 8},
-        {"type": "add_balls", "target": "liu_bei", "value": 6},
-        {"type": "add_balls", "target": "sun_quan", "value": 7},
-        {"type": "add_balls", "target": "qunxiong", "value": 14}
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.2, "duration_years": 6},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 6},
+        {"type": "add_balls", "target": "cao", "value": 10},
+        {"type": "add_balls", "target": "liu_bei", "value": 8},
+        {"type": "add_balls", "target": "sun_quan", "value": 8}
       ],
       "ui": {
-        "title": "184年 黄巾起义",
-        "subtitle": "乱世爆发，人口单位开始扩散",
-        "focus_regions": [],
-        "effect": "collapse_flash",
-        "duration_seconds": 2.4
+        "title": "黄巾余波",
+        "subtitle": "三方人口开始扩张",
+        "focus_regions": ["Hebei", "Henan", "Shandong"],
+        "effect": "default_banner",
+        "duration_seconds": 3.2
       },
-      "narration": "黄巾之后，各州人口单位快速增殖，群雄也会在边界上参战。"
+      "narration": "黄巾起义后的流民重新聚集，三国的人口单位都开始快速增殖。"
     },
     {
       "id": "anti_dong_190",
       "year": 190,
       "name_cn": "讨董联盟",
-      "category": "incident",
-      "importance": 7,
-      "trigger_conditions": [],
-      "effects": [
-        {"type": "marble_modifier", "target": "qunxiong", "stat": "speed", "multiplier": 1.42, "duration_years": 5},
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.22, "duration_years": 4},
-        {"type": "add_balls", "target": "qunxiong", "value": 18}
-      ],
-      "ui": {
-        "title": "190年 讨董联盟",
-        "subtitle": "群雄高速扰动中原",
-        "focus_regions": [],
-        "effect": "marching_arrows",
-        "duration_seconds": 2.2
-      },
-      "narration": "讨董联盟让群雄人口单位高速移动，风痕会显示短期速度提升。"
-    },
-    {
-      "id": "xu_province_refugees_194",
-      "year": 194,
-      "name_cn": "徐州流民",
-      "category": "incident",
+      "category": "speed",
       "importance": 6,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.25, "duration_years": 5},
-        {"type": "add_balls", "target": "cao", "value": 12},
-        {"type": "add_balls", "target": "qunxiong", "value": 8}
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.55, "duration_years": 5},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.42, "duration_years": 5},
+        {"type": "add_balls", "target": "cao", "value": 10}
       ],
       "ui": {
-        "title": "194年 徐州流民",
-        "subtitle": "人口迁徙让前线变密",
-        "focus_regions": [],
-        "effect": "marching_arrows",
-        "duration_seconds": 2.2
+        "title": "讨董联盟",
+        "subtitle": "北方军势高速出动",
+        "focus_regions": ["Henan", "Shaanxi"],
+        "effect": "wind",
+        "duration_seconds": 3.2
       },
-      "narration": "流民和军屯让前线人口单位增加，地图上的碰撞开始变得更频繁。"
+      "narration": "讨董联盟让中原人口单位进入高速移动期，速度提升时会出现短暂风痕。"
+    },
+    {
+      "id": "xu_refugees_194",
+      "year": 194,
+      "name_cn": "徐州流民",
+      "category": "population",
+      "importance": 5,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "add_resources", "target": "liu_bei", "value": 220},
+        {"type": "add_balls", "target": "liu_bei", "value": 12},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.28, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "徐州流民",
+        "subtitle": "蜀汉人口池增加",
+        "focus_regions": ["Shandong", "Jiangsu"],
+        "effect": "default_banner",
+        "duration_seconds": 3.0
+      },
+      "narration": "一批流民加入刘备阵营，蜀汉获得额外人口资源。"
     },
     {
       "id": "lu_bu_surrenders_198",
       "year": 198,
-      "name_cn": "吕布旧部归降",
+      "name_cn": "下邳易帜",
       "category": "surrender",
-      "importance": 8,
+      "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "qunxiong", "owner": "cao", "region": "Shandong", "radius": 95, "ball_fraction": 0.5},
-        {"type": "add_balls", "target": "cao", "value": 12},
-        {"type": "marble_modifier", "target": "cao", "stat": "capture", "multiplier": 1.12, "duration_years": 5}
+        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Jiangsu", "radius": 95, "ball_fraction": 0.45},
+        {"type": "marble_modifier", "target": "cao", "stat": "capture", "multiplier": 1.18, "duration_years": 4}
       ],
       "ui": {
-        "title": "198年 吕布旧部归降",
-        "subtitle": "一片州郡与人口单位转投曹魏",
-        "focus_regions": ["Shandong"],
+        "title": "下邳易帜",
+        "subtitle": "部分人口与土地归曹魏",
+        "focus_regions": ["Jiangsu"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.5
+        "duration_seconds": 3.6
       },
-      "narration": "归降事件会让一片区域和附近人口单位突然改属，制造大幅度局势变化。"
+      "narration": "下邳附近发生投降，部分土地和人口单位转入曹魏。"
     },
     {
       "id": "guandu_200",
       "year": 200,
       "name_cn": "官渡之战",
-      "category": "major_battle",
-      "importance": 8,
+      "category": "battle",
+      "importance": 9,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "power", "multiplier": 1.15, "duration_years": 9},
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.5, "duration_years": 6},
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.32, "duration_years": 9},
-        {"type": "add_balls", "target": "cao", "value": 18}
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.75, "duration_years": 5},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.45, "duration_years": 8},
+        {"type": "marble_modifier", "target": "cao", "stat": "power", "multiplier": 1.18, "duration_years": 6},
+        {"type": "add_balls", "target": "cao", "value": 24}
       ],
       "ui": {
-        "title": "200年 官渡之战",
-        "subtitle": "曹魏高速推进窗口",
-        "focus_regions": [],
-        "effect": "marching_arrows",
-        "duration_seconds": 2.4
+        "title": "官渡之战",
+        "subtitle": "曹魏速度与征发大幅提升",
+        "focus_regions": ["Henan", "Hebei"],
+        "effect": "wind",
+        "duration_seconds": 4.0
       },
-      "narration": "官渡之后，曹魏人口单位获得明显速度和增殖加成。"
+      "narration": "官渡胜势让曹魏进入高速扩张窗口，风痕会更明显。"
     },
     {
-      "id": "northern_clans_submit_207",
-      "year": 207,
-      "name_cn": "北方部族归附",
+      "id": "hebei_submits_204",
+      "year": 204,
+      "name_cn": "河北归附",
       "category": "surrender",
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "qunxiong", "owner": "cao", "region": "Liaoning", "radius": 120, "ball_fraction": 0.42},
-        {"type": "betrayal", "target": "qunxiong", "owner": "cao", "region": "Inner Mongolia", "radius": 130, "ball_fraction": 0.28},
-        {"type": "marble_modifier", "target": "cao", "stat": "max_units", "multiplier": 1.12, "duration_years": 12}
+        {"type": "betrayal", "target": "sun_quan", "owner": "cao", "region": "Hebei", "radius": 130, "ball_fraction": 0.35},
+        {"type": "add_resources", "target": "cao", "value": 280}
       ],
       "ui": {
-        "title": "207年 北方部族归附",
-        "subtitle": "幽并边地大规模转向曹魏",
-        "focus_regions": ["Liaoning", "Inner Mongolia"],
+        "title": "河北归附",
+        "subtitle": "北方人口池向曹魏倾斜",
+        "focus_regions": ["Hebei"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.5
+        "duration_seconds": 3.4
       },
-      "narration": "北方归附会把边地和人口单位转给曹魏，是早期的大翻盘事件。"
+      "narration": "河北一带出现大规模归附，曹魏获得额外人口资源。"
     },
     {
       "id": "chibi_208",
       "year": 208,
       "name_cn": "赤壁之战",
-      "category": "major_battle",
+      "category": "alliance",
       "importance": 10,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.72, "duration_years": 7},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.42, "duration_years": 6},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.18, "duration_years": 7},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.46, "duration_years": 6},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.15, "duration_years": 7},
-        {"type": "create_alliance", "factions": ["liu_bei", "sun_quan"], "duration_years": 13},
-        {"type": "add_balls", "target": "liu_bei", "value": 12},
-        {"type": "add_balls", "target": "sun_quan", "value": 14}
+        {"type": "create_alliance", "factions": ["liu_bei", "sun_quan"], "duration_years": 11},
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.62, "duration_years": 6},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.22, "duration_years": 7},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "capture", "multiplier": 1.22, "duration_years": 7},
+        {"type": "add_balls", "target": "sun_quan", "value": 18},
+        {"type": "add_balls", "target": "liu_bei", "value": 12}
       ],
       "ui": {
-        "title": "208年 赤壁之战",
-        "subtitle": "曹魏减速，蜀吴高速反击",
-        "focus_regions": [],
+        "title": "赤壁之战",
+        "subtitle": "孙刘结盟，曹魏减速",
+        "focus_regions": ["Hubei", "Hunan"],
         "effect": "fire_overlay",
-        "duration_seconds": 2.7
+        "duration_seconds": 4.2
       },
-      "narration": "赤壁让曹魏减速，蜀吴结盟，双方边界不会互相占地。"
+      "narration": "赤壁之后，孙刘结盟。盟友边界不会互相占地，直到联盟破裂。"
     },
     {
-      "id": "liangzhou_revolt_211",
+      "id": "jiangdong_shipyards_211",
       "year": 211,
-      "name_cn": "凉州叛乱",
-      "category": "surrender",
-      "importance": 8,
+      "name_cn": "江东船坊",
+      "category": "population",
+      "importance": 5,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "cao", "owner": "qunxiong", "region": "Gansu", "radius": 125, "ball_fraction": 0.38},
-        {"type": "betrayal", "target": "cao", "owner": "qunxiong", "region": "Shaanxi", "radius": 80, "ball_fraction": 0.22},
-        {"type": "marble_modifier", "target": "qunxiong", "stat": "speed", "multiplier": 1.38, "duration_years": 5}
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.38, "duration_years": 7},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.38, "duration_years": 4},
+        {"type": "add_balls", "target": "sun_quan", "value": 16}
       ],
       "ui": {
-        "title": "211年 凉州叛乱",
-        "subtitle": "西北人口单位脱离曹魏",
-        "focus_regions": ["Gansu", "Shaanxi"],
-        "effect": "betrayal_flash",
-        "duration_seconds": 2.5
+        "title": "江东船坊",
+        "subtitle": "东吴沿江人口加速",
+        "focus_regions": ["Jiangsu", "Zhejiang"],
+        "effect": "wind",
+        "duration_seconds": 3.2
       },
-      "narration": "凉州叛乱会让西北一片区域和人口单位回到群雄阵营。"
+      "narration": "江东船坊提升东吴沿江机动，人口单位短期加速。"
     },
     {
-      "id": "liu_bei_enters_shu_214",
+      "id": "liu_enters_shu_214",
       "year": 214,
       "name_cn": "刘备入蜀",
-      "category": "political",
-      "importance": 8,
+      "category": "surrender",
+      "importance": 9,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "qunxiong", "owner": "liu_bei", "region": "Sichuan", "radius": 130, "ball_fraction": 0.45},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.45, "duration_years": 9},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.32, "duration_years": 7},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.14, "duration_years": 9},
-        {"type": "add_resources", "target": "liu_bei", "value": 220},
-        {"type": "add_balls", "target": "liu_bei", "value": 24}
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Sichuan", "radius": 145, "ball_fraction": 0.5},
+        {"type": "add_resources", "target": "liu_bei", "value": 360},
+        {"type": "add_balls", "target": "liu_bei", "value": 26},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.45, "duration_years": 9}
       ],
       "ui": {
-        "title": "214年 刘备入蜀",
-        "subtitle": "益州大部归蜀汉",
-        "focus_regions": ["Sichuan"],
+        "title": "刘备入蜀",
+        "subtitle": "益州人口归蜀",
+        "focus_regions": ["Sichuan", "Chongqing"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.5
+        "duration_seconds": 4.0
       },
-      "narration": "刘备入蜀会让益州附近大片区域和人口单位归蜀汉。"
+      "narration": "益州附近出现大规模归附，蜀汉获得土地、人口单位和人口池。"
     },
     {
-      "id": "sichuan_local_betrayal_216",
+      "id": "yizhou_clans_216",
       "year": 216,
-      "name_cn": "西川豪强倒戈",
-      "category": "betrayal",
-      "importance": 7,
+      "name_cn": "益州豪族归附",
+      "category": "surrender",
+      "importance": 6,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Sichuan", "radius": 78, "ball_fraction": 0.24},
-        {"type": "marble_modifier", "target": "cao", "stat": "capture", "multiplier": 1.12, "duration_years": 4}
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guizhou", "radius": 100, "ball_fraction": 0.34},
+        {"type": "add_balls", "target": "liu_bei", "value": 14}
       ],
       "ui": {
-        "title": "216年 西川豪强倒戈",
-        "subtitle": "蜀地局部转投曹魏",
-        "focus_regions": ["Sichuan"],
+        "title": "益州豪族归附",
+        "subtitle": "蜀汉西南边界扩张",
+        "focus_regions": ["Guizhou", "Yunnan"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.4
+        "duration_seconds": 3.2
       },
-      "narration": "局部豪强倒戈会让附近人口单位直接转投另一国。"
+      "narration": "西南豪族转向蜀汉，边界附近的土地和人口单位随之改变阵营。"
     },
     {
       "id": "jingzhou_betrayal_219",
       "year": 219,
       "name_cn": "荆州背盟",
       "category": "betrayal",
-      "importance": 9,
+      "importance": 10,
       "trigger_conditions": [],
       "effects": [
         {"type": "break_alliance", "factions": ["liu_bei", "sun_quan"]},
-        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Hubei", "radius": 115, "ball_fraction": 0.52},
-        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Hunan", "radius": 105, "ball_fraction": 0.42},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.45, "duration_years": 5}
+        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Hubei", "radius": 120, "ball_fraction": 0.55},
+        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Hunan", "radius": 110, "ball_fraction": 0.42},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "capture", "multiplier": 1.22, "duration_years": 5}
       ],
       "ui": {
-        "title": "219年 荆州背盟",
-        "subtitle": "东吴偷袭，荆州突然换色",
+        "title": "荆州背盟",
+        "subtitle": "孙刘联盟破裂",
         "focus_regions": ["Hubei", "Hunan"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.6
+        "duration_seconds": 4.0
       },
-      "narration": "荆州背盟会把附近蜀汉地格和人口单位转给东吴。"
+      "narration": "荆州背盟会打破孙刘联盟，东吴开始夺取蜀汉边界土地。"
     },
     {
-      "id": "cao_pi_emperor_220",
+      "id": "cao_pi_220",
       "year": 220,
       "name_cn": "曹丕称帝",
-      "category": "succession",
-      "importance": 7,
+      "category": "legitimacy",
+      "importance": 8,
       "trigger_conditions": [],
       "effects": [
         {"type": "rename_faction", "target": "cao", "name_cn": "曹魏"},
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.32, "duration_years": 10},
-        {"type": "marble_modifier", "target": "cao", "stat": "max_units", "multiplier": 1.2, "duration_years": 10},
-        {"type": "add_balls", "target": "cao", "value": 24}
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.32, "duration_years": 9},
+        {"type": "marble_modifier", "target": "cao", "stat": "max_units", "multiplier": 1.12, "duration_years": 10},
+        {"type": "add_balls", "target": "cao", "value": 20}
       ],
       "ui": {
-        "title": "220年 曹丕称帝",
-        "subtitle": "曹魏上限与征发效率提升",
-        "focus_regions": [],
-        "effect": "edict_overlay",
-        "duration_seconds": 2.3
+        "title": "曹丕称帝",
+        "subtitle": "曹魏人口上限提高",
+        "focus_regions": ["Henan"],
+        "effect": "default_banner",
+        "duration_seconds": 3.5
       },
-      "narration": "曹丕称帝后，曹魏获得更高人口单位上限和征发效率。"
+      "narration": "曹丕称帝后，曹魏的人口上限和征发能力提升。"
     },
     {
       "id": "yiling_222",
       "year": 222,
       "name_cn": "夷陵之战",
-      "category": "major_battle",
+      "category": "battle",
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "power", "multiplier": 0.9, "duration_years": 5},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "power", "multiplier": 1.12, "duration_years": 5},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.36, "duration_years": 4},
-        {"type": "add_balls", "target": "sun_quan", "value": 18}
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 0.72, "duration_years": 5},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.22, "duration_years": 6},
+        {"type": "add_resources", "target": "sun_quan", "value": 260}
       ],
       "ui": {
-        "title": "222年 夷陵之战",
-        "subtitle": "蜀汉攻势降温，东吴反弹",
-        "focus_regions": [],
-        "effect": "fire_overlay",
-        "duration_seconds": 2.3
+        "title": "夷陵之战",
+        "subtitle": "蜀汉减速，东吴防御提升",
+        "focus_regions": ["Hubei", "Hunan"],
+        "effect": "default_banner",
+        "duration_seconds": 3.5
       },
-      "narration": "夷陵让蜀汉人口单位力量短暂下降，东吴获得速度和增援。"
+      "narration": "夷陵之后，蜀汉人口单位短期迟滞，东吴边境更难被突破。"
     },
     {
-      "id": "nanzhong_uprising_225",
+      "id": "nanzhong_defection_225",
       "year": 225,
-      "name_cn": "南中起事",
-      "category": "surrender",
+      "name_cn": "南中易帜",
+      "category": "betrayal",
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "liu_bei", "owner": "qunxiong", "region": "Yunnan", "radius": 120, "ball_fraction": 0.36},
-        {"type": "marble_modifier", "target": "qunxiong", "stat": "speed", "multiplier": 1.28, "duration_years": 5},
-        {"type": "add_balls", "target": "qunxiong", "value": 18}
+        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Yunnan", "radius": 120, "ball_fraction": 0.35},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.2, "duration_years": 6},
+        {"type": "add_balls", "target": "liu_bei", "value": 12}
       ],
       "ui": {
-        "title": "225年 南中起事",
-        "subtitle": "益州南部重新独立",
+        "title": "南中易帜",
+        "subtitle": "南部边境发生大规模倒戈",
         "focus_regions": ["Yunnan"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.4
+        "duration_seconds": 3.6
       },
-      "narration": "南中起事会让益州南部部分人口单位转回群雄。"
+      "narration": "南中出现一次非历史强事件，部分土地和人口转向东吴，随后蜀汉获得反扑加成。"
     },
     {
       "id": "northern_expeditions_227",
       "year": 227,
       "name_cn": "诸葛亮北伐",
-      "category": "northern_expedition",
+      "category": "offensive",
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.55, "duration_years": 8},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.18, "duration_years": 8},
-        {"type": "add_balls", "target": "liu_bei", "value": 18}
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.7, "duration_years": 7},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.25, "duration_years": 8},
+        {"type": "add_balls", "target": "liu_bei", "value": 20}
       ],
       "ui": {
-        "title": "227年 诸葛亮北伐",
-        "subtitle": "蜀汉高速北上窗口打开",
-        "focus_regions": [],
-        "effect": "marching_arrows",
-        "duration_seconds": 2.5
+        "title": "诸葛亮北伐",
+        "subtitle": "蜀汉人口单位高速北上",
+        "focus_regions": ["Shaanxi", "Gansu"],
+        "effect": "wind",
+        "duration_seconds": 3.8
       },
-      "narration": "北伐阶段，蜀汉人口单位速度显著提升，风痕会更明显。"
+      "narration": "北伐让蜀汉朝曹魏方向获得强速度与占领加成。"
     },
     {
-      "id": "wuzhang_exhaustion_234",
-      "year": 234,
-      "name_cn": "五丈原余波",
-      "category": "incident",
-      "importance": 6,
+      "id": "guanzhong_refugees_230",
+      "year": 230,
+      "name_cn": "关中流民",
+      "category": "population",
+      "importance": 5,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 0.82, "duration_years": 6},
-        {"type": "marble_modifier", "target": "cao", "stat": "defense", "multiplier": 1.12, "duration_years": 6}
+        {"type": "add_resources", "target": "liu_bei", "value": 240},
+        {"type": "add_resources", "target": "cao", "value": 160},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.25, "duration_years": 5}
       ],
       "ui": {
-        "title": "234年 五丈原余波",
-        "subtitle": "蜀汉北上速度回落",
-        "focus_regions": [],
-        "effect": "edict_overlay",
-        "duration_seconds": 2.2
+        "title": "关中流民",
+        "subtitle": "西北人口池重分配",
+        "focus_regions": ["Shaanxi", "Gansu"],
+        "effect": "default_banner",
+        "duration_seconds": 3.0
       },
-      "narration": "五丈原之后，蜀汉高速窗口关闭，北方防线变稳。"
+      "narration": "关中流民让蜀汉和曹魏都获得新的人口资源。"
+    },
+    {
+      "id": "wuzhang_234",
+      "year": 234,
+      "name_cn": "五丈原疲敝",
+      "category": "attrition",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 0.76, "duration_years": 6},
+        {"type": "marble_modifier", "target": "cao", "stat": "defense", "multiplier": 1.18, "duration_years": 6}
+      ],
+      "ui": {
+        "title": "五丈原疲敝",
+        "subtitle": "蜀汉增殖放缓",
+        "focus_regions": ["Shaanxi"],
+        "effect": "default_banner",
+        "duration_seconds": 3.0
+      },
+      "narration": "五丈原之后，蜀汉人口增殖短期放缓，曹魏边境更稳。"
+    },
+    {
+      "id": "liaodong_reform_238",
+      "year": 238,
+      "name_cn": "辽东整编",
+      "category": "population",
+      "importance": 5,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "add_resources", "target": "cao", "value": 260},
+        {"type": "add_balls", "target": "cao", "value": 16},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.2, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "辽东整编",
+        "subtitle": "曹魏北方人口补充",
+        "focus_regions": ["Liaoning"],
+        "effect": "default_banner",
+        "duration_seconds": 3.0
+      },
+      "narration": "辽东整编补充了曹魏北方人口池。"
     },
     {
       "id": "wu_northern_raid_241",
       "year": 241,
-      "name_cn": "东吴北伐",
-      "category": "surrender",
+      "name_cn": "东吴北袭",
+      "category": "offensive",
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "cao", "owner": "sun_quan", "region": "Anhui", "radius": 105, "ball_fraction": 0.26},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.4, "duration_years": 5},
-        {"type": "add_balls", "target": "sun_quan", "value": 18}
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.65, "duration_years": 5},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "capture", "multiplier": 1.22, "duration_years": 5},
+        {"type": "betrayal", "target": "cao", "owner": "sun_quan", "region": "Anhui", "radius": 115, "ball_fraction": 0.28}
       ],
       "ui": {
-        "title": "241年 东吴北伐",
-        "subtitle": "淮南边界局部改属",
+        "title": "东吴北袭",
+        "subtitle": "淮南边界转向东吴",
         "focus_regions": ["Anhui"],
-        "effect": "betrayal_flash",
-        "duration_seconds": 2.4
+        "effect": "wind",
+        "duration_seconds": 3.4
       },
-      "narration": "东吴北伐会让淮南附近部分曹魏人口单位转投东吴。"
+      "narration": "东吴北袭让淮南附近一部分土地和人口单位转入东吴。"
+    },
+    {
+      "id": "xingshi_244",
+      "year": 244,
+      "name_cn": "兴势之围",
+      "category": "defense",
+      "importance": 6,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "defense", "multiplier": 1.32, "duration_years": 6},
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.82, "duration_years": 4}
+      ],
+      "ui": {
+        "title": "兴势之围",
+        "subtitle": "蜀汉山地防御增强",
+        "focus_regions": ["Shaanxi", "Sichuan"],
+        "effect": "default_banner",
+        "duration_seconds": 3.0
+      },
+      "narration": "兴势之围让蜀汉山地边界更难被曹魏穿透。"
     },
     {
       "id": "gaopingling_249",
       "year": 249,
       "name_cn": "高平陵之变",
-      "category": "incident",
+      "category": "politics",
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 0.86, "duration_years": 8},
-        {"type": "marble_modifier", "target": "qunxiong", "stat": "capture", "multiplier": 1.12, "duration_years": 6},
-        {"type": "add_balls", "target": "qunxiong", "value": 22}
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 0.78, "duration_years": 8},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.16, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "capture", "multiplier": 1.12, "duration_years": 6}
       ],
       "ui": {
-        "title": "249年 高平陵之变",
-        "subtitle": "曹魏内部震荡，群雄趁势",
-        "focus_regions": [],
-        "effect": "collapse_flash",
-        "duration_seconds": 2.5
+        "title": "高平陵之变",
+        "subtitle": "曹魏内耗，边界松动",
+        "focus_regions": ["Henan"],
+        "effect": "default_banner",
+        "duration_seconds": 3.3
       },
-      "narration": "高平陵之变会削弱曹魏增殖，让群雄获得中后期扰动。"
+      "narration": "高平陵之变削弱曹魏增殖，给蜀吴一点反扑空间。"
     },
     {
-      "id": "huainan_rebellion_257",
-      "year": 257,
-      "name_cn": "淮南叛乱",
-      "category": "betrayal",
+      "id": "dongxing_252",
+      "year": 252,
+      "name_cn": "东兴之战",
+      "category": "battle",
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "cao", "owner": "sun_quan", "region": "Anhui", "radius": 120, "ball_fraction": 0.36},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "capture", "multiplier": 1.2, "duration_years": 5},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.28, "duration_years": 5},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.42, "duration_years": 4},
         {"type": "add_balls", "target": "sun_quan", "value": 18}
       ],
       "ui": {
-        "title": "257年 淮南叛乱",
-        "subtitle": "曹魏东南边界突然开裂",
-        "focus_regions": ["Anhui"],
-        "effect": "betrayal_flash",
-        "duration_seconds": 2.5
+        "title": "东兴之战",
+        "subtitle": "东吴边防反击",
+        "focus_regions": ["Anhui", "Jiangsu"],
+        "effect": "wind",
+        "duration_seconds": 3.2
       },
-      "narration": "淮南叛乱会把安徽附近部分曹魏人口单位转给东吴。"
+      "narration": "东兴之战提升东吴边防和机动。"
     },
     {
-      "id": "shu_frontier_surrenders_263",
-      "year": 263,
-      "name_cn": "蜀道失守",
-      "category": "surrender",
-      "importance": 9,
+      "id": "huainan_first_255",
+      "year": 255,
+      "name_cn": "淮南倒戈",
+      "category": "betrayal",
+      "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Sichuan", "radius": 135, "ball_fraction": 0.42},
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.28, "duration_years": 5},
-        {"type": "add_balls", "target": "cao", "value": 26}
+        {"type": "betrayal", "target": "cao", "owner": "sun_quan", "region": "Anhui", "radius": 130, "ball_fraction": 0.38},
+        {"type": "add_resources", "target": "sun_quan", "value": 300}
       ],
       "ui": {
-        "title": "263年 蜀道失守",
-        "subtitle": "益州核心大规模转投曹魏",
-        "focus_regions": ["Sichuan"],
+        "title": "淮南倒戈",
+        "subtitle": "一片边境与人口投向东吴",
+        "focus_regions": ["Anhui"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.6
+        "duration_seconds": 3.8
       },
-      "narration": "蜀道失守是后期大事件，会让益州核心和人口单位大规模转向曹魏。"
+      "narration": "淮南发生剧烈倒戈，东吴直接获得一片土地和人口单位。"
+    },
+    {
+      "id": "huainan_second_257",
+      "year": 257,
+      "name_cn": "寿春震荡",
+      "category": "betrayal",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "sun_quan", "owner": "cao", "region": "Anhui", "radius": 120, "ball_fraction": 0.36},
+        {"type": "marble_modifier", "target": "cao", "stat": "capture", "multiplier": 1.2, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "寿春震荡",
+        "subtitle": "曹魏夺回淮南人口",
+        "focus_regions": ["Anhui"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.6
+      },
+      "narration": "寿春震荡让淮南再次改变方向，曹魏夺回部分人口单位。"
+    },
+    {
+      "id": "wei_coup_260",
+      "year": 260,
+      "name_cn": "魏宫政变",
+      "category": "politics",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.35, "duration_years": 4},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 5},
+        {"type": "add_balls", "target": "cao", "value": 16}
+      ],
+      "ui": {
+        "title": "魏宫政变",
+        "subtitle": "曹魏重新集中",
+        "focus_regions": ["Henan"],
+        "effect": "wind",
+        "duration_seconds": 3.1
+      },
+      "narration": "魏宫政变后，曹魏短期重新集中力量。"
+    },
+    {
+      "id": "shu_surrender_263",
+      "year": 263,
+      "name_cn": "蜀中投降潮",
+      "category": "surrender",
+      "importance": 10,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Sichuan", "radius": 145, "ball_fraction": 0.5},
+        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Chongqing", "radius": 105, "ball_fraction": 0.45},
+        {"type": "marble_modifier", "target": "cao", "stat": "capture", "multiplier": 1.22, "duration_years": 6}
+      ],
+      "ui": {
+        "title": "蜀中投降潮",
+        "subtitle": "蜀地人口大幅转向曹魏",
+        "focus_regions": ["Sichuan", "Chongqing"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 4.2
+      },
+      "narration": "蜀中投降潮是一场强事件，大量土地和人口单位会转向曹魏。"
     },
     {
       "id": "zhong_hui_mutiny_264",
       "year": 264,
       "name_cn": "钟会之乱",
       "category": "betrayal",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Sichuan", "radius": 110, "ball_fraction": 0.3},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.45, "duration_years": 4},
+        {"type": "add_balls", "target": "liu_bei", "value": 14}
+      ],
+      "ui": {
+        "title": "钟会之乱",
+        "subtitle": "蜀地残局反复",
+        "focus_regions": ["Sichuan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.6
+      },
+      "narration": "钟会之乱让蜀地出现反复，部分人口单位短暂回到蜀汉。"
+    },
+    {
+      "id": "jiangling_surrender_268",
+      "year": 268,
+      "name_cn": "江陵归附",
+      "category": "surrender",
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "cao", "owner": "qunxiong", "region": "Sichuan", "radius": 100, "ball_fraction": 0.28},
-        {"type": "marble_modifier", "target": "qunxiong", "stat": "speed", "multiplier": 1.34, "duration_years": 5},
-        {"type": "add_balls", "target": "qunxiong", "value": 20}
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hubei", "radius": 105, "ball_fraction": 0.36},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.18, "duration_years": 5}
       ],
       "ui": {
-        "title": "264年 钟会之乱",
-        "subtitle": "蜀地残局再生群雄",
-        "focus_regions": ["Sichuan"],
+        "title": "江陵归附",
+        "subtitle": "荆州人口再次转向蜀汉",
+        "focus_regions": ["Hubei"],
         "effect": "betrayal_flash",
-        "duration_seconds": 2.5
+        "duration_seconds": 3.4
       },
-      "narration": "钟会之乱让后期局势再抖一次，蜀地附近可能出现群雄复起。"
+      "narration": "江陵发生虚构归附，让荆州附近人口重新摆动。"
     },
     {
       "id": "jiangnan_recovery_271",
       "year": 271,
-      "name_cn": "江南垦殖",
-      "category": "incident",
-      "importance": 7,
+      "name_cn": "江南复振",
+      "category": "population",
+      "importance": 6,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.55, "duration_years": 8},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "max_units", "multiplier": 1.18, "duration_years": 8},
-        {"type": "add_balls", "target": "sun_quan", "value": 26}
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.42, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "max_units", "multiplier": 1.12, "duration_years": 7},
+        {"type": "add_balls", "target": "sun_quan", "value": 22}
       ],
       "ui": {
-        "title": "271年 江南垦殖",
-        "subtitle": "东吴后期人口爆发",
-        "focus_regions": [],
-        "effect": "marching_arrows",
-        "duration_seconds": 2.4
+        "title": "江南复振",
+        "subtitle": "东吴人口末期增殖",
+        "focus_regions": ["Zhejiang", "Jiangsu", "Fujian"],
+        "effect": "default_banner",
+        "duration_seconds": 3.2
       },
-      "narration": "江南垦殖让东吴后期人口单位爆发式增加。"
+      "narration": "江南复振让东吴在人口数量上出现末期增长。"
     },
     {
-      "id": "late_mass_surrenders_279",
-      "year": 279,
-      "name_cn": "末年大归附",
-      "category": "surrender",
-      "importance": 9,
+      "id": "sili_migration_275",
+      "year": 275,
+      "name_cn": "司隶迁徙",
+      "category": "population",
+      "importance": 5,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "qunxiong", "owner": "cao", "region": "Gansu", "radius": 160, "ball_fraction": 0.45},
-        {"type": "betrayal", "target": "sun_quan", "owner": "cao", "region": "Jiangsu", "radius": 95, "ball_fraction": 0.22},
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.32, "duration_years": 3},
-        {"type": "add_balls", "target": "cao", "value": 30}
+        {"type": "add_resources", "target": "cao", "value": 420},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.25, "duration_years": 5}
       ],
       "ui": {
-        "title": "279年 末年大归附",
-        "subtitle": "多地人口单位突然倒向强者",
-        "focus_regions": ["Gansu", "Jiangsu"],
-        "effect": "betrayal_flash",
-        "duration_seconds": 2.7
+        "title": "司隶迁徙",
+        "subtitle": "曹魏中原人口恢复",
+        "focus_regions": ["Henan", "Shaanxi"],
+        "effect": "default_banner",
+        "duration_seconds": 3.0
       },
-      "narration": "末年大归附会制造最后一次大规模改色和人口单位转投。"
+      "narration": "司隶迁徙补充曹魏人口池，推动最后阶段的指数增长。"
+    },
+    {
+      "id": "bashu_revival_277",
+      "year": 277,
+      "name_cn": "巴蜀复兴",
+      "category": "population",
+      "importance": 6,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "add_resources", "target": "liu_bei", "value": 360},
+        {"type": "add_balls", "target": "liu_bei", "value": 18},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.3, "duration_years": 4}
+      ],
+      "ui": {
+        "title": "巴蜀复兴",
+        "subtitle": "蜀汉末段人口反弹",
+        "focus_regions": ["Sichuan", "Chongqing"],
+        "effect": "default_banner",
+        "duration_seconds": 3.1
+      },
+      "narration": "巴蜀复兴给蜀汉最后一次人口反弹。"
+    },
+    {
+      "id": "final_surrenders_279",
+      "year": 279,
+      "name_cn": "终局大归降",
+      "category": "surrender",
+      "importance": 10,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "sun_quan", "owner": "cao", "region": "Jiangsu", "radius": 125, "ball_fraction": 0.38},
+        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Sichuan", "radius": 110, "ball_fraction": 0.28},
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.45, "duration_years": 3},
+        {"type": "add_balls", "target": "cao", "value": 24}
+      ],
+      "ui": {
+        "title": "终局大归降",
+        "subtitle": "末段大规模人口转移",
+        "focus_regions": ["Jiangsu", "Sichuan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 4.0
+      },
+      "narration": "终局阶段触发大归降，大片边界和人口单位会快速摆动。"
     }
   ]
 }

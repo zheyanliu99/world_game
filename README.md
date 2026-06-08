@@ -4,8 +4,9 @@ A local Python project for historical war simulation videos and game-like map
 simulations. It currently supports two modes:
 
 - Scripted Three Kingdoms video generation with historical event overlays.
-- Marble-style real-map simulation where moving balls represent units, colored
-  cells represent territory, and physics/randomness drives conquest.
+- Marble-style real-map simulation where moving population units represent
+  people/armies, colored cells represent territory, and physics/randomness
+  drives conquest.
 
 ## Quick Start
 
@@ -52,7 +53,7 @@ E      export configured run
 Esc    quit
 ```
 
-Export a two-minute, 60fps Marble-mode video:
+Export a three-minute, 60fps Marble-mode video:
 
 ```bash
 .venv/bin/python scripts/generate_demo.py --scenario configs/scenarios/sanguo_marble_real_map_demo.json
@@ -75,14 +76,15 @@ The default Wei/Shu/Wu population-unit production uses Three Kingdoms
 registered population figures as configurable gameplay weights: Cao Wei
 4,432,881, Shu Han 1,082,000, and Eastern Wu 2,535,000. These weights affect
 initial population units, resource income, and readable max unit caps; they are
-not exact historical population reconstruction. The fourth faction, `群雄`,
-represents everyone outside the three kingdoms.
+not exact historical population reconstruction.
 
 The default Marble event timeline also includes incident and betrayal effects.
 Betrayal/surrender incidents can flip nearby cells and convert nearby population
 units to another kingdom, while temporary speed boosts affect units already on
 the map and draw short wind trails. Ball capacity ramps upward with exponential
-population recovery, so the screen fills as years pass.
+population recovery, so the screen fills as years pass. If a kingdom drops below
+10% of total land, it can no longer capture new territory and starts losing
+population units and population resources until it recovers or dies out.
 
 The real map is also grouped into coarse historical 州 overlays such as 益州,
 荆州, 扬州, and 凉州. Thin state borders and state labels are rendered on the map.
@@ -92,6 +94,9 @@ update by year and sit at the center of each kingdom's largest connected
 territory, rather than a fixed province. Strategic bounce steering can bend a
 non-enemy-wall rebound toward a configured enemy target, and timed alliances can
 prevent allied border capture until an event breaks the alliance.
+When control of a state flips, the losing kingdom drops a configurable
+percentage of its population resource pool, and the winning kingdom gains that
+same amount.
 
 ## Development
 

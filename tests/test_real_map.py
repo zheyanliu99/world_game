@@ -61,10 +61,10 @@ def test_owner_for_province_uses_default() -> None:
     assert owner_for_province("Unknown Province", overlay) == "cao"
 
 
-def test_default_overlay_targets_four_marble_factions() -> None:
+def test_default_overlay_targets_three_marble_factions() -> None:
     overlay = read_json("configs/maps/sanguo_historical_overlay.json")
     owners = {overlay["default_owner"]}
     owners.update(rule["owner"] for rule in overlay["province_owner_rules"])
     owners.update(overlay["spawn_province_rules"].keys())
 
-    assert owners == {"cao", "liu_bei", "sun_quan", "qunxiong"}
+    assert owners == {"cao", "liu_bei", "sun_quan"}

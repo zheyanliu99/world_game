@@ -1,12 +1,14 @@
 {
-  "default_owner": "qunxiong",
+  "default_owner": "cao",
   "province_owner_rules": [
     {
       "contains": [
         "Sichuan",
         "Chongqing",
         "Yunnan",
-        "Guizhou"
+        "Guizhou",
+        "Tibet",
+        "Qinghai"
       ],
       "owner": "liu_bei"
     },
@@ -20,7 +22,13 @@
         "Guangdong",
         "Guangxi",
         "Hainan",
-        "Taiwan"
+        "Taiwan",
+        "Hubei",
+        "Hunan",
+        "Anhui",
+        "Macau",
+        "Hong Kong",
+        "Guangzhou"
       ],
       "owner": "sun_quan"
     },
@@ -33,17 +41,20 @@
         "Shaanxi",
         "Henan",
         "Shandong",
-        "Anhui",
-        "Hubei",
-        "Hunan"
+        "Gansu",
+        "Liaoning",
+        "Jilin",
+        "Heilongjiang",
+        "Ningxia",
+        "Inner Mongolia",
+        "Xinjiang"
       ],
       "owner": "cao"
     }
   ],
   "spawn_province_rules": {
-    "cao": ["Henan", "Shandong", "Hebei", "Shaanxi"],
-    "liu_bei": ["Sichuan", "Chongqing", "Yunnan", "Guizhou"],
-    "sun_quan": ["Jiangsu", "Zhejiang", "Shanghai", "Fujian", "Guangdong"],
-    "qunxiong": ["Gansu", "Liaoning", "Inner Mongolia", "Xinjiang", "Tibet"]
+    "cao": ["Henan", "Shandong", "Hebei", "Shaanxi", "Gansu"],
+    "liu_bei": ["Sichuan", "Chongqing", "Yunnan", "Guizhou", "Tibet"],
+    "sun_quan": ["Jiangsu", "Zhejiang", "Shanghai", "Fujian", "Guangdong", "Hubei", "Hunan"]
   }
 }
