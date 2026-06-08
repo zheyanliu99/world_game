@@ -77,4 +77,4 @@ def test_agentic_static_ui_is_served() -> None:
 
     assert response.status_code == 200
     assert "mapCanvas" in response.text
-    assert "Resolve Round" in response.text
+    assert "结算回合" in response.text

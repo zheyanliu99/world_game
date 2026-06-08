@@ -1,26 +1,35 @@
 const policies = ["balanced", "farming", "war", "logistics", "defense", "diplomacy"];
 const policyLabels = {
-  balanced: "Balanced",
-  farming: "Farming",
-  war: "War",
-  logistics: "Logistics",
-  defense: "Defense",
-  diplomacy: "Diplomacy",
+  balanced: "均衡",
+  farming: "屯田",
+  war: "征伐",
+  logistics: "转运",
+  defense: "固守",
+  diplomacy: "外交",
 };
 
 const typeLabels = {
-  army: "Army",
-  worker: "Worker",
-  scout: "Scout",
-  caravan: "Caravan",
+  army: "军",
+  worker: "田官",
+  scout: "斥候",
+  caravan: "辎重",
+};
+
+const actionLabels = {
+  rest: "休整",
+  attack: "进攻",
+  defend: "固守",
+  scout: "侦察",
+  farm: "屯田",
+  transfer: "转运",
 };
 
 const resourceLabels = {
-  food: "Food",
-  weapons: "Arms",
-  gold: "Gold",
-  manpower: "Men",
-  intel: "Intel",
+  food: "粮",
+  weapons: "兵",
+  gold: "金",
+  manpower: "丁",
+  intel: "报",
 };
 
 let game = null;
@@ -46,6 +55,7 @@ const elements = {
   logList: document.getElementById("logList"),
   statusPill: document.getElementById("statusPill"),
   winnerBanner: document.getElementById("winnerBanner"),
+  edictText: document.getElementById("edictText"),
 };
 
 async function api(path, options = {}) {
@@ -61,7 +71,7 @@ async function api(path, options = {}) {
 }
 
 async function startGame() {
-  setStatus("Starting");
+  setStatus("开局");
   game = await api("/api/games", {
     method: "POST",
     body: JSON.stringify({ player_faction: "liu_bei" }),
@@ -70,30 +80,30 @@ async function startGame() {
   orderDrafts = [];
   diplomacyDrafts = [];
   render();
-  setStatus("Ready");
+  setStatus("待命");
 }
 
 async function saveCommand() {
   if (!game) return;
-  setStatus("Saving");
+  setStatus("保存");
   game = await api(`/api/games/${game.game_id}/command`, {
     method: "POST",
     body: JSON.stringify(commandPayload()),
   });
   render();
-  setStatus("Saved");
+  setStatus("已存");
 }
 
 async function resolveRound() {
   if (!game || game.finished) return;
-  setStatus("Resolving");
+  setStatus("推演");
   await saveCommand();
   game = await api(`/api/games/${game.game_id}/resolve`, { method: "POST" });
   selectedPolicy = game.current_player_policy || selectedPolicy;
   orderDrafts = [];
   diplomacyDrafts = [];
   render();
-  setStatus(game.finished ? "Finished" : "Ready");
+  setStatus(game.finished ? "终局" : "待命");
 }
 
 function commandPayload() {
@@ -111,8 +121,11 @@ function setStatus(text) {
 
 function render() {
   if (!game) return;
-  elements.roundLine.textContent = `Round ${game.round} / ${game.max_rounds}`;
+  elements.roundLine.textContent = `${game.round} / ${game.max_rounds} 回合`;
   elements.strategyInput.value = game.current_player_command || elements.strategyInput.value;
+  elements.edictText.textContent = game.finished
+    ? `${game.factions[game.winner]?.name || "天下"}定鼎，二十回合之争落幕。`
+    : `蜀汉军议：${elements.strategyInput.value || "结吴、守汉中、探荆州，二十回合内争天下。"}`;
   renderPolicies();
   renderUnits();
   renderDrafts();
@@ -172,29 +185,29 @@ function renderUnits() {
 function actionButtonsFor(unit) {
   if (unit.unit_type === "army") {
     return [
-      { label: "Attack", order: attackOrder(unit) },
-      { label: "Defend", order: { unit_id: unit.id, action: "defend", region_id: unit.region_id } },
-      { label: "Rest", order: { unit_id: unit.id, action: "rest" } },
+      { label: "进攻", order: attackOrder(unit) },
+      { label: "固守", order: { unit_id: unit.id, action: "defend", region_id: unit.region_id } },
+      { label: "休整", order: { unit_id: unit.id, action: "rest" } },
     ];
   }
   if (unit.unit_type === "worker") {
     return [
-      { label: "Farm", order: { unit_id: unit.id, action: "farm", region_id: unit.region_id } },
-      { label: "Defend", order: { unit_id: unit.id, action: "defend", region_id: unit.region_id } },
-      { label: "Rest", order: { unit_id: unit.id, action: "rest" } },
+      { label: "屯田", order: { unit_id: unit.id, action: "farm", region_id: unit.region_id } },
+      { label: "固守", order: { unit_id: unit.id, action: "defend", region_id: unit.region_id } },
+      { label: "休整", order: { unit_id: unit.id, action: "rest" } },
     ];
   }
   if (unit.unit_type === "scout") {
     return [
-      { label: "Scout", order: scoutOrder(unit) },
-      { label: "Defend", order: { unit_id: unit.id, action: "defend", region_id: unit.region_id } },
-      { label: "Rest", order: { unit_id: unit.id, action: "rest" } },
+      { label: "侦察", order: scoutOrder(unit) },
+      { label: "固守", order: { unit_id: unit.id, action: "defend", region_id: unit.region_id } },
+      { label: "休整", order: { unit_id: unit.id, action: "rest" } },
     ];
   }
   return [
-    { label: "Weapons", order: transferOrder(unit, "weapons") },
-    { label: "Food", order: transferOrder(unit, "food") },
-    { label: "Rest", order: { unit_id: unit.id, action: "rest" } },
+    { label: "武器", order: transferOrder(unit, "weapons") },
+    { label: "粮草", order: transferOrder(unit, "food") },
+    { label: "休整", order: { unit_id: unit.id, action: "rest" } },
   ];
 }
 
@@ -236,7 +249,7 @@ function renderDrafts() {
     row.innerHTML = `<span>${label}</span>`;
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.textContent = "Remove";
+    remove.textContent = "撤";
     remove.addEventListener("click", () => {
       if (draft.kind === "order") orderDrafts.splice(draft.index, 1);
       else diplomacyDrafts.splice(draft.index, 1);
@@ -252,31 +265,31 @@ function orderLabel(order) {
   const target = order.target_region_id || order.region_id;
   const regionName = target && regions[target] ? regions[target].name_cn : "";
   const resource = order.resource ? ` ${resourceLabels[order.resource]}` : "";
-  return `${order.unit_id}: ${order.action}${resource}${regionName ? ` → ${regionName}` : ""}`;
+  return `${order.unit_id}: ${actionLabels[order.action]}${resource}${regionName ? ` -> ${regionName}` : ""}`;
 }
 
 function diplomacyLabel(order) {
   const faction = game.factions[order.target]?.name || order.target;
-  return `${order.type.replace("_", " ")} · ${faction}`;
+  return `${order.type === "propose_alliance" ? "结盟" : "破盟"} · ${faction}`;
 }
 
 function renderFactions() {
   const rows = Object.values(game.factions).sort((a, b) => b.score - a.score);
   elements.factionList.innerHTML = "";
-  rows.forEach((faction) => {
+  rows.forEach((faction, index) => {
     const row = document.createElement("article");
     row.className = "faction-row";
     row.innerHTML = `
       <div class="faction-title">
-        <span><span class="swatch" style="background:${faction.color}"></span>${faction.name}</span>
-        <span>${faction.region_count} regions · ${faction.score}</span>
+        <span><span class="swatch" style="background:${faction.color}"></span>${index + 1}. ${faction.name}</span>
+        <span>${faction.region_count}州/${faction.unit_count}部</span>
       </div>
       <div class="resource-grid">
-        <span>${resourceLabels.food}: ${faction.resources.food}</span>
-        <span>${resourceLabels.weapons}: ${faction.resources.weapons}</span>
-        <span>${resourceLabels.gold}: ${faction.resources.gold}</span>
-        <span>${resourceLabels.manpower}: ${faction.resources.manpower}</span>
-        <span>${resourceLabels.intel}: ${faction.resources.intel}</span>
+        <span>${resourceLabels.food}${faction.resources.food}</span>
+        <span>${resourceLabels.weapons}${faction.resources.weapons}</span>
+        <span>${resourceLabels.gold}${faction.resources.gold}</span>
+        <span>${resourceLabels.manpower}${faction.resources.manpower}</span>
+        <span>${resourceLabels.intel}${faction.resources.intel}</span>
       </div>
     `;
     elements.factionList.appendChild(row);
@@ -295,8 +308,10 @@ function renderIntents() {
 
 function renderLogs() {
   const logs = [...game.logs].reverse().slice(0, 28);
+  const headline = logs.find((log) => log.title !== "Income") || logs[0];
+  const ordered = headline ? [headline, ...logs.filter((log) => log !== headline)] : logs;
   elements.logList.innerHTML = "";
-  logs.forEach((log) => {
+  ordered.forEach((log) => {
     const row = document.createElement("article");
     row.className = "log-row";
     row.dataset.tone = log.tone;
@@ -311,7 +326,7 @@ function renderWinner() {
     return;
   }
   elements.winnerBanner.hidden = false;
-  elements.winnerBanner.textContent = `${game.factions[game.winner].name} wins after ${game.round} rounds`;
+  elements.winnerBanner.textContent = `${game.factions[game.winner].name}定鼎天下 · ${game.round}回合`;
 }
 
 function drawMap() {
@@ -327,13 +342,14 @@ function drawMap() {
 
   const mapWidth = 1920;
   const mapHeight = 1080;
-  const scale = Math.min(rect.width / mapWidth, rect.height / mapHeight);
-  const offsetX = (rect.width - mapWidth * scale) / 2;
-  const offsetY = (rect.height - mapHeight * scale) / 2;
+  const uiReserve = rect.width > 1180 ? 180 : 250;
+  const scale = Math.min(rect.width / mapWidth, (rect.height - uiReserve) / mapHeight) * (rect.width > 1180 ? 1.12 : 1);
+  const offsetX = (rect.width - mapWidth * scale) / 2 - (rect.width > 1180 ? 40 : 0);
+  const offsetY = (rect.height - uiReserve - mapHeight * scale) / 2 + (rect.width > 1180 ? 60 : 170);
 
-  ctx.fillStyle = "#090a0b";
+  ctx.fillStyle = "#251f19";
   ctx.fillRect(0, 0, rect.width, rect.height);
-  drawGrid(ctx, rect.width, rect.height);
+  drawPaperNoise(ctx, rect.width, rect.height);
 
   game.regions.forEach((region) => {
     const owner = game.region_owners[region.id];
@@ -345,21 +361,19 @@ function drawMap() {
   drawUnits(ctx, offsetX, offsetY, scale);
 }
 
-function drawGrid(ctx, width, height) {
+function drawPaperNoise(ctx, width, height) {
   ctx.save();
-  ctx.strokeStyle = "rgba(214,179,95,0.05)";
-  ctx.lineWidth = 1;
-  for (let x = 0; x < width; x += 48) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, height);
-    ctx.stroke();
-  }
-  for (let y = 0; y < height; y += 48) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(width, y);
-    ctx.stroke();
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "rgba(58,48,37,0.46)");
+  gradient.addColorStop(0.48, "rgba(37,31,25,0.12)");
+  gradient.addColorStop(1, "rgba(10,8,6,0.24)");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "rgba(246,234,201,0.025)";
+  for (let i = 0; i < 900; i += 1) {
+    const x = (i * 97) % width;
+    const y = (i * 193) % height;
+    ctx.fillRect(x, y, 1, 1);
   }
   ctx.restore();
 }
@@ -373,9 +387,9 @@ function drawPolygon(ctx, polygon, offsetX, offsetY, scale, color, regionId) {
     else ctx.lineTo(x, y);
   });
   ctx.closePath();
-  ctx.fillStyle = hexToRgba(color, 0.72);
-  ctx.strokeStyle = "rgba(241,220,164,0.62)";
-  ctx.lineWidth = Math.max(1, scale * 2.4);
+  ctx.fillStyle = hexToRgba(color, 0.82);
+  ctx.strokeStyle = "rgba(245,238,206,0.62)";
+  ctx.lineWidth = Math.max(1, scale * 2);
   ctx.fill();
   ctx.stroke();
 
@@ -399,18 +413,18 @@ function drawRegionLabel(ctx, region, offsetX, offsetY, scale) {
   const faction = game.factions[owner];
   const x = offsetX + region.center[0] * scale;
   const y = offsetY + region.center[1] * scale;
-  const fontSize = Math.max(10, Math.min(15, 13 * scale + 5));
+  const fontSize = Math.max(13, Math.min(22, 17 * scale + 4));
   ctx.save();
-  ctx.font = `700 ${fontSize}px system-ui, sans-serif`;
+  ctx.font = `900 ${fontSize}px "Songti SC", serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4;
   ctx.strokeStyle = "rgba(0,0,0,0.76)";
-  ctx.fillStyle = "#fff4ce";
+  ctx.fillStyle = "#f6eac9";
   ctx.strokeText(region.name_cn, x, y - fontSize * 0.4);
   ctx.fillText(region.name_cn, x, y - fontSize * 0.4);
-  ctx.font = `600 ${Math.max(9, fontSize - 3)}px system-ui, sans-serif`;
-  ctx.fillStyle = "rgba(255,245,215,0.82)";
+  ctx.font = `800 ${Math.max(9, fontSize - 6)}px "PingFang SC", sans-serif`;
+  ctx.fillStyle = "rgba(255,242,199,0.82)";
   ctx.fillText(faction.name, x, y + fontSize * 0.75);
   ctx.restore();
 }
@@ -530,7 +544,7 @@ window.addEventListener("resize", () => {
 
 function showError(error) {
   console.error(error);
-  setStatus("Error");
+  setStatus("出错");
 }
 
 startGame().catch(showError);

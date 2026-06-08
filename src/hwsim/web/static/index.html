@@ -8,62 +8,63 @@
   </head>
   <body>
     <main class="shell">
-      <section class="topbar">
-        <div>
-          <h1>Agentic Three Kingdoms</h1>
+      <section class="battlefield">
+        <canvas id="mapCanvas" aria-label="Three Kingdoms strategy map"></canvas>
+
+        <div class="year-panel">
           <div id="roundLine" class="round-line">Round 0 / 20</div>
-        </div>
-        <div class="top-actions">
-          <button id="newGameBtn" type="button">New Game</button>
-          <button id="saveBtn" type="button">Save Command</button>
-          <button id="resolveBtn" type="button" class="primary">Resolve Round</button>
-        </div>
-      </section>
-
-      <section class="game-grid">
-        <div class="map-wrap">
-          <canvas id="mapCanvas" aria-label="Three Kingdoms strategy map"></canvas>
-          <div id="winnerBanner" class="winner-banner" hidden></div>
+          <span id="statusPill" class="status-pill">待命</span>
         </div>
 
-        <aside class="side-panel">
-          <section class="command-panel">
+        <div class="edict-panel">
+          <h1>Agentic Three Kingdoms</h1>
+          <p id="edictText">蜀汉军议：结吴、守汉中、探荆州，二十回合内争天下。</p>
+        </div>
+
+        <aside class="score-panel">
+          <h2>势力排名</h2>
+          <div id="factionList" class="faction-list"></div>
+        </aside>
+
+        <div id="winnerBanner" class="winner-banner" hidden></div>
+
+        <section class="command-dock">
+          <div class="command-panel">
             <div class="panel-head">
-              <h2>Shu Command</h2>
-              <span id="statusPill" class="status-pill">Ready</span>
+              <h2>蜀汉军令</h2>
+              <div class="top-actions">
+                <button id="newGameBtn" type="button">新局</button>
+                <button id="saveBtn" type="button">保存</button>
+                <button id="resolveBtn" type="button" class="primary">结算回合</button>
+              </div>
             </div>
-            <textarea id="strategyInput" rows="5">Form alliance with Wu, defend Hanzhong, scout Jingzhou, and prepare weapons for a northern attack.</textarea>
+            <textarea id="strategyInput" rows="3">Form alliance with Wu, defend Hanzhong, scout Jingzhou, and prepare weapons for a northern attack.</textarea>
             <div id="policyButtons" class="segmented"></div>
-          </section>
+            <div id="orderDrafts" class="drafts"></div>
+          </div>
 
-          <section class="orders-panel">
+          <div class="orders-panel">
             <div class="panel-head">
-              <h2>Units</h2>
-              <button id="clearOrdersBtn" type="button" class="quiet">Clear</button>
+              <h2>部队</h2>
+              <button id="clearOrdersBtn" type="button" class="quiet">清空</button>
             </div>
             <div id="unitList" class="unit-list"></div>
             <div class="diplomacy-row">
-              <button id="allyWuBtn" type="button">Ally Wu</button>
-              <button id="breakWuBtn" type="button">Break Wu</button>
+              <button id="allyWuBtn" type="button">联吴</button>
+              <button id="breakWuBtn" type="button">破盟</button>
             </div>
-            <div id="orderDrafts" class="drafts"></div>
-          </section>
-        </aside>
-      </section>
+          </div>
+        </section>
 
-      <section class="lower-grid">
-        <section class="score-panel">
-          <h2>Factions</h2>
-          <div id="factionList" class="faction-list"></div>
-        </section>
-        <section class="intent-panel">
-          <h2>Agent Intent</h2>
-          <div id="intentList" class="intent-list"></div>
-        </section>
         <section class="log-panel">
-          <h2>Round Log</h2>
+          <h2>战报</h2>
           <div id="logList" class="log-list"></div>
         </section>
+      </section>
+
+      <section class="intel-panel">
+        <h2>诸方意图</h2>
+        <div id="intentList" class="intent-list"></div>
       </section>
     </main>
 
