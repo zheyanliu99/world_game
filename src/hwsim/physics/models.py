@@ -35,6 +35,8 @@ class PhysicsConfig(BaseModel):
     surrender_unit_fraction: float = 0.0
     collapse_resource_decay: float = 0.0
     collapse_unit_loss_interval_frames: int = 0
+    enclave_cleanup_interval_frames: int = 0
+    enclave_cleanup_max_cells: int = 0
     state_capture_population_loss_fraction: float = 0.0
     state_capture_unit_fraction: float = 0.0
     spawn_interval_frames: int = 45
@@ -215,7 +217,7 @@ class MarbleGameState:
     frame: int = 0
     marbles: list[MarbleUnit] = field(default_factory=list)
     resources: dict[str, float] = field(default_factory=dict)
-    pending_ball_adds: list[tuple[str, int]] = field(default_factory=list)
+    pending_ball_adds: list[tuple[str, int, tuple[float, float] | None]] = field(default_factory=list)
     active_modifiers: list[MarbleModifier] = field(default_factory=list)
     state_controllers: dict[str, str] = field(default_factory=dict)
     alliances: list[Alliance] = field(default_factory=list)

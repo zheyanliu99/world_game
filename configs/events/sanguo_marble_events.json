@@ -510,29 +510,51 @@
     {
       "id": "wei_coup_260",
       "year": 260,
-      "name_cn": "魏宫震荡",
-      "category": "politics",
-      "importance": 7,
+      "name_cn": "姜维出祁山",
+      "category": "offensive",
+      "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 0.68, "duration_years": 7},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.55, "duration_years": 6},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.25, "duration_years": 7},
-        {"type": "add_balls", "target": "liu_bei", "value": 24}
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 0.72, "duration_years": 6},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.5, "duration_years": 6},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.24, "duration_years": 7},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Shaanxi", "radius": 115, "ball_fraction": 0.28},
+        {"type": "add_balls", "target": "liu_bei", "value": 22, "region": "Shaanxi"}
       ],
       "ui": {
-        "title": "魏宫震荡",
-        "subtitle": "曹魏内耗，蜀汉提速",
-        "focus_regions": ["Henan"],
+        "title": "姜维出祁山",
+        "subtitle": "蜀军自关中边界成片推进",
+        "focus_regions": ["Shaanxi", "Gansu"],
         "effect": "wind",
-        "duration_seconds": 3.1
+        "duration_seconds": 3.6
       },
-      "narration": "魏宫震荡让曹魏增殖放缓，蜀汉获得后期机动窗口。"
+      "narration": "姜维率军出祁山，关中边界的蜀汉人口单位从战区中心增援。"
     },
     {
-      "id": "shu_surrender_263",
+      "id": "sima_clan_feud_262",
+      "year": 262,
+      "name_cn": "司马内争",
+      "category": "politics",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 0.62, "duration_years": 7},
+        {"type": "marble_modifier", "target": "cao", "stat": "defense", "multiplier": 0.78, "duration_years": 5},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Henan", "radius": 95, "ball_fraction": 0.24}
+      ],
+      "ui": {
+        "title": "司马内争",
+        "subtitle": "中原守备松动",
+        "focus_regions": ["Henan"],
+        "effect": "default_banner",
+        "duration_seconds": 3.2
+      },
+      "narration": "司马氏内争削弱曹魏守备，中原部分城邑开始转向蜀汉。"
+    },
+    {
+      "id": "jiangwei_jiange_263",
       "year": 263,
-      "name_cn": "剑阁反攻",
+      "name_cn": "姜维守剑阁",
       "category": "surrender",
       "importance": 10,
       "trigger_conditions": [],
@@ -542,16 +564,16 @@
         {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Shaanxi", "radius": 120, "ball_fraction": 0.38},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.42, "duration_years": 7},
         {"type": "add_resources", "target": "liu_bei", "value": 520},
-        {"type": "add_balls", "target": "liu_bei", "value": 36}
+        {"type": "add_balls", "target": "liu_bei", "value": 34, "region": "Sichuan"}
       ],
       "ui": {
-        "title": "剑阁反攻",
-        "subtitle": "蜀汉收复巴蜀与关中边界",
+        "title": "姜维守剑阁",
+        "subtitle": "巴蜀豪族带头归附",
         "focus_regions": ["Sichuan", "Chongqing", "Shaanxi"],
         "effect": "betrayal_flash",
         "duration_seconds": 4.2
       },
-      "narration": "剑阁反攻是一场强事件，巴蜀与关中附近大量人口单位转向蜀汉。"
+      "narration": "姜维稳住剑阁，巴蜀豪族带头投降，人口单位从成都附近重新集结。"
     },
     {
       "id": "zhong_hui_mutiny_264",
@@ -575,6 +597,49 @@
       "narration": "钟会之乱让蜀地出现反复，部分人口单位短暂回到蜀汉。"
     },
     {
+      "id": "longyou_submit_265",
+      "year": 265,
+      "name_cn": "陇右诸将归蜀",
+      "category": "surrender",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Gansu", "radius": 150, "ball_fraction": 0.45},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Qinghai", "radius": 120, "ball_fraction": 0.35},
+        {"type": "add_balls", "target": "liu_bei", "value": 24, "region": "Gansu"},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.18, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "陇右诸将归蜀",
+        "subtitle": "西北成片倒向蜀汉",
+        "focus_regions": ["Gansu", "Qinghai"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.6
+      },
+      "narration": "陇右诸将带头归蜀，西北边地从州郡中心向外成片易帜。"
+    },
+    {
+      "id": "luo_xian_lu_kang_truce_267",
+      "year": 267,
+      "name_cn": "罗宪陆抗停战",
+      "category": "alliance",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "create_alliance", "factions": ["liu_bei", "sun_quan"], "duration_years": 3},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "defense", "multiplier": 1.18, "duration_years": 4},
+        {"type": "add_resources", "target": "liu_bei", "value": 260}
+      ],
+      "ui": {
+        "title": "罗宪陆抗停战",
+        "subtitle": "吴蜀边境暂时停火",
+        "focus_regions": ["Hubei", "Chongqing"],
+        "effect": "default_banner",
+        "duration_seconds": 3.4
+      },
+      "narration": "罗宪与陆抗达成停战，吴蜀边境暂时停止互相占地，蜀汉得以整理巴东防线。"
+    },
+    {
       "id": "jiangling_surrender_268",
       "year": 268,
       "name_cn": "江陵归附",
@@ -595,6 +660,27 @@
       "narration": "江陵发生虚构归附，让荆州附近人口重新摆动。"
     },
     {
+      "id": "jingzhou_clans_submit_269",
+      "year": 269,
+      "name_cn": "荆州豪族献城",
+      "category": "surrender",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "break_alliance", "factions": ["liu_bei", "sun_quan"]},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hunan", "radius": 130, "ball_fraction": 0.45},
+        {"type": "add_balls", "target": "liu_bei", "value": 20, "region": "Hunan"}
+      ],
+      "ui": {
+        "title": "荆州豪族献城",
+        "subtitle": "停战结束，荆南归蜀",
+        "focus_regions": ["Hubei", "Hunan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.5
+      },
+      "narration": "停战结束后，荆州豪族献城，蜀汉从荆南中心产出新的归附人口。"
+    },
+    {
       "id": "jiangnan_recovery_271",
       "year": 271,
       "name_cn": "江南归蜀",
@@ -605,7 +691,7 @@
         {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangsu", "radius": 145, "ball_fraction": 0.5},
         {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Zhejiang", "radius": 130, "ball_fraction": 0.44},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "max_units", "multiplier": 1.18, "duration_years": 8},
-        {"type": "add_balls", "target": "liu_bei", "value": 30}
+        {"type": "add_balls", "target": "liu_bei", "value": 28, "region": "Jiangsu"}
       ],
       "ui": {
         "title": "江南归蜀",
@@ -617,6 +703,28 @@
       "narration": "江南归蜀让东吴核心地区出现大规模归附，蜀汉获得沿江人口。"
     },
     {
+      "id": "zhuge_zhan_sili_273",
+      "year": 273,
+      "name_cn": "诸葛瞻入司隶",
+      "category": "offensive",
+      "importance": 8,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Henan", "radius": 160, "ball_fraction": 0.5},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Shanxi", "radius": 120, "ball_fraction": 0.32},
+        {"type": "add_balls", "target": "liu_bei", "value": 26, "region": "Henan"},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.35, "duration_years": 4}
+      ],
+      "ui": {
+        "title": "诸葛瞻入司隶",
+        "subtitle": "中原郡县连片易帜",
+        "focus_regions": ["Henan", "Shanxi"],
+        "effect": "wind",
+        "duration_seconds": 3.5
+      },
+      "narration": "诸葛瞻入司隶，中原郡县连续归附，蜀汉人口从洛阳附近扩散。"
+    },
+    {
       "id": "sili_migration_275",
       "year": 275,
       "name_cn": "司隶归心",
@@ -626,17 +734,20 @@
       "effects": [
         {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Henan", "radius": 150, "ball_fraction": 0.42},
         {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Shaanxi", "radius": 130, "ball_fraction": 0.45},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Fujian", "radius": 120, "ball_fraction": 0.38},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangdong", "radius": 130, "ball_fraction": 0.42},
         {"type": "add_resources", "target": "liu_bei", "value": 560},
+        {"type": "add_balls", "target": "liu_bei", "value": 26, "region": "Fujian"},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.38, "duration_years": 5}
       ],
       "ui": {
         "title": "司隶归心",
-        "subtitle": "中原人口向蜀汉转移",
-        "focus_regions": ["Henan", "Shaanxi"],
+        "subtitle": "中原与闽粤同步归降",
+        "focus_regions": ["Henan", "Shaanxi", "Fujian", "Guangdong"],
         "effect": "betrayal_flash",
         "duration_seconds": 3.6
       },
-      "narration": "司隶归心让中原核心人口向蜀汉转移，魏国进入崩解边缘。"
+      "narration": "司隶归心带动中原归附，同时闽粤地方首领投降，东吴南部开始瓦解。"
     },
     {
       "id": "bashu_revival_277",
@@ -646,8 +757,10 @@
       "importance": 6,
       "trigger_conditions": [],
       "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Ningxia", "radius": 120, "ball_fraction": 0.42},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangxi", "radius": 130, "ball_fraction": 0.5},
         {"type": "add_resources", "target": "liu_bei", "value": 700},
-        {"type": "add_balls", "target": "liu_bei", "value": 42},
+        {"type": "add_balls", "target": "liu_bei", "value": 38, "region": "Sichuan"},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.62, "duration_years": 4},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.55, "duration_years": 4},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.35, "duration_years": 4}
@@ -662,26 +775,122 @@
       "narration": "巴蜀复兴给蜀汉最后一次总动员，人口单位高速外扩。"
     },
     {
+      "id": "sun_hao_south_submit_276",
+      "year": 276,
+      "name_cn": "孙皓南州降表",
+      "category": "surrender",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangxi", "radius": 165, "ball_fraction": 0.58},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangdong", "radius": 165, "ball_fraction": 0.58},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hainan", "radius": 95, "ball_fraction": 0.55},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Taiwan", "radius": 100, "ball_fraction": 0.5},
+        {"type": "add_balls", "target": "liu_bei", "value": 30, "region": "Guangdong"}
+      ],
+      "ui": {
+        "title": "孙皓南州降表",
+        "subtitle": "岭南诸州带头归蜀",
+        "focus_regions": ["Guangdong", "Guangxi", "Hainan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.8
+      },
+      "narration": "孙皓失政，岭南诸州递上降表，归附兵力从广州附近集中产出。"
+    },
+    {
+      "id": "northern_prefectures_submit_278",
+      "year": 278,
+      "name_cn": "北方郡县连降",
+      "category": "surrender",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Hebei", "radius": 210, "ball_fraction": 0.68},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Shandong", "radius": 185, "ball_fraction": 0.62},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Liaoning", "radius": 190, "ball_fraction": 0.56},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Jilin", "radius": 145, "ball_fraction": 0.5},
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Inner Mongolia", "radius": 180, "ball_fraction": 0.46},
+        {"type": "add_balls", "target": "liu_bei", "value": 34, "region": "Hebei"}
+      ],
+      "ui": {
+        "title": "北方郡县连降",
+        "subtitle": "河北青徐接连归蜀",
+        "focus_regions": ["Hebei", "Shandong", "Liaoning"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.8
+      },
+      "narration": "北方郡县连降，魏国残余从河北、青徐到辽东逐步并入蜀汉。"
+    },
+    {
+      "id": "wu_last_prefectures_submit_278",
+      "year": 278,
+      "name_cn": "吴郡残部归蜀",
+      "category": "surrender",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangsu", "radius": 175, "ball_fraction": 0.62},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Zhejiang", "radius": 170, "ball_fraction": 0.62},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Fujian", "radius": 160, "ball_fraction": 0.58},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangxi", "radius": 160, "ball_fraction": 0.58},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Anhui", "radius": 145, "ball_fraction": 0.5},
+        {"type": "add_balls", "target": "liu_bei", "value": 30, "region": "Zhejiang"}
+      ],
+      "ui": {
+        "title": "吴郡残部归蜀",
+        "subtitle": "江南沿海州郡陆续纳降",
+        "focus_regions": ["Jiangsu", "Zhejiang", "Fujian", "Jiangxi"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.8
+      },
+      "narration": "吴郡残部陆续归蜀，江南沿海的归附人口从会稽附近集中产出。"
+    },
+    {
+      "id": "remote_garrisons_submit_278",
+      "year": 278,
+      "name_cn": "远州残部归蜀",
+      "category": "surrender",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Inner Mongolia", "radius": 230, "ball_fraction": 0.72},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Qinghai", "radius": 190, "ball_fraction": 0.68},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Tibet", "radius": 210, "ball_fraction": 0.64},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Gansu", "radius": 175, "ball_fraction": 0.66},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Heilongjiang", "radius": 185, "ball_fraction": 0.6},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Sichuan", "radius": 160, "ball_fraction": 0.58},
+        {"type": "add_balls", "target": "liu_bei", "value": 22, "region": "Qinghai"}
+      ],
+      "ui": {
+        "title": "远州残部归蜀",
+        "subtitle": "西北东北飞地成片纳降",
+        "focus_regions": ["Inner Mongolia", "Qinghai", "Tibet", "Heilongjiang"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 3.8
+      },
+      "narration": "远州残部主动归蜀，西北和东北的孤立据点从当地中心成片合并。"
+    },
+    {
       "id": "final_surrenders_279",
       "year": 279,
-      "name_cn": "终局大归降",
+      "name_cn": "魏吴残部纳降",
       "category": "surrender",
       "importance": 10,
       "trigger_conditions": [],
       "effects": [
         {"type": "surrender_faction", "target": "cao", "owner": "liu_bei", "value": 1.0},
         {"type": "surrender_faction", "target": "sun_quan", "owner": "liu_bei", "value": 1.0},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.55, "duration_years": 3},
-        {"type": "add_balls", "target": "liu_bei", "value": 36}
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.35, "duration_years": 3},
+        {"type": "add_balls", "target": "liu_bei", "value": 18, "region": "Henan"}
       ],
       "ui": {
-        "title": "终局大归降",
-        "subtitle": "魏吴举国归蜀",
+        "title": "魏吴残部纳降",
+        "subtitle": "残余政权正式归蜀",
         "focus_regions": ["Jiangsu", "Sichuan", "Henan"],
         "effect": "betrayal_flash",
         "duration_seconds": 4.0
       },
-      "narration": "终局阶段触发大归降，曹魏与东吴残余土地和人口单位全部归入蜀汉。"
+      "narration": "终局只处理残余政权，前面的州郡归附已经让统一过程逐步完成。"
     }
   ]
 }

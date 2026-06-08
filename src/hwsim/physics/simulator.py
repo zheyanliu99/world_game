@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 import random
-from collections import defaultdict
+from collections import defaultdict, deque
 from pathlib import Path
 
 import numpy as np
@@ -56,6 +56,7 @@ class MarbleSimulator:
                 self._apply_collapse_pressure()
                 self._apply_land_share_surrenders()
                 self._update_state_control_transfers()
+                self._cleanup_small_enclaves()
             for marble in self.state.marbles:
                 marble.age_frames += 1
                 marble.cooldown_frames = max(0, marble.cooldown_frames - 1)
@@ -143,15 +144,23 @@ class MarbleSimulator:
             return
         pending = self.state.pending_ball_adds
         self.state.pending_ball_adds = []
-        for faction_id, amount in pending:
+        for faction_id, amount, center in pending:
             for _ in range(amount):
                 if self._marble_count(faction_id) >= self._max_marble_count(faction_id):
                     break
-                if not self._spawn_marble(self.state, faction_id, free=True):
+                if not self._spawn_marble(self.state, faction_id, free=True, center=center):
                     break
 
-    def _spawn_marble(self, state: MarbleGameState, faction_id: str, free: bool) -> bool:
-        cell = state.grid.random_owned_cell(faction_id, self.rng)
+    def _spawn_marble(
+        self,
+        state: MarbleGameState,
+        faction_id: str,
+        free: bool,
+        center: tuple[float, float] | None = None,
+    ) -> bool:
+        cell = self._owned_cell_near_center(state, faction_id, center) if center else None
+        if cell is None:
+            cell = state.grid.random_owned_cell(faction_id, self.rng)
         if cell is None:
             return False
         x, y = state.grid.grid_to_canvas(*cell)
@@ -173,6 +182,30 @@ class MarbleSimulator:
         if not free:
             marble.cooldown_frames = 12
         return True
+
+    def _owned_cell_near_center(
+        self,
+        state: MarbleGameState,
+        faction_id: str,
+        center: tuple[float, float] | None,
+    ) -> tuple[int, int] | None:
+        if center is None:
+            return None
+        owner_index = state.grid.faction_index(faction_id)
+        center_gx, center_gy = state.grid.canvas_to_grid(*center)
+        grid_h, grid_w = state.grid.owner_grid.shape
+        max_radius = max(grid_w, grid_h)
+        candidates: list[tuple[int, int]] = []
+        for radius in range(0, max_radius + 1):
+            for gy in range(max(0, center_gy - radius), min(grid_h, center_gy + radius + 1)):
+                for gx in range(max(0, center_gx - radius), min(grid_w, center_gx + radius + 1)):
+                    if abs(gx - center_gx) != radius and abs(gy - center_gy) != radius:
+                        continue
+                    if int(state.grid.owner_grid[gy, gx]) == owner_index:
+                        candidates.append((gx, gy))
+            if candidates:
+                return candidates[self.rng.randrange(len(candidates))]
+        return None
 
     def _move_marbles(self) -> None:
         dt = 1 / self.scenario.physics.fps / max(1, self.scenario.physics.substeps)
@@ -330,11 +363,22 @@ class MarbleSimulator:
             return
         fraction = min(1.0, max(0.01, self.scenario.physics.partial_surrender_fraction))
         convert_count = max(1, int(round(len(xs) * fraction)))
-        picks = list(range(len(xs)))
-        self.rng.shuffle(picks)
+        center_x = float(xs.mean())
+        center_y = float(ys.mean())
+        picks = sorted(
+            range(len(xs)),
+            key=lambda index: (float(xs[index]) - center_x) ** 2 + (float(ys[index]) - center_y) ** 2,
+        )
+        converted_points: list[tuple[int, int]] = []
         for pick in picks[:convert_count]:
-            owner_grid[int(ys[pick]), int(xs[pick])] = winner_index
+            gy = int(ys[pick])
+            gx = int(xs[pick])
+            owner_grid[gy, gx] = winner_index
+            converted_points.append((gx, gy))
         self._convert_surrendered_units(loser, winner, state_index, self.scenario.physics.surrender_unit_fraction)
+        spawn_center = self._converted_cell_center(converted_points)
+        spawn_amount = max(1, min(10, convert_count // 120))
+        self.state.pending_ball_adds.append((winner, spawn_amount, spawn_center))
         self._transfer_population_pool(loser, winner, fraction * 0.5)
         self._add_surrender_event("partial", loser, winner)
 
@@ -378,6 +422,13 @@ class MarbleSimulator:
         self.state.resources[loser] = max(0.0, self.state.resources.get(loser, 0.0) - transfer)
         self.state.resources[winner] = self.state.resources.get(winner, 0.0) + transfer
 
+    def _converted_cell_center(self, points: list[tuple[int, int]]) -> tuple[float, float] | None:
+        if not points:
+            return None
+        avg_x = sum(x for x, _y in points) / len(points)
+        avg_y = sum(y for _x, y in points) / len(points)
+        return self.state.grid.grid_to_canvas(int(round(avg_x)), int(round(avg_y)))
+
     def _add_surrender_event(self, kind: str, loser: str, winner: str) -> None:
         loser_name = self.state.factions[loser].display_name(self.state.current_year)
         winner_name = self.state.factions[winner].display_name(self.state.current_year)
@@ -411,6 +462,45 @@ class MarbleSimulator:
                 continue
             self._transfer_state_population(state_id, previous_owner, new_owner)
             self.state.state_controllers[state_id] = new_owner
+
+    def _cleanup_small_enclaves(self) -> None:
+        interval = self.scenario.physics.enclave_cleanup_interval_frames
+        max_cells = self.scenario.physics.enclave_cleanup_max_cells
+        if interval <= 0 or max_cells <= 0 or self.state.frame % interval != 0:
+            return
+        owner_grid = self.state.grid.owner_grid
+        height, width = owner_grid.shape
+        visited = np.zeros(owner_grid.shape, dtype=bool)
+        conversions: list[tuple[list[tuple[int, int]], int]] = []
+
+        for start_y in range(height):
+            for start_x in range(width):
+                owner = int(owner_grid[start_y, start_x])
+                if owner < 0 or visited[start_y, start_x]:
+                    continue
+                component: list[tuple[int, int]] = []
+                neighbor_counts: dict[int, int] = {}
+                queue: deque[tuple[int, int]] = deque([(start_x, start_y)])
+                visited[start_y, start_x] = True
+                while queue:
+                    x, y = queue.popleft()
+                    component.append((x, y))
+                    for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                        if nx < 0 or ny < 0 or nx >= width or ny >= height:
+                            continue
+                        neighbor_owner = int(owner_grid[ny, nx])
+                        if neighbor_owner == owner and not visited[ny, nx]:
+                            visited[ny, nx] = True
+                            queue.append((nx, ny))
+                        elif neighbor_owner >= 0 and neighbor_owner != owner:
+                            neighbor_counts[neighbor_owner] = neighbor_counts.get(neighbor_owner, 0) + 1
+                if len(component) <= max_cells and neighbor_counts:
+                    target_owner = max(neighbor_counts.items(), key=lambda item: item[1])[0]
+                    conversions.append((component, target_owner))
+
+        for component, target_owner in conversions:
+            for x, y in component:
+                owner_grid[y, x] = target_owner
 
     def _transfer_state_population(self, state_id: str, loser: str, winner: str) -> None:
         if loser not in self.state.factions or winner not in self.state.factions:

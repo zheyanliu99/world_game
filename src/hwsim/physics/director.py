@@ -58,7 +58,8 @@ class MarbleEventDirector:
                     state.resources[effect.target] = state.resources.get(effect.target, 0) + float(effect.value or 0)
             elif effect.type == "add_balls":
                 if effect.target:
-                    state.pending_ball_adds.append((effect.target, max(0, int(effect.value or 0))))
+                    center = self._province_centroid(state, effect.region) if effect.region else None
+                    state.pending_ball_adds.append((effect.target, max(0, int(effect.value or 0)), center))
             elif effect.type == "betrayal":
                 self._apply_betrayal(state, effect)
             elif effect.type == "surrender_faction":
@@ -142,18 +143,18 @@ class MarbleEventDirector:
         fraction = effect.value if effect.value is not None else 1.0
         fraction = min(1.0, max(0.0, float(fraction)))
         ys, xs = self._owned_cells(state, from_index)
-        if len(xs) == 0:
-            return
-        if fraction >= 1.0:
-            state.grid.owner_grid[state.grid.owner_grid == from_index] = to_index
-        else:
-            convert_count = max(1, int(round(len(xs) * fraction)))
-            for y, x in zip(ys[:convert_count], xs[:convert_count], strict=False):
-                state.grid.owner_grid[int(y), int(x)] = to_index
-        for marble in state.marbles:
-            if marble.faction_id == effect.target:
-                marble.faction_id = effect.owner
-                marble.cooldown_frames = max(marble.cooldown_frames, 45)
+        if len(xs) > 0:
+            if fraction >= 1.0:
+                state.grid.owner_grid[state.grid.owner_grid == from_index] = to_index
+            else:
+                convert_count = max(1, int(round(len(xs) * fraction)))
+                for y, x in zip(ys[:convert_count], xs[:convert_count], strict=False):
+                    state.grid.owner_grid[int(y), int(x)] = to_index
+        candidates = [marble for marble in state.marbles if marble.faction_id == effect.target]
+        convert_count = len(candidates) if fraction >= 1.0 else int(round(len(candidates) * fraction))
+        for marble in candidates[:convert_count]:
+            marble.faction_id = effect.owner
+            marble.cooldown_frames = max(marble.cooldown_frames, 45)
         transfer = state.resources.get(effect.target, 0.0) * fraction
         state.resources[effect.target] = max(0.0, state.resources.get(effect.target, 0.0) - transfer)
         state.resources[effect.owner] = state.resources.get(effect.owner, 0.0) + transfer

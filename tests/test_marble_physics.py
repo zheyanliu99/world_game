@@ -260,6 +260,31 @@ def test_marble_event_add_balls_increases_unit_count() -> None:
     assert after == before + 2
 
 
+def test_region_add_balls_spawn_near_event_center() -> None:
+    event = HistoricalEvent.model_validate(
+        {
+            "id": "local_reinforce_184",
+            "year": 184,
+            "name_cn": "local",
+            "category": "test",
+            "importance": 1,
+            "trigger_conditions": [],
+            "effects": [{"type": "add_balls", "target": "cao", "value": 3, "region": "Alpha"}],
+            "ui": {"title": "local", "subtitle": "local", "duration_seconds": 1},
+            "narration": "local",
+        }
+    )
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[event]))
+    sim.state.marbles = []
+    sim.state.frame = 1
+
+    sim.step()
+
+    spawned = [marble for marble in sim.state.marbles if marble.faction_id == "cao"]
+    assert len(spawned) == 3
+    assert all(marble.x < 65 for marble in spawned)
+
+
 def test_betrayal_incident_converts_nearby_land_and_balls() -> None:
     event = HistoricalEvent.model_validate(
         {
@@ -353,6 +378,31 @@ def test_surrender_faction_event_converts_all_land_and_population() -> None:
     assert sim.state.marbles[0].faction_id == "liu_bei"
     assert sim.state.resources["cao"] == 0
     assert sim.state.resources["liu_bei"] == 120
+
+
+def test_surrender_faction_event_converts_units_when_land_is_already_lost() -> None:
+    event = HistoricalEvent.model_validate(
+        {
+            "id": "surrender_184",
+            "year": 184,
+            "name_cn": "surrender",
+            "category": "test",
+            "importance": 1,
+            "trigger_conditions": [],
+            "effects": [{"type": "surrender_faction", "target": "cao", "owner": "liu_bei", "value": 1.0}],
+            "ui": {"title": "surrender", "subtitle": "surrender", "duration_seconds": 1},
+            "narration": "surrender",
+        }
+    )
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[event]))
+    cao = sim.state.grid.faction_index("cao")
+    liu = sim.state.grid.faction_index("liu_bei")
+    sim.state.grid.owner_grid[sim.state.grid.owner_grid == cao] = liu
+    sim.state.marbles = [MarbleUnit(id=1, faction_id="cao", x=40, y=60, vx=0, vy=0, radius=4)]
+
+    sim.director.update(sim.state)
+
+    assert sim.state.marbles[0].faction_id == "liu_bei"
 
 
 def test_marble_event_modifiers_expire() -> None:
@@ -468,6 +518,8 @@ def test_low_land_share_triggers_yearly_partial_surrender_to_target_winner() -> 
 
     after = int((sim.state.grid.owner_grid == cao).sum())
     assert after < before
+    converted = np.argwhere(sim.state.grid.owner_grid == cao)
+    assert converted.size == 0 or converted[:, 1].max() - converted[:, 1].min() <= 1
     assert sim.state.marbles[0].faction_id == "liu_bei"
     assert sim.state.resources["cao"] < 100
     assert sim.state.resources["liu_bei"] > 0
@@ -494,6 +546,22 @@ def test_below_ten_percent_can_surrender_whole_country() -> None:
 
     assert not bool((sim.state.grid.owner_grid == cao).any())
     assert int((sim.state.grid.owner_grid == liu).sum()) == int(land.sum())
+
+
+def test_small_enclave_cleanup_merges_isolated_fragment() -> None:
+    scenario = _scenario()
+    scenario.physics.enclave_cleanup_interval_frames = 1
+    scenario.physics.enclave_cleanup_max_cells = 4
+    sim = MarbleSimulator(scenario, _prepared_map(), EventConfig(events=[]))
+    cao = sim.state.grid.faction_index("cao")
+    liu = sim.state.grid.faction_index("liu_bei")
+    land = sim.state.grid.province_id_grid >= 0
+    sim.state.grid.owner_grid[land] = liu
+    sim.state.grid.owner_grid[5, 5] = cao
+
+    sim._cleanup_small_enclaves()
+
+    assert sim.state.grid.owner_grid[5, 5] == liu
 
 
 def test_state_capture_transfers_population_to_winner() -> None:

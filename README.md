@@ -81,12 +81,14 @@ not exact historical population reconstruction.
 The default Marble event timeline also includes incident and betrayal effects.
 Betrayal/surrender incidents can flip nearby cells and convert nearby population
 units to another kingdom, while temporary speed boosts affect units already on
-the map and draw short wind trails. Ball capacity ramps upward with exponential
-population recovery, so the screen fills as years pass. The default director
-targets a 蜀汉 end state: late events favor Shu, and the final arc can resolve
-the map into one ruler. If a kingdom drops below 20% of total land, yearly
-collapse checks can make part of its territory and population surrender. Below
-10%, it can no longer capture new territory and may surrender the whole country.
+the map and draw short wind trails. Event reinforcements can specify a province,
+so surrendered population units spawn from the incident center instead of
+randomly across the map. Ball capacity ramps upward with exponential population
+recovery, so the screen fills as years pass. The default director targets a 蜀汉
+end state through a gradual late-game surrender chain, rather than one abrupt
+map flip. If a kingdom drops below 20% of total land, yearly collapse checks can
+make part of its territory and population surrender. Below 10%, it can no longer
+capture new territory and may surrender the whole country.
 
 The real map is also grouped into coarse historical 州 overlays such as 益州,
 荆州, 扬州, and 凉州. Thin state borders and state labels are rendered on the map.
@@ -98,7 +100,8 @@ non-enemy-wall rebound toward a configured enemy target, and timed alliances can
 prevent allied border capture until an event breaks the alliance.
 When control of a state flips, the losing kingdom drops a configurable
 percentage of its population resource pool, and the winning kingdom gains that
-same amount.
+same amount. Small isolated territory fragments are periodically merged into the
+neighboring majority owner to reduce messy flylands.
 
 ## Development
 
