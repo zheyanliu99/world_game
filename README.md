@@ -85,10 +85,13 @@ the map and draw short wind trails. Event reinforcements can specify a province,
 so surrendered population units spawn from the incident center instead of
 randomly across the map. Ball capacity ramps upward with exponential population
 recovery, so the screen fills as years pass. The default director targets a 蜀汉
-end state through a gradual late-game surrender chain, rather than one abrupt
-map flip. If a kingdom drops below 20% of total land, yearly collapse checks can
-make part of its territory and population surrender. Below 10%, it can no longer
-capture new territory and may surrender the whole country.
+dominant end state through a gradual late-game surrender chain, rather than one
+abrupt map flip. 东吴 also has a configurable Jiangdong homeland floor, so it can
+be reduced to a remnant but should not spend visible time as a landless faction.
+If a kingdom drops below 20% of total land, yearly collapse checks can make part
+of its territory and population surrender. Below 10%, it can no longer capture
+new territory and may surrender the whole country unless protected by a reserve
+rule.
 
 The real map is also grouped into coarse historical 州 overlays such as 益州,
 荆州, 扬州, and 凉州. Thin state borders and state labels are rendered on the map.

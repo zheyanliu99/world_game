@@ -626,8 +626,10 @@
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "create_alliance", "factions": ["liu_bei", "sun_quan"], "duration_years": 3},
+        {"type": "create_alliance", "factions": ["liu_bei", "sun_quan"], "duration_years": 6},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "defense", "multiplier": 1.18, "duration_years": 4},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.22, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 5},
         {"type": "add_resources", "target": "liu_bei", "value": 260}
       ],
       "ui": {
@@ -647,8 +649,9 @@
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hubei", "radius": 105, "ball_fraction": 0.36},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.18, "duration_years": 5}
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hubei", "radius": 80, "ball_fraction": 0.14},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.18, "duration_years": 5},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.08, "duration_years": 5}
       ],
       "ui": {
         "title": "江陵归附",
@@ -660,47 +663,48 @@
       "narration": "江陵发生虚构归附，让荆州附近人口重新摆动。"
     },
     {
-      "id": "jingzhou_clans_submit_269",
+      "id": "lu_kang_jingzhou_defense_269",
       "year": 269,
-      "name_cn": "荆州豪族献城",
-      "category": "surrender",
+      "name_cn": "陆抗固守荆州",
+      "category": "defense",
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "break_alliance", "factions": ["liu_bei", "sun_quan"]},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hunan", "radius": 130, "ball_fraction": 0.45},
-        {"type": "add_balls", "target": "liu_bei", "value": 20, "region": "Hunan"}
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.3, "duration_years": 7},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.22, "duration_years": 6},
+        {"type": "add_balls", "target": "sun_quan", "value": 22, "region": "Hunan"}
       ],
       "ui": {
-        "title": "荆州豪族献城",
-        "subtitle": "停战结束，荆南归蜀",
+        "title": "陆抗固守荆州",
+        "subtitle": "东吴稳住荆南防线",
         "focus_regions": ["Hubei", "Hunan"],
-        "effect": "betrayal_flash",
+        "effect": "default_banner",
         "duration_seconds": 3.5
       },
-      "narration": "停战结束后，荆州豪族献城，蜀汉从荆南中心产出新的归附人口。"
+      "narration": "陆抗固守荆州，东吴不会在中期轻易崩盘，并从荆南中心补充人口。"
     },
     {
-      "id": "jiangnan_recovery_271",
+      "id": "lu_kang_guards_jiangnan_271",
       "year": 271,
-      "name_cn": "江南归蜀",
-      "category": "surrender",
+      "name_cn": "陆抗守江南",
+      "category": "defense",
       "importance": 9,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangsu", "radius": 145, "ball_fraction": 0.5},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Zhejiang", "radius": 130, "ball_fraction": 0.44},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "max_units", "multiplier": 1.18, "duration_years": 8},
-        {"type": "add_balls", "target": "liu_bei", "value": 28, "region": "Jiangsu"}
+        {"type": "create_alliance", "factions": ["liu_bei", "sun_quan"], "duration_years": 4},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.34, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.24, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "max_units", "multiplier": 1.12, "duration_years": 7},
+        {"type": "add_balls", "target": "sun_quan", "value": 30, "region": "Jiangsu"}
       ],
       "ui": {
-        "title": "江南归蜀",
-        "subtitle": "东吴沿江人口倒向蜀汉",
+        "title": "陆抗守江南",
+        "subtitle": "东吴沿江防线再稳数年",
         "focus_regions": ["Zhejiang", "Jiangsu", "Fujian"],
-        "effect": "betrayal_flash",
+        "effect": "default_banner",
         "duration_seconds": 3.8
       },
-      "narration": "江南归蜀让东吴核心地区出现大规模归附，蜀汉获得沿江人口。"
+      "narration": "陆抗稳住江南，吴蜀短暂停战，东吴沿江人口不会过早归降。"
     },
     {
       "id": "zhuge_zhan_sili_273",
@@ -734,8 +738,8 @@
       "effects": [
         {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Henan", "radius": 150, "ball_fraction": 0.42},
         {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Shaanxi", "radius": 130, "ball_fraction": 0.45},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Fujian", "radius": 120, "ball_fraction": 0.38},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangdong", "radius": 130, "ball_fraction": 0.42},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Fujian", "radius": 80, "ball_fraction": 0.12},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangdong", "radius": 80, "ball_fraction": 0.12},
         {"type": "add_resources", "target": "liu_bei", "value": 560},
         {"type": "add_balls", "target": "liu_bei", "value": 26, "region": "Fujian"},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.38, "duration_years": 5}
@@ -747,7 +751,7 @@
         "effect": "betrayal_flash",
         "duration_seconds": 3.6
       },
-      "narration": "司隶归心带动中原归附，同时闽粤地方首领投降，东吴南部开始瓦解。"
+      "narration": "司隶归心带动中原归附，但闽粤只出现少量摇摆，东吴主力仍能守住江南。"
     },
     {
       "id": "bashu_revival_277",
@@ -758,7 +762,7 @@
       "trigger_conditions": [],
       "effects": [
         {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Ningxia", "radius": 120, "ball_fraction": 0.42},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangxi", "radius": 130, "ball_fraction": 0.5},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangxi", "radius": 90, "ball_fraction": 0.16},
         {"type": "add_resources", "target": "liu_bei", "value": 700},
         {"type": "add_balls", "target": "liu_bei", "value": 38, "region": "Sichuan"},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.62, "duration_years": 4},
@@ -775,27 +779,27 @@
       "narration": "巴蜀复兴给蜀汉最后一次总动员，人口单位高速外扩。"
     },
     {
-      "id": "sun_hao_south_submit_276",
+      "id": "sun_hao_south_mobilization_276",
       "year": 276,
-      "name_cn": "孙皓南州降表",
-      "category": "surrender",
+      "name_cn": "孙皓南州整军",
+      "category": "defense",
       "importance": 9,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangxi", "radius": 165, "ball_fraction": 0.58},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Guangdong", "radius": 165, "ball_fraction": 0.58},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Hainan", "radius": 95, "ball_fraction": 0.55},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Taiwan", "radius": 100, "ball_fraction": 0.5},
-        {"type": "add_balls", "target": "liu_bei", "value": 30, "region": "Guangdong"}
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.26, "duration_years": 4},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "spawn_rate", "multiplier": 1.2, "duration_years": 4},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "max_units", "multiplier": 1.08, "duration_years": 4},
+        {"type": "add_resources", "target": "sun_quan", "value": 420},
+        {"type": "add_balls", "target": "sun_quan", "value": 34, "region": "Guangdong"}
       ],
       "ui": {
-        "title": "孙皓南州降表",
-        "subtitle": "岭南诸州带头归蜀",
+        "title": "孙皓南州整军",
+        "subtitle": "岭南诸州继续支撑东吴",
         "focus_regions": ["Guangdong", "Guangxi", "Hainan"],
-        "effect": "betrayal_flash",
+        "effect": "default_banner",
         "duration_seconds": 3.8
       },
-      "narration": "孙皓失政，岭南诸州递上降表，归附兵力从广州附近集中产出。"
+      "narration": "孙皓强令南州整军，东吴在岭南继续补充人口单位，灭亡被推迟。"
     },
     {
       "id": "northern_prefectures_submit_278",
@@ -822,19 +826,19 @@
       "narration": "北方郡县连降，魏国残余从河北、青徐到辽东逐步并入蜀汉。"
     },
     {
-      "id": "wu_last_prefectures_submit_278",
-      "year": 278,
+      "id": "wu_last_prefectures_submit_279",
+      "year": 279,
       "name_cn": "吴郡残部归蜀",
       "category": "surrender",
       "importance": 9,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangsu", "radius": 175, "ball_fraction": 0.62},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Zhejiang", "radius": 170, "ball_fraction": 0.62},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Fujian", "radius": 160, "ball_fraction": 0.58},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangxi", "radius": 160, "ball_fraction": 0.58},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Anhui", "radius": 145, "ball_fraction": 0.5},
-        {"type": "add_balls", "target": "liu_bei", "value": 30, "region": "Zhejiang"}
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangsu", "radius": 150, "ball_fraction": 0.42},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Zhejiang", "radius": 145, "ball_fraction": 0.42},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Fujian", "radius": 130, "ball_fraction": 0.36},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Jiangxi", "radius": 130, "ball_fraction": 0.36},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Anhui", "radius": 120, "ball_fraction": 0.32},
+        {"type": "add_balls", "target": "liu_bei", "value": 20, "region": "Zhejiang"}
       ],
       "ui": {
         "title": "吴郡残部归蜀",
@@ -846,20 +850,20 @@
       "narration": "吴郡残部陆续归蜀，江南沿海的归附人口从会稽附近集中产出。"
     },
     {
-      "id": "remote_garrisons_submit_278",
-      "year": 278,
+      "id": "remote_garrisons_submit_279",
+      "year": 279,
       "name_cn": "远州残部归蜀",
       "category": "surrender",
       "importance": 9,
       "trigger_conditions": [],
       "effects": [
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Inner Mongolia", "radius": 230, "ball_fraction": 0.72},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Qinghai", "radius": 190, "ball_fraction": 0.68},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Tibet", "radius": 210, "ball_fraction": 0.64},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Gansu", "radius": 175, "ball_fraction": 0.66},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Heilongjiang", "radius": 185, "ball_fraction": 0.6},
-        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Sichuan", "radius": 160, "ball_fraction": 0.58},
-        {"type": "add_balls", "target": "liu_bei", "value": 22, "region": "Qinghai"}
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Inner Mongolia", "radius": 190, "ball_fraction": 0.46},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Qinghai", "radius": 160, "ball_fraction": 0.42},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Tibet", "radius": 170, "ball_fraction": 0.4},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Gansu", "radius": 145, "ball_fraction": 0.42},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Heilongjiang", "radius": 150, "ball_fraction": 0.38},
+        {"type": "betrayal", "target": "sun_quan", "owner": "liu_bei", "region": "Sichuan", "radius": 130, "ball_fraction": 0.34},
+        {"type": "add_balls", "target": "liu_bei", "value": 14, "region": "Qinghai"}
       ],
       "ui": {
         "title": "远州残部归蜀",
@@ -871,26 +875,26 @@
       "narration": "远州残部主动归蜀，西北和东北的孤立据点从当地中心成片合并。"
     },
     {
-      "id": "final_surrenders_279",
-      "year": 279,
-      "name_cn": "魏吴残部纳降",
+      "id": "final_surrenders_280",
+      "year": 280,
+      "name_cn": "魏降吴臣",
       "category": "surrender",
       "importance": 10,
       "trigger_conditions": [],
       "effects": [
         {"type": "surrender_faction", "target": "cao", "owner": "liu_bei", "value": 1.0},
-        {"type": "surrender_faction", "target": "sun_quan", "owner": "liu_bei", "value": 1.0},
+        {"type": "surrender_faction", "target": "sun_quan", "owner": "liu_bei", "value": 0.82},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.35, "duration_years": 3},
         {"type": "add_balls", "target": "liu_bei", "value": 18, "region": "Henan"}
       ],
       "ui": {
-        "title": "魏吴残部纳降",
-        "subtitle": "残余政权正式归蜀",
+        "title": "魏降吴臣",
+        "subtitle": "曹魏灭亡，东吴保留江东残境",
         "focus_regions": ["Jiangsu", "Sichuan", "Henan"],
         "effect": "betrayal_flash",
         "duration_seconds": 4.0
       },
-      "narration": "终局只处理残余政权，前面的州郡归附已经让统一过程逐步完成。"
+      "narration": "终局处理残余政权：曹魏灭亡，东吴称臣但仍保留江东残境，不会在画面中无地化。"
     }
   ]
 }

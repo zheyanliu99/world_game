@@ -37,6 +37,9 @@ class PhysicsConfig(BaseModel):
     collapse_unit_loss_interval_frames: int = 0
     enclave_cleanup_interval_frames: int = 0
     enclave_cleanup_max_cells: int = 0
+    minimum_land_cells_by_faction: dict[str, int] = Field(default_factory=dict)
+    minimum_units_by_faction: dict[str, int] = Field(default_factory=dict)
+    reserve_province_by_faction: dict[str, str] = Field(default_factory=dict)
     state_capture_population_loss_fraction: float = 0.0
     state_capture_unit_fraction: float = 0.0
     spawn_interval_frames: int = 45

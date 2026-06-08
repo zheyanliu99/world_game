@@ -47,6 +47,7 @@ class MarbleSimulator:
     def step(self, frames: int = 1) -> MarbleGameState:
         for _ in range(frames):
             self.director.update(self.state)
+            self._enforce_minimum_homelands()
             self._consume_pending_ball_adds()
             self._spawn_resources()
             for _substep in range(max(1, self.scenario.physics.substeps)):
@@ -57,9 +58,11 @@ class MarbleSimulator:
                 self._apply_land_share_surrenders()
                 self._update_state_control_transfers()
                 self._cleanup_small_enclaves()
+                self._enforce_minimum_homelands()
             for marble in self.state.marbles:
                 marble.age_frames += 1
                 marble.cooldown_frames = max(0, marble.cooldown_frames - 1)
+            self._enforce_minimum_homelands()
             self.state.frame += 1
         return self.state
 
@@ -501,6 +504,68 @@ class MarbleSimulator:
         for component, target_owner in conversions:
             for x, y in component:
                 owner_grid[y, x] = target_owner
+
+    def _enforce_minimum_homelands(self) -> None:
+        for faction_id, minimum_cells in self.scenario.physics.minimum_land_cells_by_faction.items():
+            if faction_id not in self.state.grid.faction_ids:
+                continue
+            minimum_cells = max(0, int(minimum_cells))
+            if minimum_cells > 0:
+                self._restore_minimum_land(faction_id, minimum_cells)
+            minimum_units = max(0, int(self.scenario.physics.minimum_units_by_faction.get(faction_id, 0)))
+            center = self._reserve_center(faction_id)
+            while self._marble_count(faction_id) < minimum_units:
+                if not self._spawn_marble(self.state, faction_id, free=True, center=center):
+                    break
+
+    def _restore_minimum_land(self, faction_id: str, minimum_cells: int) -> None:
+        owner_index = self.state.grid.faction_index(faction_id)
+        current_cells = int((self.state.grid.owner_grid == owner_index).sum())
+        missing = minimum_cells - current_cells
+        if missing <= 0:
+            return
+        center = self._reserve_center(faction_id)
+        if center is None:
+            return
+        center_gx, center_gy = self.state.grid.canvas_to_grid(*center)
+        candidates: list[tuple[float, int, int]] = []
+        grid_h, grid_w = self.state.grid.owner_grid.shape
+        for gy in range(grid_h):
+            for gx in range(grid_w):
+                if self.state.grid.province_id_grid[gy, gx] < 0:
+                    continue
+                if int(self.state.grid.owner_grid[gy, gx]) == owner_index:
+                    continue
+                distance_sq = (gx - center_gx) ** 2 + (gy - center_gy) ** 2
+                candidates.append((distance_sq, gx, gy))
+        candidates.sort(key=lambda item: item[0])
+        for _distance, gx, gy in candidates[:missing]:
+            self.state.grid.owner_grid[gy, gx] = owner_index
+
+    def _reserve_center(self, faction_id: str) -> tuple[float, float] | None:
+        reserve_name = self.scenario.physics.reserve_province_by_faction.get(faction_id)
+        if not reserve_name:
+            reserve_name = self.state.factions.get(faction_id).capital_region if faction_id in self.state.factions else None
+        if reserve_name:
+            center = self._province_centroid(reserve_name)
+            if center is not None:
+                return center
+        return self._owned_centroid(faction_id)
+
+    def _province_centroid(self, name_fragment: str) -> tuple[float, float] | None:
+        needle = name_fragment.lower()
+        matches = [
+            province
+            for province in self.state.grid.province_records
+            if needle in str(province.get("name", "")).lower()
+        ]
+        if not matches:
+            return None
+        province = max(matches, key=lambda item: int(item.get("cell_count", 0)))
+        centroid = province.get("centroid")
+        if not centroid or len(centroid) < 2:
+            return None
+        return float(centroid[0]), float(centroid[1])
 
     def _transfer_state_population(self, state_id: str, loser: str, winner: str) -> None:
         if loser not in self.state.factions or winner not in self.state.factions:

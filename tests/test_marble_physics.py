@@ -444,6 +444,7 @@ def test_default_marble_scenario_has_three_factions_and_three_minute_export() ->
     assert scenario.physics.min_land_share_to_capture == 0.1
     assert scenario.physics.partial_surrender_land_share == 0.2
     assert scenario.physics.whole_surrender_land_share == 0.1
+    assert scenario.physics.minimum_land_cells_by_faction["sun_quan"] > 0
     assert scenario.physics.state_capture_population_loss_fraction > 0
     assert scenario.target_winner == "liu_bei"
     assert scenario.video_length_seconds == 180
@@ -562,6 +563,24 @@ def test_small_enclave_cleanup_merges_isolated_fragment() -> None:
     sim._cleanup_small_enclaves()
 
     assert sim.state.grid.owner_grid[5, 5] == liu
+
+
+def test_minimum_homeland_restores_wu_land_and_units() -> None:
+    scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
+    scenario.physics.minimum_land_cells_by_faction = {"sun_quan": 12}
+    scenario.physics.minimum_units_by_faction = {"sun_quan": 2}
+    scenario.physics.reserve_province_by_faction = {"sun_quan": "Jiangsu"}
+    sim = MarbleSimulator(scenario, _three_kingdom_prepared_map(), EventConfig(events=[]))
+    sun = sim.state.grid.faction_index("sun_quan")
+    liu = sim.state.grid.faction_index("liu_bei")
+    sim.state.grid.owner_grid[sim.state.grid.owner_grid == sun] = liu
+    sim.state.marbles = [marble for marble in sim.state.marbles if marble.faction_id != "sun_quan"]
+
+    sim._enforce_minimum_homelands()
+
+    assert int((sim.state.grid.owner_grid == sun).sum()) == 12
+    assert sum(1 for marble in sim.state.marbles if marble.faction_id == "sun_quan") == 2
+    assert all(marble.x > 100 for marble in sim.state.marbles if marble.faction_id == "sun_quan")
 
 
 def test_state_capture_transfers_population_to_winner() -> None:
