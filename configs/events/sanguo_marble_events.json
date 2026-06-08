@@ -8,18 +8,42 @@
       "importance": 7,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.08, "duration_years": 8},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 8},
         {"type": "marble_modifier", "target": "liu_bei", "stat": "defense", "multiplier": 1.08, "duration_years": 8},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.05, "duration_years": 8}
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.06, "duration_years": 8},
+        {"type": "add_balls", "target": "cao", "value": 10},
+        {"type": "add_balls", "target": "liu_bei", "value": 6},
+        {"type": "add_balls", "target": "sun_quan", "value": 8}
       ],
       "ui": {
         "title": "184年 黄巾起义",
-        "subtitle": "三国边界开始松动",
+        "subtitle": "乱世爆发，三方征兵加速",
         "focus_regions": [],
         "effect": "collapse_flash",
         "duration_seconds": 2.4
       },
-      "narration": "黄巾之后，魏蜀吴三方弹球开始在真实地图边界上抢格子。"
+      "narration": "黄巾之后，魏蜀吴三方弹球快速增殖，在真实地图边界上抢格子。"
+    },
+    {
+      "id": "xu_province_refugees_194",
+      "year": 194,
+      "name_cn": "徐州流民",
+      "category": "incident",
+      "importance": 6,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.2, "duration_years": 5},
+        {"type": "add_balls", "target": "cao", "value": 8},
+        {"type": "add_balls", "target": "sun_quan", "value": 5}
+      ],
+      "ui": {
+        "title": "194年 徐州流民",
+        "subtitle": "人口迁徙让前线球群变密",
+        "focus_regions": [],
+        "effect": "marching_arrows",
+        "duration_seconds": 2.2
+      },
+      "narration": "流民和军屯让前线弹球数量增加，地图上的碰撞开始变得更频繁。"
     },
     {
       "id": "guandu_200",
@@ -29,19 +53,19 @@
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "power", "multiplier": 1.12, "duration_years": 9},
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.08, "duration_years": 6},
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.1, "duration_years": 9},
-        {"type": "add_balls", "target": "cao", "value": 3}
+        {"type": "marble_modifier", "target": "cao", "stat": "power", "multiplier": 1.14, "duration_years": 9},
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.35, "duration_years": 6},
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.25, "duration_years": 9},
+        {"type": "add_balls", "target": "cao", "value": 14}
       ],
       "ui": {
         "title": "200年 官渡之战",
-        "subtitle": "曹魏获得北方推进窗口",
+        "subtitle": "曹魏高速推进窗口",
         "focus_regions": [],
         "effect": "marching_arrows",
         "duration_seconds": 2.4
       },
-      "narration": "官渡之后，曹魏弹球获得短期力量和征兵加成，但仍会被边界反弹。"
+      "narration": "官渡之后，曹魏弹球获得更明显的速度和征兵加成，但仍会被边界反弹。"
     },
     {
       "id": "chibi_208",
@@ -51,20 +75,22 @@
       "importance": 10,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.9, "duration_years": 7},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.06, "duration_years": 5},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.12, "duration_years": 7},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.05, "duration_years": 5},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.12, "duration_years": 7}
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 0.78, "duration_years": 7},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.28, "duration_years": 6},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.16, "duration_years": 7},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.32, "duration_years": 6},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "defense", "multiplier": 1.14, "duration_years": 7},
+        {"type": "add_balls", "target": "liu_bei", "value": 8},
+        {"type": "add_balls", "target": "sun_quan", "value": 10}
       ],
       "ui": {
         "title": "208年 赤壁之战",
-        "subtitle": "曹魏减速，蜀吴获得边界优势",
+        "subtitle": "曹魏减速，蜀吴高速反击",
         "focus_regions": [],
         "effect": "fire_overlay",
         "duration_seconds": 2.7
       },
-      "narration": "赤壁不会强行改色，只让曹魏减速，并提高蜀吴的边界作战效率。"
+      "narration": "赤壁不会强行改色，但曹魏减速，蜀吴弹球速度明显提升。"
     },
     {
       "id": "liu_bei_enters_shu_214",
@@ -74,19 +100,61 @@
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.18, "duration_years": 9},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.1, "duration_years": 9},
-        {"type": "add_resources", "target": "liu_bei", "value": 90},
-        {"type": "add_balls", "target": "liu_bei", "value": 4}
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "spawn_rate", "multiplier": 1.35, "duration_years": 9},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.22, "duration_years": 7},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.12, "duration_years": 9},
+        {"type": "add_resources", "target": "liu_bei", "value": 160},
+        {"type": "add_balls", "target": "liu_bei", "value": 16}
       ],
       "ui": {
         "title": "214年 刘备入蜀",
-        "subtitle": "蜀汉获得西南资源",
+        "subtitle": "蜀汉获得西南人口与资源",
         "focus_regions": [],
         "effect": "marching_arrows",
         "duration_seconds": 2.4
       },
-      "narration": "刘备入蜀表现为蜀汉增殖和占格能力提升，不再加入其他小势力。"
+      "narration": "刘备入蜀表现为蜀汉球群增殖、速度提高，占格能力也随之增强。"
+    },
+    {
+      "id": "sichuan_local_betrayal_216",
+      "year": 216,
+      "name_cn": "西川豪强倒戈",
+      "category": "betrayal",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "liu_bei", "owner": "cao", "region": "Sichuan", "radius": 70, "ball_fraction": 0.22},
+        {"type": "marble_modifier", "target": "cao", "stat": "capture", "multiplier": 1.12, "duration_years": 4}
+      ],
+      "ui": {
+        "title": "216年 西川豪强倒戈",
+        "subtitle": "局部土地与弹球转投曹魏",
+        "focus_regions": ["Sichuan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 2.4
+      },
+      "narration": "叛变事件会把附近一部分地格和弹球直接转投另一国，局势会突然翻面。"
+    },
+    {
+      "id": "jingzhou_betrayal_219",
+      "year": 219,
+      "name_cn": "荆州背盟",
+      "category": "betrayal",
+      "importance": 9,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Hubei", "radius": 105, "ball_fraction": 0.45},
+        {"type": "betrayal", "target": "liu_bei", "owner": "sun_quan", "region": "Hunan", "radius": 95, "ball_fraction": 0.35},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.3, "duration_years": 5}
+      ],
+      "ui": {
+        "title": "219年 荆州背盟",
+        "subtitle": "东吴偷袭，边界突然换色",
+        "focus_regions": ["Hubei", "Hunan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 2.6
+      },
+      "narration": "荆州背盟会把附近蜀汉地格和弹球转给东吴，视频里会出现突然改色。"
     },
     {
       "id": "cao_pi_emperor_220",
@@ -97,17 +165,18 @@
       "trigger_conditions": [],
       "effects": [
         {"type": "rename_faction", "target": "cao", "name_cn": "曹魏"},
-        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.1, "duration_years": 10},
-        {"type": "marble_modifier", "target": "cao", "stat": "max_units", "multiplier": 1.12, "duration_years": 10}
+        {"type": "marble_modifier", "target": "cao", "stat": "spawn_rate", "multiplier": 1.25, "duration_years": 10},
+        {"type": "marble_modifier", "target": "cao", "stat": "max_units", "multiplier": 1.18, "duration_years": 10},
+        {"type": "add_balls", "target": "cao", "value": 18}
       ],
       "ui": {
         "title": "220年 曹丕称帝",
-        "subtitle": "曹魏征兵效率提升",
+        "subtitle": "曹魏上限与征兵效率提升",
         "focus_regions": [],
         "effect": "edict_overlay",
         "duration_seconds": 2.3
       },
-      "narration": "曹丕称帝后，曹魏获得征兵效率，但无法直接穿过敌国边界。"
+      "narration": "曹丕称帝后，曹魏获得更高球数上限和征兵效率，但仍不能穿墙。"
     },
     {
       "id": "yiling_222",
@@ -117,17 +186,39 @@
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "power", "multiplier": 0.94, "duration_years": 5},
-        {"type": "marble_modifier", "target": "sun_quan", "stat": "power", "multiplier": 1.06, "duration_years": 5}
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "power", "multiplier": 0.92, "duration_years": 5},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "power", "multiplier": 1.1, "duration_years": 5},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "speed", "multiplier": 1.25, "duration_years": 4},
+        {"type": "add_balls", "target": "sun_quan", "value": 12}
       ],
       "ui": {
         "title": "222年 夷陵之战",
-        "subtitle": "蜀汉攻势短暂降温",
+        "subtitle": "蜀汉攻势降温，东吴反弹",
         "focus_regions": [],
         "effect": "fire_overlay",
         "duration_seconds": 2.3
       },
-      "narration": "夷陵让蜀汉弹球力量短暂下降，东吴获得反弹机会。"
+      "narration": "夷陵让蜀汉弹球力量短暂下降，东吴获得速度和增援。"
+    },
+    {
+      "id": "wu_defection_228",
+      "year": 228,
+      "name_cn": "江东将校倒戈",
+      "category": "betrayal",
+      "importance": 6,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "sun_quan", "owner": "cao", "region": "Jiangsu", "radius": 75, "ball_fraction": 0.24},
+        {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 1.18, "duration_years": 4}
+      ],
+      "ui": {
+        "title": "228年 江东将校倒戈",
+        "subtitle": "东吴沿江局部失守",
+        "focus_regions": ["Jiangsu"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 2.2
+      },
+      "narration": "江东将校倒戈会让东吴首都附近部分地格和弹球转给曹魏。"
     },
     {
       "id": "northern_expeditions_227",
@@ -137,17 +228,60 @@
       "importance": 8,
       "trigger_conditions": [],
       "effects": [
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.1, "duration_years": 8},
-        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.12, "duration_years": 8}
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.38, "duration_years": 8},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "capture", "multiplier": 1.16, "duration_years": 8},
+        {"type": "add_balls", "target": "liu_bei", "value": 12}
       ],
       "ui": {
         "title": "227年 诸葛亮北伐",
-        "subtitle": "蜀汉北上窗口打开",
+        "subtitle": "蜀汉高速北上窗口打开",
         "focus_regions": [],
         "effect": "marching_arrows",
         "duration_seconds": 2.5
       },
-      "narration": "北伐阶段，蜀汉弹球速度和占格能力提升，能否突破仍看物理随机性。"
+      "narration": "北伐阶段，蜀汉弹球速度显著提升，能否突破仍看物理随机性。"
+    },
+    {
+      "id": "huainan_rebellion_257",
+      "year": 257,
+      "name_cn": "淮南叛乱",
+      "category": "betrayal",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "sun_quan", "region": "Anhui", "radius": 90, "ball_fraction": 0.3},
+        {"type": "marble_modifier", "target": "sun_quan", "stat": "capture", "multiplier": 1.18, "duration_years": 5},
+        {"type": "add_balls", "target": "sun_quan", "value": 10}
+      ],
+      "ui": {
+        "title": "257年 淮南叛乱",
+        "subtitle": "曹魏东南边界突然开裂",
+        "focus_regions": ["Anhui"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 2.5
+      },
+      "narration": "淮南叛乱会把安徽附近部分曹魏地格和弹球转给东吴，制造一次中后期事故。"
+    },
+    {
+      "id": "zhong_hui_mutiny_264",
+      "year": 264,
+      "name_cn": "钟会之乱",
+      "category": "betrayal",
+      "importance": 7,
+      "trigger_conditions": [],
+      "effects": [
+        {"type": "betrayal", "target": "cao", "owner": "liu_bei", "region": "Sichuan", "radius": 95, "ball_fraction": 0.32},
+        {"type": "marble_modifier", "target": "liu_bei", "stat": "speed", "multiplier": 1.25, "duration_years": 5},
+        {"type": "add_balls", "target": "liu_bei", "value": 10}
+      ],
+      "ui": {
+        "title": "264年 钟会之乱",
+        "subtitle": "蜀地残局再生变数",
+        "focus_regions": ["Sichuan"],
+        "effect": "betrayal_flash",
+        "duration_seconds": 2.5
+      },
+      "narration": "钟会之乱让后期局势再抖一次，蜀地附近可能出现突然倒戈。"
     }
   ]
 }

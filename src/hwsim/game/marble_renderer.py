@@ -141,6 +141,10 @@ class MarbleRenderer:
                 x = 210 + offset
                 draw.line((x, 160, x + 48, 132), fill=(255, 220, 120, 160), width=6)
                 draw.polygon([(x + 48, 132), (x + 31, 130), (x + 40, 147)], fill=(255, 220, 120, 160))
+        elif event.effect == "betrayal_flash":
+            for offset in range(-120, width, 90):
+                draw.line((offset, height * 0.18, offset + 170, height * 0.34), fill=(255, 70, 45, 150), width=5)
+                draw.line((offset + 34, height * 0.34, offset + 132, height * 0.18), fill=(255, 194, 84, 130), width=3)
 
         banner = (width // 2 - 360, 42, width // 2 + 360, 136)
         draw.rounded_rectangle(banner, radius=8, fill=(10, 8, 6, 225), outline=(238, 204, 130, 180), width=2)

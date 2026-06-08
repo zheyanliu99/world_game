@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from hwsim.core.models import Alliance, EventConfig, HistoricalEvent, TriggeredEvent
+from hwsim.core.models import Alliance, Effect, EventConfig, HistoricalEvent, TriggeredEvent
 from hwsim.physics.models import MarbleGameState, MarbleModifier
 
 
@@ -59,6 +59,8 @@ class MarbleEventDirector:
             elif effect.type == "add_balls":
                 if effect.target:
                     state.pending_ball_adds.append((effect.target, max(0, int(effect.value or 0))))
+            elif effect.type == "betrayal":
+                self._apply_betrayal(state, effect)
             elif effect.type == "create_alliance":
                 if len(effect.factions) == 2:
                     state.alliances.append(
@@ -77,6 +79,65 @@ class MarbleEventDirector:
         state.triggered_events.append(triggered_event)
         self.triggered_ids.add(event.id)
         return triggered_event
+
+    def _apply_betrayal(self, state: MarbleGameState, effect: Effect) -> None:
+        if not effect.target or not effect.owner or not effect.region:
+            return
+        if effect.target not in state.grid.faction_ids or effect.owner not in state.grid.faction_ids:
+            return
+        center = self._province_centroid(state, effect.region)
+        if center is None:
+            return
+
+        from_index = state.grid.faction_index(effect.target)
+        to_index = state.grid.faction_index(effect.owner)
+        radius = float(effect.radius or effect.value or 80)
+        radius_sq = radius * radius
+        cell_w, cell_h = state.grid.cell_size
+        center_x, center_y = center
+
+        for gy in range(state.grid.owner_grid.shape[0]):
+            y = (gy + 0.5) * cell_h
+            for gx in range(state.grid.owner_grid.shape[1]):
+                if int(state.grid.owner_grid[gy, gx]) != from_index:
+                    continue
+                if state.grid.province_id_grid[gy, gx] < 0:
+                    continue
+                x = (gx + 0.5) * cell_w
+                if (x - center_x) ** 2 + (y - center_y) ** 2 <= radius_sq:
+                    state.grid.owner_grid[gy, gx] = to_index
+
+        fraction = effect.ball_fraction
+        if fraction is None:
+            fraction = effect.multiplier if effect.multiplier is not None else 0.35
+        fraction = min(1.0, max(0.0, float(fraction)))
+        candidates = [
+            marble
+            for marble in state.marbles
+            if marble.faction_id == effect.target and (marble.x - center_x) ** 2 + (marble.y - center_y) ** 2 <= radius_sq
+        ]
+        candidates.sort(key=lambda marble: (marble.x - center_x) ** 2 + (marble.y - center_y) ** 2)
+        convert_count = int(round(len(candidates) * fraction))
+        if candidates and fraction > 0:
+            convert_count = max(1, convert_count)
+        for marble in candidates[:convert_count]:
+            marble.faction_id = effect.owner
+            marble.cooldown_frames = max(marble.cooldown_frames, 24)
+
+    def _province_centroid(self, state: MarbleGameState, name_fragment: str) -> tuple[float, float] | None:
+        needle = name_fragment.lower()
+        matches = [
+            province
+            for province in state.grid.province_records
+            if needle in str(province.get("name", "")).lower()
+        ]
+        if not matches:
+            return None
+        province = max(matches, key=lambda item: int(item.get("cell_count", 0)))
+        centroid = province.get("centroid")
+        if not centroid or len(centroid) < 2:
+            return None
+        return float(centroid[0]), float(centroid[1])
 
     def _years_to_frames(self, state: MarbleGameState, years: int) -> int:
         year_span = max(1, state.scenario.end_year - state.scenario.start_year)

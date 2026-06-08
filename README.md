@@ -77,6 +77,11 @@ Shu Han 1,082,000, and Eastern Wu 2,535,000. These weights affect initial
 balls, resource income, and readable max unit caps; they are not exact
 historical population reconstruction.
 
+The default Marble event timeline also includes incident and betrayal effects.
+Betrayal incidents can flip nearby cells and convert nearby balls to another
+kingdom, while temporary speed boosts affect balls already on the map. The
+one-minute default is tuned to end with at least 250 balls on screen.
+
 ## Development
 
 ```bash

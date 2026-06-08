@@ -19,17 +19,17 @@
   "physics": {
     "fps": 60,
     "substeps": 2,
-    "min_speed": 84,
-    "max_speed": 150,
-    "bounce_jitter": 0.18,
-    "capture_radius": 8,
-    "base_radius": 3,
-    "max_marbles_per_faction": 28,
-    "spawn_interval_frames": 42,
-    "spawn_cost": 62,
-    "resource_gain_per_100_cells": 1.55,
-    "initial_marbles_per_faction": 8,
-    "collision_damage": 0.12
+    "min_speed": 118,
+    "max_speed": 220,
+    "bounce_jitter": 0.2,
+    "capture_radius": 7,
+    "base_radius": 2.4,
+    "max_marbles_per_faction": 125,
+    "spawn_interval_frames": 12,
+    "spawn_cost": 22,
+    "resource_gain_per_100_cells": 4.6,
+    "initial_marbles_per_faction": 28,
+    "collision_damage": 0.1
   },
   "factions": {
     "cao": {

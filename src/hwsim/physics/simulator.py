@@ -109,7 +109,6 @@ class MarbleSimulator:
         x, y = state.grid.grid_to_canvas(*cell)
         angle = self.rng.uniform(0, math.tau)
         speed = self.rng.uniform(self.scenario.physics.min_speed, self.scenario.physics.max_speed)
-        speed *= state.stat_multiplier(faction_id, "speed")
         radius = self.scenario.physics.base_radius * max(0.7, state.stat_multiplier(faction_id, "radius"))
         marble = MarbleUnit(
             id=self.next_marble_id,
@@ -132,8 +131,9 @@ class MarbleSimulator:
         width, height = self.state.grid.canvas_size
         for marble in self.state.marbles:
             old_x, old_y = marble.x, marble.y
-            next_x = marble.x + marble.vx * dt
-            next_y = marble.y + marble.vy * dt
+            effective_dt = dt * self.state.stat_multiplier(marble.faction_id, "speed")
+            next_x = marble.x + marble.vx * effective_dt
+            next_y = marble.y + marble.vy * effective_dt
             hit_x = next_x - marble.radius < 0 or next_x + marble.radius > width
             hit_y = next_y - marble.radius < 0 or next_y + marble.radius > height
 
@@ -146,12 +146,12 @@ class MarbleSimulator:
             blocker = self._movement_blocker(marble, next_x, next_y)
             if blocker == "enemy":
                 marble.x, marble.y = old_x, old_y
-                reflect_x, reflect_y = self._reflection_axes_for_block(marble, old_x, old_y, dt)
+                reflect_x, reflect_y = self._reflection_axes_for_block(marble, old_x, old_y, effective_dt)
                 self._capture_cells_for_marble(marble, center=(next_x, next_y))
                 self._reflect_axes(marble, reflect_x=reflect_x, reflect_y=reflect_y)
             elif blocker == "land":
                 marble.x, marble.y = old_x, old_y
-                self._reflect_from_block(marble, old_x, old_y, dt)
+                self._reflect_from_block(marble, old_x, old_y, effective_dt)
             else:
                 marble.x, marble.y = next_x, next_y
 
@@ -174,7 +174,7 @@ class MarbleSimulator:
                 y = gy + dy
                 if y < 0 or x < 0 or y >= self.state.grid.owner_grid.shape[0] or x >= self.state.grid.owner_grid.shape[1]:
                     continue
-                if not self.state.grid.land_mask[y, x]:
+                if self.state.grid.province_id_grid[y, x] < 0:
                     continue
                 current_owner = int(self.state.grid.owner_grid[y, x])
                 if current_owner == owner_index:
@@ -189,23 +189,25 @@ class MarbleSimulator:
 
     def _resolve_collisions(self) -> None:
         buckets: dict[tuple[int, int], list[int]] = defaultdict(list)
-        bucket_size = 36
+        bucket_size = max(14, int(self.scenario.physics.base_radius * 7))
         for index, marble in enumerate(self.state.marbles):
             buckets[(int(marble.x // bucket_size), int(marble.y // bucket_size))].append(index)
 
-        checked: set[tuple[int, int]] = set()
+        neighbor_offsets = ((0, 0), (1, 0), (0, 1), (1, 1), (-1, 1))
         for bucket, indices in buckets.items():
-            nearby: list[int] = []
             bx, by = bucket
-            for oy in (-1, 0, 1):
-                for ox in (-1, 0, 1):
-                    nearby.extend(buckets.get((bx + ox, by + oy), []))
-            for i in indices:
-                for j in nearby:
-                    if i >= j or (i, j) in checked:
-                        continue
-                    checked.add((i, j))
-                    self._collide_pair(self.state.marbles[i], self.state.marbles[j])
+            for ox, oy in neighbor_offsets:
+                other = buckets.get((bx + ox, by + oy))
+                if not other:
+                    continue
+                if ox == 0 and oy == 0:
+                    for left_pos, i in enumerate(indices):
+                        for j in indices[left_pos + 1 :]:
+                            self._collide_pair(self.state.marbles[i], self.state.marbles[j])
+                else:
+                    for i in indices:
+                        for j in other:
+                            self._collide_pair(self.state.marbles[i], self.state.marbles[j])
 
     def _collide_pair(self, first: MarbleUnit, second: MarbleUnit) -> None:
         dx = second.x - first.x
@@ -255,11 +257,17 @@ class MarbleSimulator:
 
     def _movement_blocker(self, marble: MarbleUnit, x: float, y: float) -> str | None:
         owner_index = self.state.grid.faction_index(marble.faction_id)
+        cell_w, cell_h = self.state.grid.cell_size
+        grid_h, grid_w = self.state.grid.owner_grid.shape
         for sample_x, sample_y in self._collision_samples(marble, x, y):
-            if not self.state.grid.is_land_at_canvas(sample_x, sample_y):
+            gx = int(sample_x / cell_w)
+            gy = int(sample_y / cell_h)
+            if gy < 0 or gx < 0 or gy >= grid_h or gx >= grid_w:
                 return "land"
-            sample_owner = self.state.grid.owner_index_at_canvas(sample_x, sample_y)
-            if sample_owner is None or sample_owner == owner_index:
+            if self.state.grid.province_id_grid[gy, gx] < 0:
+                return "land"
+            sample_owner = int(self.state.grid.owner_grid[gy, gx])
+            if sample_owner < 0 or sample_owner == owner_index:
                 continue
             other_faction = self.state.grid.faction_id(sample_owner)
             if other_faction and not self.state.are_allied(marble.faction_id, other_faction):

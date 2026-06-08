@@ -188,6 +188,32 @@ def test_marble_event_modifier_is_applied() -> None:
     assert sim.state.triggered_events[0].event_id == "boost_184"
 
 
+def test_speed_modifier_moves_existing_marbles_faster() -> None:
+    event = HistoricalEvent.model_validate(
+        {
+            "id": "boost_184",
+            "year": 184,
+            "name_cn": "boost",
+            "category": "test",
+            "importance": 1,
+            "trigger_conditions": [],
+            "effects": [
+                {"type": "marble_modifier", "target": "cao", "stat": "speed", "multiplier": 2.0, "duration_years": 5}
+            ],
+            "ui": {"title": "boost", "subtitle": "boost", "duration_seconds": 1},
+            "narration": "boost",
+        }
+    )
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[event]))
+    marble = MarbleUnit(id=1, faction_id="cao", x=40, y=60, vx=60, vy=0, radius=2)
+    sim.state.marbles = [marble]
+    sim.state.frame = 1
+
+    sim.step()
+
+    assert marble.x == 42
+
+
 def test_marble_event_add_balls_increases_unit_count() -> None:
     event = HistoricalEvent.model_validate(
         {
@@ -210,6 +236,40 @@ def test_marble_event_add_balls_increases_unit_count() -> None:
 
     after = len([marble for marble in sim.state.marbles if marble.faction_id == "cao"])
     assert after == before + 2
+
+
+def test_betrayal_incident_converts_nearby_land_and_balls() -> None:
+    event = HistoricalEvent.model_validate(
+        {
+            "id": "betray_184",
+            "year": 184,
+            "name_cn": "betray",
+            "category": "test",
+            "importance": 1,
+            "trigger_conditions": [],
+            "effects": [
+                {
+                    "type": "betrayal",
+                    "target": "cao",
+                    "owner": "liu_bei",
+                    "region": "Alpha",
+                    "radius": 28,
+                    "ball_fraction": 1.0,
+                }
+            ],
+            "ui": {"title": "betray", "subtitle": "betray", "duration_seconds": 1},
+            "narration": "betray",
+        }
+    )
+    sim = MarbleSimulator(_scenario(), _prepared_map(), EventConfig(events=[event]))
+    sim.state.marbles = [MarbleUnit(id=1, faction_id="cao", x=40, y=60, vx=0, vy=0, radius=4)]
+    before_cao_cells = int((sim.state.grid.owner_grid == sim.state.grid.faction_index("cao")).sum())
+
+    sim.director.update(sim.state)
+
+    after_cao_cells = int((sim.state.grid.owner_grid == sim.state.grid.faction_index("cao")).sum())
+    assert after_cao_cells < before_cao_cells
+    assert sim.state.marbles[0].faction_id == "liu_bei"
 
 
 def test_marble_event_modifiers_expire() -> None:
@@ -245,8 +305,8 @@ def test_default_marble_scenario_is_three_kingdoms_only() -> None:
     scenario = load_marble_scenario("configs/scenarios/sanguo_marble_real_map_demo.json")
 
     assert set(scenario.factions) == {"cao", "liu_bei", "sun_quan"}
-    assert scenario.physics.base_radius <= 3
-    assert scenario.physics.capture_radius <= 9
+    assert scenario.physics.base_radius <= 2.5
+    assert scenario.physics.capture_radius <= 7
     assert scenario.video_length_seconds == 60
     assert scenario.output_fps == 60
     assert scenario.render_fps == 60
@@ -263,6 +323,7 @@ def test_population_weights_scale_initial_and_max_units() -> None:
 
     assert initial_counts["cao"] > initial_counts["sun_quan"] > initial_counts["liu_bei"]
     assert sim._max_marble_count("cao") > sim._max_marble_count("sun_quan") > sim._max_marble_count("liu_bei")
+    assert sum(sim._max_marble_count(faction_id) for faction_id in scenario.factions) >= 250
 
 
 def test_capital_labels_have_valid_target_provinces() -> None:

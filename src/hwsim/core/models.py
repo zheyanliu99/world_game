@@ -68,6 +68,8 @@ class Effect(BaseModel):
     value: float | int | None = None
     stat: str | None = None
     multiplier: float | None = None
+    radius: float | None = None
+    ball_fraction: float | None = None
     duration_years: int = 0
     factions: list[str] = Field(default_factory=list)
     region: str | None = None
