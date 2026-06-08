@@ -8,8 +8,9 @@ softly biased toward unification.
 ## Quick Start
 
 ```bash
-python3 -m pip install -r requirements.txt
-python scripts/generate_demo.py --scenario configs/scenarios/sanguo_shu_unification_demo.json
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python scripts/generate_demo.py --scenario configs/scenarios/sanguo_shu_unification_demo.json
 ```
 
 Expected outputs:
@@ -27,8 +28,8 @@ install is not required.
 ## Development
 
 ```bash
-python -m pytest
-python scripts/run_simulation.py --scenario configs/scenarios/sanguo_shu_unification_demo.json
+.venv/bin/python -m pytest
+.venv/bin/python scripts/run_simulation.py --scenario configs/scenarios/sanguo_shu_unification_demo.json
 ```
 
 The implementation lives under `src/hwsim`. Top-level scripts are intentionally

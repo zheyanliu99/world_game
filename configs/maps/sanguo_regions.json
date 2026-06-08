@@ -32,7 +32,7 @@
       "population": 58,
       "economy": 53,
       "initial_owner": "yuan_shao",
-      "neighbors": ["bingzhou", "jizhou", "liaodong"]
+      "neighbors": ["bingzhou", "jizhou", "liaodong", "qingzhou"]
     },
     {
       "id": "liaodong",

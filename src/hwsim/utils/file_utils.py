@@ -36,14 +36,14 @@ def ensure_dir(path: str | Path) -> Path:
     return path
 
 
-def clean_png_frames(frames_dir: str | Path) -> None:
+def clean_png_frames(frames_dir: str | Path) -> Path:
     frames_dir = ensure_dir(frames_dir)
     for frame in frames_dir.glob("frame_*.png"):
         frame.unlink()
+    return frames_dir
 
 
 def copy_file(source: str | Path, destination: str | Path) -> None:
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, destination)
-
