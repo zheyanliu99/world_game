@@ -41,10 +41,19 @@ def load_bigquery(table_name: str) -> None:
     if not project_id or not dataset:
         raise SystemExit("Set GCP_PROJECT_ID and BQ_DATASET, or use --validate-only.")
     table_ref = f"{project_id}:{dataset}.{table_name}"
-    subprocess.run(["bq", "mk", "--dataset", "--if_not_exists", f"{project_id}:{dataset}"], check=True)
+    dataset_ref = f"{project_id}:{dataset}"
+    dataset_check = subprocess.run(
+        ["bq", "--project_id", project_id, "show", "--format=none", dataset_ref],
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if dataset_check.returncode != 0:
+        subprocess.run(["bq", "--project_id", project_id, "mk", "--dataset", dataset_ref], check=True)
     subprocess.run(
         [
             "bq",
+            "--project_id",
+            project_id,
             "load",
             "--replace",
             "--source_format=CSV",
