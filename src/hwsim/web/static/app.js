@@ -292,7 +292,7 @@ function actionButtonsFor(unit) {
   return [
     { label: "武器", order: transferOrder(unit, "weapons") },
     { label: "粮草", order: transferOrder(unit, "food") },
-    { label: "休整", order: { unit_id: unit.id, action: "rest" } },
+    { label: "赏金", order: transferOrder(unit, "gold") },
   ];
 }
 
@@ -836,6 +836,14 @@ function drawPortraitToken(ctx, general, x, y, radius) {
   ctx.lineWidth = 1.4;
   ctx.strokeStyle = "rgba(255,243,204,0.96)";
   ctx.stroke();
+  ctx.font = `900 ${Math.max(10, radius * 0.95)}px "Songti SC", serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(0,0,0,0.82)";
+  ctx.fillStyle = "#fff3cc";
+  ctx.strokeText(general.name_cn, x, y - radius - 1);
+  ctx.fillText(general.name_cn, x, y - radius - 1);
   ctx.font = `900 ${Math.max(8, radius * 0.7)}px "PingFang SC", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";

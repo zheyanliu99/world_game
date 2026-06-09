@@ -40,8 +40,10 @@ Open `http://127.0.0.1:8010/`. The player controls 蜀汉 with natural-language
 strategy text plus guided general cards. Named generals lead armies between
 curated cities, portrait tokens show soldier counts on the real map, and each
 manual round can animate movement, defense, battle, retreat, or surrender.
-The city campaign lasts up to 100 manual rounds, includes a free deterministic
-Shu advisor recommendation each round, and rewards city captures with local
+The city campaign uses 100 rounds as a pacing marker, but victory requires
+eliminating rival factions rather than hitting a score threshold. It includes a
+free deterministic Shu advisor recommendation each round, movement and upkeep
+costs for armies, gold-funded reinforcement, and city-capture rewards from local
 supplies and manpower.
 
 General seed data is reusable from `data/generals/`; the current seed has 18

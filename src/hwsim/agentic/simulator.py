@@ -43,7 +43,6 @@ FACTION_IDS = ("cao", "liu_bei", "sun_quan")
 PLAYER_FACTION = "liu_bei"
 MAX_ROUNDS = 100
 DIPLOMACY_ACTIONS_PER_ROUND = 1
-DOMINANCE_SHARE = 0.75
 DEFAULT_SCENARIO = Path("configs/scenarios/sanguo_shu_unification_demo.json")
 REAL_MAP_CONFIG = Path("configs/maps/sanguo_real_map.json")
 REAL_MAP_FILE = Path("data/maps/sanguo_real_map_prepared.json")
@@ -57,6 +56,11 @@ ACTION_COSTS = {
     "farm": 1,
     "transfer": 1,
 }
+
+MOVE_FOOD_COST = 2
+ATTACK_FOOD_COST = 5
+ARMY_GOLD_UPKEEP_DIVISOR = 8500
+GOLD_RECRUIT_COST_PER_1000 = 4
 
 POLICY_MODIFIERS: dict[Policy, dict[str, float]] = {
     "balanced": {"food": 1.0, "weapons": 1.0, "gold": 1.0, "manpower": 1.0, "attack": 1.0, "defense": 1.0, "transfer": 1.0},
@@ -199,10 +203,6 @@ class AgenticGameEngine:
         self._update_victory(state)
         if state.finished:
             return state
-        if state.round >= state.max_rounds:
-            self._finish_by_score(state, "Round limit reached")
-            return state
-
         round_number = state.round + 1
         plans = self._collect_plans(state, round_number)
         state.last_plans = plans
@@ -752,6 +752,8 @@ class AgenticGameEngine:
             target = order.target_city_id or (order.target_city_ids[0] if order.target_city_ids else None) or self._first_enemy_city_neighbor(state, source_city or "", faction_id)
             if not source_city or not target or target not in state.cities or target not in state.cities[source_city].neighbors:
                 return self._reject(state, faction_id, "Scout rejected", f"{unit.id} has no adjacent target.")
+            if not self._spend_food_for_action(state, faction_id, source_city, MOVE_FOOD_COST, "scout"):
+                return self._reject(state, faction_id, "Scout rejected", f"{unit.id} lacks food to move.")
             state.resources[faction_id].add("intel", 9)
             unit.readiness = max(0, unit.readiness - 5)
             unit.city_id = source_city
@@ -801,6 +803,8 @@ class AgenticGameEngine:
             target_owner = state.city_owners[target]
             if target_owner != faction_id and not self._are_allied(state, faction_id, target_owner):
                 return self._reject(state, faction_id, "Transfer rejected", f"{target} is not owned by an ally.")
+            if not self._spend_food_for_action(state, faction_id, source_city, MOVE_FOOD_COST, "transfer"):
+                return self._reject(state, faction_id, "Transfer rejected", f"{unit.id} lacks food to move supplies.")
             amount = max(1, min(40, order.amount or 12))
             if not state.resources[faction_id].spend(resource, amount):
                 return self._reject(state, faction_id, "Transfer rejected", f"{faction_id} lacks {resource}.")
@@ -835,6 +839,9 @@ class AgenticGameEngine:
                     return self._reject(state, faction_id, "Attack rejected", f"{state.cities[target].name_cn} is already friendly.")
                 if self._are_allied(state, faction_id, target_owner):
                     return self._reject(state, faction_id, "Attack rejected", f"Alliance blocks fighting with {target_owner}.")
+            attack_food = ATTACK_FOOD_COST * len(target_cities)
+            if not self._spend_food_for_action(state, faction_id, source_city, attack_food, "attack"):
+                return self._reject(state, faction_id, "Attack rejected", f"{unit.id} lacks {attack_food} food for the march.")
             unit.readiness = max(0, unit.readiness - 16)
             unit.status = f"attacking {target}"
             first_target = target_cities[0]
@@ -861,6 +868,7 @@ class AgenticGameEngine:
         source_city = unit.city_id or self._first_city_for_region(unit.region_id)
         consumed_weapons = self._consume_city_supply_or_pool(state, faction_id, source_city or "", "weapons", 8)
         local_food = self._city_supply(state, source_city or "", "food")
+        battle_pay = self._consume_city_supply(state, source_city or "", "gold", 3)
         target = state.cities[target_city_id]
         terrain_penalty = 0.0
         if target.terrain in ("mountain", "pass"):
@@ -868,7 +876,7 @@ class AgenticGameEngine:
         elif target.terrain == "river":
             terrain_penalty = max(0.0, 5.0 - faction.naval * 2.5)
         intel_bonus = min(6.0, state.resources[faction_id].intel / 12)
-        supply_bonus = consumed_weapons * 1.2 + min(8.0, local_food * 0.1)
+        supply_bonus = consumed_weapons * 1.2 + min(8.0, local_food * 0.1) + battle_pay * 1.8
         soldier_score = math.sqrt(max(1, unit.soldiers or 1000)) * 0.28
         general_score = ((general.command + general.attack) / 2) * 0.22 if general else 0
         return (
@@ -927,7 +935,12 @@ class AgenticGameEngine:
             unit_score += 10.0 * unit.power + unit.readiness * 0.22 + math.sqrt(max(1, unit.soldiers)) * 0.24 + general_score
         city = state.cities[city_id]
         terrain_score = TERRAIN_DEFENSE.get(city.terrain, 10.0) * city.fort
-        supply_score = min(13.0, self._city_supply(state, city_id, "food") * 0.12 + self._city_supply(state, city_id, "weapons") * 0.18)
+        supply_score = min(
+            18.0,
+            self._city_supply(state, city_id, "food") * 0.12
+            + self._city_supply(state, city_id, "weapons") * 0.18
+            + self._city_supply(state, city_id, "gold") * 0.16,
+        )
         return (
             20.0
             + unit_score
@@ -967,6 +980,8 @@ class AgenticGameEngine:
             f"terrain {city.terrain}",
             f"fort {city.fort:.2f}",
         ]
+        if self._city_supply(state, source_city_id, "gold") > 0:
+            factors.append("attacker paid battle awards")
         if defense_bonus.get(target_city_id, 0) > 0:
             factors.append("defender prepared nearby defense")
         if self._city_supply(state, target_city_id, "food") or self._city_supply(state, target_city_id, "weapons"):
@@ -1153,11 +1168,34 @@ class AgenticGameEngine:
             if unit.unit_type == "army" and unit.soldiers > 0:
                 general = self._general_for_unit(state, unit)
                 food_need = general.food_need if general else max(1, unit.soldiers // 4000)
+                gold_need = max(1, unit.soldiers // ARMY_GOLD_UPKEEP_DIVISOR)
+                city_id = unit.city_id or ""
                 if state.resources[owner].spend("food", food_need):
                     recovery += 2
-                    reinforce = min((unit.max_soldiers or unit.soldiers) - unit.soldiers, int(state.resources[owner].manpower * 0.03))
-                    if reinforce > 0 and state.resources[owner].spend("manpower", reinforce):
+                else:
+                    unit.readiness = max(0, unit.readiness - 8)
+                    unit.soldiers = max(0, int(unit.soldiers * 0.985))
+                gold_paid = self._consume_city_supply_or_pool(state, owner, city_id, "gold", gold_need) if city_id else 0
+                if gold_paid >= gold_need:
+                    recovery += 1
+                else:
+                    unit.readiness = max(0, unit.readiness - 6)
+                missing = max(0, (unit.max_soldiers or unit.soldiers) - unit.soldiers)
+                recruit_by_manpower = int(state.resources[owner].manpower * 0.03)
+                recruit_by_gold = (state.resources[owner].gold // GOLD_RECRUIT_COST_PER_1000) * 1000
+                reinforce = min(missing, recruit_by_manpower, recruit_by_gold)
+                if reinforce > 0:
+                    gold_cost = max(1, math.ceil(reinforce / 1000) * GOLD_RECRUIT_COST_PER_1000)
+                    if state.resources[owner].spend("gold", gold_cost) and state.resources[owner].spend("manpower", reinforce):
                         unit.soldiers += reinforce
+                        self._log(
+                            state,
+                            "Recruitment",
+                            f"{state.factions[owner].display_name(222)} spends {gold_cost} gold and {reinforce} manpower to reinforce {self._unit_label(state, unit)}.",
+                            faction_id=owner,
+                            region_id=unit.region_id,
+                            tone="economy",
+                        )
             if unit.city_id and self._city_supply(state, unit.city_id, "food") > 0:
                 self._consume_city_supply(state, unit.city_id, "food", 1)
                 recovery += 3
@@ -1171,49 +1209,23 @@ class AgenticGameEngine:
             self._log(state, "Treaty expired", "An alliance expires and border fighting is legal again.", tone="diplomacy")
 
     def _update_victory(self, state: AgenticGameState) -> None:
-        region_counts = self._region_counts(state)
-        region_needed = math.ceil(len(state.regions) * DOMINANCE_SHARE)
-        for faction_id, count in region_counts.items():
-            if count >= region_needed:
-                state.finished = True
-                state.winner = faction_id
-                self._log(
-                    state,
-                    "Dominance victory",
-                    f"{state.factions[faction_id].display_name(222)} controls {count}/{len(state.regions)} regions and wins early.",
-                    faction_id=faction_id,
-                    tone="victory",
-                )
-                return
-        counts = self._city_counts(state) if state.city_owners else self._region_counts(state)
-        total = len(state.city_owners) if state.city_owners else len(state.regions)
-        needed = math.ceil(total * DOMINANCE_SHARE)
-        for faction_id, count in counts.items():
-            if count >= needed:
-                state.finished = True
-                state.winner = faction_id
-                self._log(
-                    state,
-                    "Dominance victory",
-                    f"{state.factions[faction_id].display_name(222)} controls {count}/{total} cities and wins early.",
-                    faction_id=faction_id,
-                    tone="victory",
-                )
-                return
-        if state.round >= state.max_rounds:
-            self._finish_by_score(state, f"Round {state.max_rounds} reached")
+        alive = [faction_id for faction_id in FACTION_IDS if self._faction_alive(state, faction_id)]
+        if len(alive) == 1:
+            winner = alive[0]
+            state.finished = True
+            state.winner = winner
+            self._log(
+                state,
+                "Conquest victory",
+                f"{state.factions[winner].display_name(222)} eliminates every rival faction and unifies all remaining cities.",
+                faction_id=winner,
+                tone="victory",
+            )
 
-    def _finish_by_score(self, state: AgenticGameState, reason: str) -> None:
-        winner = max(FACTION_IDS, key=lambda faction_id: self._score_faction(state, faction_id))
-        state.finished = True
-        state.winner = winner
-        self._log(
-            state,
-            "Score victory",
-            f"{reason}. {state.factions[winner].display_name(222)} wins by total score.",
-            faction_id=winner,
-            tone="victory",
-        )
+    def _faction_alive(self, state: AgenticGameState, faction_id: str) -> bool:
+        owns_city = any(owner == faction_id for owner in state.city_owners.values())
+        has_army = any(unit.faction_id == faction_id and unit.unit_type == "army" and unit.soldiers > 0 for unit in state.units)
+        return owns_city or has_army
 
     def _score_faction(self, state: AgenticGameState, faction_id: str) -> int:
         region_score = len(self._owned_regions(state, faction_id)) * 18
@@ -1427,6 +1439,29 @@ class AgenticGameEngine:
         if state.resources[faction_id].spend(resource, remaining):
             return amount
         return spent
+
+    def _spend_food_for_action(
+        self,
+        state: AgenticGameState,
+        faction_id: str,
+        city_id: str,
+        amount: int,
+        action: str,
+    ) -> bool:
+        if self._city_supply(state, city_id, "food") + state.resources[faction_id].food < amount:
+            return False
+        spent = self._consume_city_supply_or_pool(state, faction_id, city_id, "food", amount)
+        if spent >= amount:
+            self._log(
+                state,
+                "Food spent",
+                f"{state.factions[faction_id].display_name(222)} spends {amount} food for {action} from {state.cities[city_id].name_cn}.",
+                faction_id=faction_id,
+                region_id=state.cities[city_id].region_id,
+                tone="supply",
+            )
+            return True
+        return False
 
     def _remove_dead_armies(self, state: AgenticGameState) -> None:
         live_units: list[AgenticUnit] = []

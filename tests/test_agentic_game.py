@@ -39,7 +39,7 @@ def test_mock_agentic_game_is_deterministic() -> None:
     assert [log.title for log in first.logs] == [log.title for log in second.logs]
 
 
-def test_game_finishes_at_configured_round_cap() -> None:
+def test_round_cap_does_not_create_score_winner() -> None:
     engine = _engine()
     state = engine.new_game()
     state.max_rounds = 3
@@ -47,16 +47,19 @@ def test_game_finishes_at_configured_round_cap() -> None:
     for _ in range(5):
         engine.resolve_round(state)
 
-    assert state.finished
-    assert state.round <= 3
-    assert state.winner in {"cao", "liu_bei", "sun_quan"}
+    assert not state.finished
+    assert state.round == 5
+    assert state.winner is None
 
 
-def test_early_dominance_victory() -> None:
+def test_victory_requires_eliminating_enemy_factions() -> None:
     engine = _engine()
     state = engine.new_game()
-    for index, region_id in enumerate(state.region_owners):
-        state.region_owners[region_id] = "liu_bei" if index < 12 else "cao"
+    for city_id in state.city_owners:
+        state.city_owners[city_id] = "liu_bei"
+    for unit in state.units:
+        if unit.faction_id != "liu_bei":
+            unit.soldiers = 0
 
     engine.resolve_round(state)
 
@@ -131,6 +134,43 @@ def test_each_general_can_act_once_without_faction_ap_cap() -> None:
     assert any(log.title == "Attack launched" and "关羽" in log.detail for log in state.logs)
     assert any(log.title == "Attack launched" and "马超" in log.detail for log in state.logs)
     assert not any("lacks AP" in log.detail for log in state.logs)
+
+
+def test_attack_requires_and_spends_food() -> None:
+    engine = _engine()
+    state = engine.new_game()
+    guan = next(unit for unit in state.units if unit.general_id == "guan_yu")
+    guan.city_id = "xinye"
+    guan.region_id = "jingzhou"
+    state.resources["liu_bei"].food = 0
+    state.city_supply["xinye"] = {"food": 0}
+    engine.save_player_command(
+        state,
+        "attack without food",
+        "war",
+        orders=[AgentOrder(unit_id=guan.id, general_id="guan_yu", action="attack", source_city_id="xinye", target_city_ids=["xuchang"])],
+    )
+
+    engine.resolve_round(state)
+
+    assert any("lacks 5 food" in log.detail for log in state.logs)
+    assert not any(log.title == "Attack launched" and "关羽" in log.detail for log in state.logs)
+
+
+def test_gold_and_manpower_reinforce_armies() -> None:
+    engine = _engine()
+    state = engine.new_game()
+    unit = next(unit for unit in state.units if unit.general_id == "zhao_yun")
+    unit.soldiers = 10000
+    state.resources["liu_bei"].food = 999
+    state.resources["liu_bei"].gold = 80
+    state.resources["liu_bei"].manpower = 50000
+
+    engine._recover_units(state)
+
+    assert unit.soldiers > 10000
+    assert state.resources["liu_bei"].gold < 80
+    assert any(log.title == "Recruitment" for log in state.logs)
 
 
 def test_unordered_units_default_to_defense_and_improve_farms() -> None:

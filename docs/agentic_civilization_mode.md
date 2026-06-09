@@ -371,9 +371,11 @@ unchanged. The player controls 蜀汉, while 曹魏 and 东吴 are controlled by
 agent provider. Tests and offline play use deterministic mock agents; a live
 OpenAI-backed provider can be used when credentials are configured.
 
-The demo is manually paced. It has at most 100 rounds, and the player advances
-each round from the web UI after editing a strategy command, selecting a policy,
-and optionally adding structured unit or diplomacy orders.
+The demo is manually paced. It uses 100 rounds as a pacing marker, but the game
+does not award dominance or score victories; a faction wins only by eliminating
+all rival factions. The player advances each round from the web UI after editing
+a strategy command, selecting a policy, and optionally adding structured unit or
+diplomacy orders.
 
 The Shu UI includes a deterministic advisor recommendation each round. It
 suggests a policy, one legal action per available unit, optional diplomacy, and a
@@ -399,6 +401,10 @@ derived from city ownership for ranking and map tinting.
 Resource transfer is implemented through city supply and summarized by region.
 Caravans move pooled food, weapons, or gold into a target city; local supply then
 improves battle and recovery outcomes there.
+
+Attacking, scouting, and transfers spend food. Armies require food and gold for
+upkeep, while gold plus manpower can reinforce depleted units. Moving gold into
+a front city also acts as battle pay, improving local attack and defense.
 
 City conquest now awards most stored food, weapons, and gold in the captured
 city plus manpower drawn from the local population, while battle damage reduces
