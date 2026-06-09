@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 import math
+import random
 import uuid
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 from hwsim.agentic.agents import AgentProvider, MockAgentProvider
+from hwsim.agentic.city_data import load_city_graph, load_general_seeds
 from hwsim.agentic.models import (
+    AnimationEvent,
     AgentObservation,
     AgentOrder,
     AgentPlan,
     AgenticAlliance,
     AgenticGameState,
     AgenticUnit,
+    BattleEvent,
+    CityView,
     DiplomacyOrder,
     FactionView,
+    GeneralView,
     GameView,
     PendingAttack,
     Policy,
@@ -118,6 +124,9 @@ class AgenticGameEngine:
         self.agent_provider = agent_provider or MockAgentProvider()
         self.fallback_provider = fallback_provider or MockAgentProvider()
         self.real_map_view = self._load_real_map_view()
+        self.city_graph = load_city_graph()
+        self.city_config = self.city_graph.city_map()
+        self.general_seeds = load_general_seeds(city_ids=set(self.city_config))
 
     @classmethod
     def from_default_scenario(
@@ -131,8 +140,11 @@ class AgenticGameEngine:
     def new_game(self, player_faction: str = PLAYER_FACTION, game_id: str | None = None) -> AgenticGameState:
         factions = self._three_kingdom_factions()
         regions = {region.id: region for region in self.map_config.regions}
-        region_owners = self._initial_region_owners(regions)
-        units = self._initial_units()
+        cities = self._city_views()
+        city_owners = {city_id: city.initial_owner for city_id, city in self.city_config.items()}
+        region_owners = self._derive_region_owners_from_cities(city_owners, regions)
+        generals = self._initial_generals()
+        units = self._initial_units(generals)
         state = AgenticGameState(
             game_id=game_id or uuid.uuid4().hex,
             round=0,
@@ -141,7 +153,12 @@ class AgenticGameEngine:
             factions=factions,
             regions=regions,
             region_owners=region_owners,
+            cities=cities,
+            city_owners=city_owners,
+            city_development={city_id: 1.0 for city_id in cities},
+            city_supply={city_id: {} for city_id in cities},
             units=units,
+            generals=generals,
             resources={faction_id: INITIAL_RESOURCES[faction_id].model_copy(deep=True) for faction_id in FACTION_IDS},
             policies={faction_id: "balanced" for faction_id in FACTION_IDS},
             region_development={region_id: 1.0 for region_id in regions},
@@ -202,6 +219,8 @@ class AgenticGameEngine:
                 self._try_execute_order(state, faction_id, order, remaining_ap, used_units, defense_bonus, attacks)
 
         self._resolve_attacks(state, attacks, defense_bonus)
+        self._sync_generals(state)
+        state.region_owners = self._derive_region_owners_from_cities(state.city_owners, state.regions)
         self._apply_round_income(state)
         self._recover_units(state)
         self._expire_alliances(state)
@@ -211,6 +230,7 @@ class AgenticGameEngine:
         return state
 
     def to_view(self, state: AgenticGameState) -> GameView:
+        self._sync_generals(state)
         region_counts = self._region_counts(state)
         unit_counts = {faction_id: sum(1 for unit in state.units if unit.faction_id == faction_id) for faction_id in FACTION_IDS}
         factions: dict[str, FactionView] = {}
@@ -237,11 +257,18 @@ class AgenticGameEngine:
             real_map=self.real_map_view,
             regions=list(self.map_config.regions),
             region_owners=state.region_owners,
+            cities=list(state.cities.values()),
+            city_owners=state.city_owners,
+            city_development=state.city_development,
+            city_supply=state.city_supply,
             region_development=state.region_development,
             regional_supply=state.regional_supply,
             region_pressure=state.region_pressure,
             factions=factions,
             units=state.units,
+            generals=list(state.generals.values()),
+            battle_events=state.battle_events[-24:],
+            animations=state.animations,
             alliances=state.alliances,
             logs=state.logs[-80:],
             current_player_command=state.current_player_command,
@@ -268,23 +295,113 @@ class AgenticGameEngine:
                 owners[region_id] = "cao"
         return owners
 
-    def _initial_units(self) -> list[AgenticUnit]:
+    def _city_views(self) -> dict[str, CityView]:
+        return {
+            city_id: CityView(
+                id=city.id,
+                name_cn=city.name_cn,
+                region_id=city.region_id,
+                position=city.position,
+                terrain=city.terrain,
+                population=city.population,
+                economy=city.economy,
+                fort=city.fort,
+                neighbors=city.neighbors,
+            )
+            for city_id, city in self.city_config.items()
+        }
+
+    def _initial_generals(self) -> dict[str, GeneralView]:
+        return {
+            seed.id: GeneralView(
+                id=seed.id,
+                name_cn=seed.name_cn,
+                name_en=seed.name_en,
+                faction_id=seed.faction_id,
+                portrait_path=seed.portrait_path,
+                city_id=seed.starting_city_id,
+                soldiers=seed.soldiers,
+                max_soldiers=seed.max_soldiers,
+                command=seed.command,
+                attack=seed.attack,
+                defense=seed.defense,
+                mobility=seed.mobility,
+                loyalty=seed.loyalty,
+                food_need=seed.food_need,
+                surrender_risk=seed.surrender_risk,
+            )
+            for seed in self.general_seeds
+        }
+
+    def _initial_units(self, generals: dict[str, GeneralView]) -> list[AgenticUnit]:
         units: list[AgenticUnit] = []
+        army_counts: dict[str, int] = defaultdict(int)
+        for general in generals.values():
+            city = self.city_config[general.city_id or ""]
+            army_counts[general.faction_id] += 1
+            unit_id = f"{general.faction_id}_army_{army_counts[general.faction_id]}"
+            general.unit_id = unit_id
+            units.append(
+                AgenticUnit(
+                    id=unit_id,
+                    faction_id=general.faction_id,
+                    unit_type="army",
+                    region_id=city.region_id,
+                    city_id=city.id,
+                    general_id=general.id,
+                    soldiers=general.soldiers,
+                    max_soldiers=general.max_soldiers,
+                    readiness=100,
+                    power=(general.command + general.attack + general.defense) / 255,
+                    status="idle",
+                )
+            )
         for faction_id, specs in INITIAL_UNITS.items():
             unit_type_counts: dict[str, int] = defaultdict(int)
             for unit_type, region_id, power in specs:
+                if unit_type == "army":
+                    continue
                 unit_type_counts[unit_type] += 1
+                city_id = self._default_city_for_region(faction_id, region_id)
                 units.append(
                     AgenticUnit(
                         id=f"{faction_id}_{unit_type}_{unit_type_counts[unit_type]}",
                         faction_id=faction_id,
                         unit_type=unit_type,  # type: ignore[arg-type]
                         region_id=region_id,
+                        city_id=city_id,
                         readiness=100,
                         power=power,
                     )
                 )
         return units
+
+    def _default_city_for_region(self, faction_id: str, region_id: str) -> str | None:
+        for city in self.city_config.values():
+            if city.region_id == region_id and city.initial_owner == faction_id:
+                return city.id
+        for city in self.city_config.values():
+            if city.region_id == region_id:
+                return city.id
+        return None
+
+    def _derive_region_owners_from_cities(self, city_owners: dict[str, str], regions: dict[str, Region]) -> dict[str, str]:
+        owners: dict[str, str] = {}
+        for region_id in regions:
+            counts: dict[str, int] = defaultdict(int)
+            for city_id, owner in city_owners.items():
+                city = self.city_config.get(city_id)
+                if city and city.region_id == region_id:
+                    counts[owner] += max(1, city.population)
+            if counts:
+                owners[region_id] = max(FACTION_IDS, key=lambda faction_id: (counts.get(faction_id, 0), faction_id == "liu_bei"))
+            elif region_id in INITIAL_OWNER_MAP["liu_bei"]:
+                owners[region_id] = "liu_bei"
+            elif region_id in INITIAL_OWNER_MAP["sun_quan"]:
+                owners[region_id] = "sun_quan"
+            else:
+                owners[region_id] = "cao"
+        return owners
 
     def _load_real_map_view(self) -> RealMapView | None:
         prepared_path = resolve_path(REAL_MAP_FILE)
@@ -421,32 +538,32 @@ class AgenticGameEngine:
         if wants_attack:
             for unit in units:
                 if unit.unit_type == "army":
-                    target = self._best_attack_target_for_unit(state, unit)
+                    target = self._best_attack_city_for_unit(state, unit)
                     if target:
-                        orders.append(AgentOrder(unit_id=unit.id, action="attack", target_region_id=target))
+                        orders.append(AgentOrder(unit_id=unit.id, general_id=unit.general_id, action="attack", source_city_id=unit.city_id, target_city_ids=[target]))
                         break
         if wants_farm or not orders:
             for unit in units:
                 if unit.unit_type == "worker":
-                    orders.append(AgentOrder(unit_id=unit.id, action="farm", region_id=unit.region_id))
+                    orders.append(AgentOrder(unit_id=unit.id, action="farm", region_id=unit.region_id, source_city_id=unit.city_id))
                     break
         if wants_scout or not any(order.action == "scout" for order in orders):
             for unit in units:
                 if unit.unit_type == "scout":
-                    target = self._first_enemy_neighbor(state, unit.region_id, unit.faction_id)
+                    target = self._first_enemy_city_neighbor(state, unit.city_id or "", unit.faction_id)
                     if target:
-                        orders.append(AgentOrder(unit_id=unit.id, action="scout", target_region_id=target))
+                        orders.append(AgentOrder(unit_id=unit.id, action="scout", source_city_id=unit.city_id, target_city_id=target))
                     break
         if wants_transfer or state.current_player_policy in ("war", "logistics"):
             for unit in units:
                 if unit.unit_type == "caravan":
-                    target = self._first_border_region(state, unit.faction_id) or unit.region_id
-                    orders.append(AgentOrder(unit_id=unit.id, action="transfer", target_region_id=target, resource="weapons", amount=16))
+                    target = self._first_border_city(state, unit.faction_id) or unit.city_id
+                    orders.append(AgentOrder(unit_id=unit.id, action="transfer", source_city_id=unit.city_id, target_city_id=target, resource="weapons", amount=16))
                     break
         if not wants_attack:
             for unit in units:
                 if unit.unit_type == "army" and len(orders) < 4:
-                    orders.append(AgentOrder(unit_id=unit.id, action="defend", region_id=unit.region_id))
+                    orders.append(AgentOrder(unit_id=unit.id, general_id=unit.general_id, action="defend", source_city_id=unit.city_id, region_id=unit.region_id))
         return orders[:5]
 
     def _observation_for(self, state: AgenticGameState, faction_id: str, round_number: int) -> AgentObservation:
@@ -460,14 +577,18 @@ class AgenticGameEngine:
             resources=state.resources[faction_id],
             owned_regions=self._owned_regions(state, faction_id),
             visible_regions=state.region_owners,
+            visible_cities=state.city_owners,
             units=units,
             neighbors={region_id: region.neighbors for region_id, region in state.regions.items()},
+            city_neighbors={city_id: city.neighbors for city_id, city in state.cities.items()},
             alliances=[item for item in alliances if item],
             recent_log=[log.detail for log in state.logs[-8:]],
             player_command=state.current_player_command if faction_id != state.player_faction else "",
         )
 
     def _start_round(self, state: AgenticGameState) -> None:
+        state.animations = []
+        state.battle_events = []
         for unit in state.units:
             unit.status = "idle"
         self._log(
@@ -571,31 +692,44 @@ class AgenticGameEngine:
             return True
 
         if order.action == "defend":
-            if state.region_owners.get(unit.region_id) != faction_id:
+            source_city = self._source_city_for_order(unit, order)
+            if not source_city or state.city_owners.get(source_city) != faction_id:
                 return self._reject(state, faction_id, "Defend rejected", f"{unit.id} is outside friendly territory.")
-            bonus = 10.0 + unit.readiness * 0.14 * unit.power
-            defense_bonus[unit.region_id] += bonus
+            general = self._general_for_unit(state, unit)
+            bonus = 10.0 + unit.readiness * 0.14 * unit.power + (general.defense * 0.14 if general else 0)
+            defended_cities = [source_city]
+            defended_cities.extend(
+                neighbor for neighbor in state.cities[source_city].neighbors if state.city_owners.get(neighbor) == faction_id
+            )
+            for city_id in defended_cities:
+                defense_bonus[city_id] += bonus
             unit.readiness = max(0, unit.readiness - 7)
+            unit.city_id = source_city
+            unit.region_id = state.cities[source_city].region_id
             unit.status = "defending"
-            self._log(state, "Defense set", f"{unit.id} fortifies {state.regions[unit.region_id].name_cn}.", faction_id=faction_id, region_id=unit.region_id)
+            state.animations.append(AnimationEvent(type="defend", faction_id=faction_id, general_id=unit.general_id, city_id=source_city, tone="defense"))
+            city_name = state.cities[source_city].name_cn
+            self._log(state, "Defense set", f"{self._unit_label(state, unit)} fortifies {city_name} and nearby friendly cities.", faction_id=faction_id, region_id=unit.region_id)
             return True
 
         if order.action == "scout":
             if unit.unit_type != "scout":
                 return self._reject(state, faction_id, "Scout rejected", f"{unit.id} is not a scout.")
-            target = order.target_region_id or self._first_enemy_neighbor(state, unit.region_id, faction_id)
-            if not target or target not in state.regions or target not in state.regions[unit.region_id].neighbors:
+            source_city = self._source_city_for_order(unit, order)
+            target = order.target_city_id or (order.target_city_ids[0] if order.target_city_ids else None) or self._first_enemy_city_neighbor(state, source_city or "", faction_id)
+            if not source_city or not target or target not in state.cities or target not in state.cities[source_city].neighbors:
                 return self._reject(state, faction_id, "Scout rejected", f"{unit.id} has no adjacent target.")
             state.resources[faction_id].add("intel", 9)
             unit.readiness = max(0, unit.readiness - 5)
+            unit.city_id = source_city
             unit.status = f"scouting {target}"
-            owner = state.region_owners[target]
+            owner = state.city_owners[target]
             self._log(
                 state,
                 "Scout report",
-                f"{unit.id} scouts {state.regions[target].name_cn}: owner {state.factions[owner].display_name(222)}, pressure {state.region_pressure.get(f'{faction_id}:{target}', 0)}.",
+                f"{unit.id} scouts {state.cities[target].name_cn}: owner {state.factions[owner].display_name(222)}, nearby roads {len(state.cities[target].neighbors)}.",
                 faction_id=faction_id,
-                region_id=target,
+                region_id=state.cities[target].region_id,
                 tone="intel",
             )
             return True
@@ -603,41 +737,54 @@ class AgenticGameEngine:
         if order.action == "farm":
             if unit.unit_type != "worker":
                 return self._reject(state, faction_id, "Farm rejected", f"{unit.id} is not a worker.")
-            if state.region_owners.get(unit.region_id) != faction_id:
+            source_city = self._source_city_for_order(unit, order)
+            if not source_city or state.city_owners.get(source_city) != faction_id:
                 return self._reject(state, faction_id, "Farm rejected", f"{unit.id} is outside friendly territory.")
-            state.region_development[unit.region_id] = min(1.55, state.region_development.get(unit.region_id, 1.0) + 0.1)
+            unit.city_id = source_city
+            unit.region_id = state.cities[source_city].region_id
+            state.city_development[source_city] = min(1.65, state.city_development.get(source_city, 1.0) + 0.12)
+            state.region_development[unit.region_id] = min(1.55, state.region_development.get(unit.region_id, 1.0) + 0.05)
             state.resources[faction_id].add("food", 10)
             unit.readiness = max(0, unit.readiness - 6)
             unit.status = "farming"
-            self._log(state, "Farms expanded", f"{unit.id} improves {state.regions[unit.region_id].name_cn}.", faction_id=faction_id, region_id=unit.region_id, tone="economy")
+            self._log(state, "Farms expanded", f"{unit.id} improves fields around {state.cities[source_city].name_cn}.", faction_id=faction_id, region_id=unit.region_id, tone="economy")
             return True
 
         if order.action == "transfer":
             if unit.unit_type != "caravan":
                 return self._reject(state, faction_id, "Transfer rejected", f"{unit.id} is not a caravan.")
-            target = order.target_region_id or unit.region_id
+            source_city = self._source_city_for_order(unit, order)
+            target = (
+                order.target_city_id
+                or (order.target_city_ids[0] if order.target_city_ids else None)
+                or self._reachable_city_in_region(state, source_city or "", order.target_region_id or "")
+                or source_city
+            )
             resource = order.resource or "food"
             if resource not in ("food", "weapons", "gold"):
                 return self._reject(state, faction_id, "Transfer rejected", f"{resource} cannot be moved by caravan.")
-            if target not in state.regions or target not in [unit.region_id, *state.regions[unit.region_id].neighbors]:
+            if not source_city or not target or target not in state.cities or target not in [source_city, *state.cities[source_city].neighbors]:
                 return self._reject(state, faction_id, "Transfer rejected", f"{unit.id} cannot reach the target this round.")
-            target_owner = state.region_owners[target]
+            target_owner = state.city_owners[target]
             if target_owner != faction_id and not self._are_allied(state, faction_id, target_owner):
                 return self._reject(state, faction_id, "Transfer rejected", f"{target} is not owned by an ally.")
             amount = max(1, min(40, order.amount or 12))
             if not state.resources[faction_id].spend(resource, amount):
                 return self._reject(state, faction_id, "Transfer rejected", f"{faction_id} lacks {resource}.")
             delivered = max(1, int(amount * self._policy_mod(state, faction_id, "transfer")))
-            self._add_region_supply(state, target, resource, delivered)
-            unit.region_id = target
+            self._add_city_supply(state, target, resource, delivered)
+            self._add_region_supply(state, state.cities[target].region_id, resource, delivered)
+            unit.city_id = target
+            unit.region_id = state.cities[target].region_id
             unit.readiness = max(0, unit.readiness - 4)
             unit.status = f"delivered {resource}"
+            state.animations.append(AnimationEvent(type="move", faction_id=faction_id, from_city_id=source_city, to_city_id=target, value=delivered, tone="supply"))
             self._log(
                 state,
                 "Supply transfer",
-                f"{unit.id} delivers {delivered} {resource} to {state.regions[target].name_cn}.",
+                f"{unit.id} delivers {delivered} {resource} to {state.cities[target].name_cn}.",
                 faction_id=faction_id,
-                region_id=target,
+                region_id=state.cities[target].region_id,
                 tone="supply",
             )
             return True
@@ -645,44 +792,56 @@ class AgenticGameEngine:
         if order.action == "attack":
             if unit.unit_type != "army":
                 return self._reject(state, faction_id, "Attack rejected", f"{unit.id} is not an army.")
-            target = order.target_region_id or self._best_attack_target_for_unit(state, unit)
-            if not target or target not in state.regions[unit.region_id].neighbors:
-                return self._reject(state, faction_id, "Attack rejected", f"{unit.id} has no adjacent target.")
-            target_owner = state.region_owners[target]
-            if target_owner == faction_id:
-                return self._reject(state, faction_id, "Attack rejected", f"{target} is already friendly.")
-            if self._are_allied(state, faction_id, target_owner):
-                return self._reject(state, faction_id, "Attack rejected", f"Alliance blocks fighting with {target_owner}.")
-            attack_score = self._attack_score(state, faction_id, unit, target)
+            source_city = self._source_city_for_order(unit, order)
+            target_cities = self._target_cities_for_order(state, unit, order)
+            if not source_city or not target_cities:
+                return self._reject(state, faction_id, "Attack rejected", f"{unit.id} has no adjacent city target.")
+            for target in target_cities:
+                target_owner = state.city_owners[target]
+                if target_owner == faction_id:
+                    return self._reject(state, faction_id, "Attack rejected", f"{state.cities[target].name_cn} is already friendly.")
+                if self._are_allied(state, faction_id, target_owner):
+                    return self._reject(state, faction_id, "Attack rejected", f"Alliance blocks fighting with {target_owner}.")
             unit.readiness = max(0, unit.readiness - 16)
             unit.status = f"attacking {target}"
+            first_target = target_cities[0]
             attacks.append(
                 PendingAttack(
                     faction_id=faction_id,
                     unit_id=unit.id,
                     source_region_id=unit.region_id,
-                    target_region_id=target,
-                    attack_score=attack_score,
+                    target_region_id=state.cities[first_target].region_id,
+                    attack_score=0.0,
+                    source_city_id=source_city,
+                    target_city_ids=target_cities,
                 )
             )
-            self._log(state, "Attack launched", f"{unit.id} attacks {state.regions[target].name_cn}.", faction_id=faction_id, region_id=target, tone="war")
+            state.animations.append(AnimationEvent(type="move", faction_id=faction_id, general_id=unit.general_id, from_city_id=source_city, to_city_id=first_target, tone="war"))
+            self._log(state, "Attack launched", f"{self._unit_label(state, unit)} attacks {state.cities[first_target].name_cn}.", faction_id=faction_id, region_id=state.cities[first_target].region_id, tone="war")
             return True
 
         return False
 
-    def _attack_score(self, state: AgenticGameState, faction_id: str, unit: AgenticUnit, target_region_id: str) -> float:
+    def _attack_score(self, state: AgenticGameState, faction_id: str, unit: AgenticUnit, target_city_id: str) -> float:
         faction = state.factions[faction_id]
-        consumed_weapons = self._consume_supply_or_pool(state, faction_id, unit.region_id, "weapons", 8)
-        local_food = self._region_supply(state, unit.region_id, "food")
+        general = self._general_for_unit(state, unit)
+        source_city = unit.city_id or self._first_city_for_region(unit.region_id)
+        consumed_weapons = self._consume_city_supply_or_pool(state, faction_id, source_city or "", "weapons", 8)
+        local_food = self._city_supply(state, source_city or "", "food")
+        target = state.cities[target_city_id]
         terrain_penalty = 0.0
-        if state.regions[target_region_id].terrain in ("mountain", "pass"):
+        if target.terrain in ("mountain", "pass"):
             terrain_penalty = 6.0
-        elif state.regions[target_region_id].terrain == "river":
+        elif target.terrain == "river":
             terrain_penalty = max(0.0, 5.0 - faction.naval * 2.5)
         intel_bonus = min(6.0, state.resources[faction_id].intel / 12)
         supply_bonus = consumed_weapons * 1.2 + min(8.0, local_food * 0.1)
+        soldier_score = math.sqrt(max(1, unit.soldiers or 1000)) * 0.28
+        general_score = ((general.command + general.attack) / 2) * 0.22 if general else 0
         return (
             18.0 * unit.power
+            + soldier_score
+            + general_score
             + unit.readiness * 0.34
             + faction.attack * 11.0
             + supply_bonus
@@ -700,86 +859,201 @@ class AgenticGameEngine:
             unit = self._unit_by_id(state, attack.unit_id)
             if unit is None:
                 continue
-            target_owner = state.region_owners[attack.target_region_id]
-            if target_owner == attack.faction_id or self._are_allied(state, attack.faction_id, target_owner):
-                continue
-            defender_score = self._defense_score(state, target_owner, attack.target_region_id, defense_bonus)
-            pressure_key = f"{attack.faction_id}:{attack.target_region_id}"
-            pressure = state.region_pressure.get(pressure_key, 0)
-            attacker_name = state.factions[attack.faction_id].display_name(222)
-            defender_name = state.factions[target_owner].display_name(222)
-            region_name = state.regions[attack.target_region_id].name_cn
-
-            if attack.attack_score >= defender_score * 1.08 or (pressure >= 2 and attack.attack_score >= defender_score * 0.96):
-                state.region_owners[attack.target_region_id] = attack.faction_id
-                state.region_development[attack.target_region_id] = max(0.66, state.region_development.get(attack.target_region_id, 1.0) * 0.88)
-                unit.region_id = attack.target_region_id
-                unit.readiness = max(18, unit.readiness - 8)
-                self._clear_pressure_for_region(state, attack.target_region_id)
-                self._retreat_defenders(state, target_owner, attack.target_region_id)
-                self._log(
-                    state,
-                    "Region captured",
-                    f"{attacker_name} captures {region_name} from {defender_name} ({attack.attack_score:.1f} vs {defender_score:.1f}).",
-                    faction_id=attack.faction_id,
-                    region_id=attack.target_region_id,
-                    tone="victory",
-                )
-            elif attack.attack_score >= defender_score * 0.92:
-                state.region_pressure[pressure_key] = pressure + 1
-                unit.readiness = max(0, unit.readiness - 8)
-                self._log(
-                    state,
-                    "Front contested",
-                    f"{attacker_name} pressures {region_name}, but {defender_name} holds for now ({attack.attack_score:.1f} vs {defender_score:.1f}).",
-                    faction_id=attack.faction_id,
-                    region_id=attack.target_region_id,
-                    tone="war",
-                )
-            else:
-                state.region_pressure[pressure_key] = max(0, pressure - 1)
-                unit.readiness = max(0, unit.readiness - 14)
-                self._log(
-                    state,
-                    "Attack repelled",
-                    f"{defender_name} holds {region_name} against {attacker_name} ({attack.attack_score:.1f} vs {defender_score:.1f}).",
-                    faction_id=target_owner,
-                    region_id=attack.target_region_id,
-                    tone="defense",
-                )
+            current_city = attack.source_city_id or unit.city_id
+            for target_city_id in attack.target_city_ids:
+                if not current_city or target_city_id not in state.cities[current_city].neighbors:
+                    self._reject(state, attack.faction_id, "Attack halted", f"{unit.id} cannot continue from {current_city} to {target_city_id}.")
+                    break
+                target_owner = state.city_owners[target_city_id]
+                if target_owner == attack.faction_id or self._are_allied(state, attack.faction_id, target_owner):
+                    break
+                won = self._resolve_city_battle(state, unit, current_city, target_city_id, target_owner, defense_bonus)
+                if not won:
+                    unit.city_id = current_city
+                    unit.region_id = state.cities[current_city].region_id
+                    break
+                current_city = target_city_id
+                if unit.readiness < 18 or unit.soldiers < 1000:
+                    break
 
     def _defense_score(
         self,
         state: AgenticGameState,
         defender_id: str,
-        region_id: str,
+        city_id: str,
         defense_bonus: dict[str, float],
     ) -> float:
         faction = state.factions[defender_id]
         defending_units = [
-            unit for unit in state.units if unit.faction_id == defender_id and unit.region_id == region_id and unit.unit_type == "army"
+            unit for unit in state.units if unit.faction_id == defender_id and unit.city_id == city_id and unit.unit_type == "army"
         ]
-        unit_score = sum(10.0 * unit.power + unit.readiness * 0.22 for unit in defending_units)
-        terrain_score = TERRAIN_DEFENSE.get(state.regions[region_id].terrain, 10.0)
-        supply_score = min(11.0, self._region_supply(state, region_id, "food") * 0.12 + self._region_supply(state, region_id, "weapons") * 0.18)
+        unit_score = 0.0
+        for unit in defending_units:
+            general = self._general_for_unit(state, unit)
+            general_score = ((general.command + general.defense) / 2) * 0.2 if general else 0
+            unit_score += 10.0 * unit.power + unit.readiness * 0.22 + math.sqrt(max(1, unit.soldiers)) * 0.24 + general_score
+        city = state.cities[city_id]
+        terrain_score = TERRAIN_DEFENSE.get(city.terrain, 10.0) * city.fort
+        supply_score = min(13.0, self._city_supply(state, city_id, "food") * 0.12 + self._city_supply(state, city_id, "weapons") * 0.18)
         return (
             20.0
             + unit_score
             + terrain_score
             + supply_score
-            + defense_bonus.get(region_id, 0.0)
+            + defense_bonus.get(city_id, 0.0)
             + faction.defense * 10.0
         ) * self._policy_mod(state, defender_id, "defense")
 
+    def _resolve_city_battle(
+        self,
+        state: AgenticGameState,
+        attacker_unit: AgenticUnit,
+        source_city_id: str,
+        target_city_id: str,
+        defender_id: str,
+        defense_bonus: dict[str, float],
+    ) -> bool:
+        attacker_id = attacker_unit.faction_id
+        attacker_general = self._general_for_unit(state, attacker_unit)
+        defender_unit = self._best_defender_at_city(state, defender_id, target_city_id)
+        defender_general = self._general_for_unit(state, defender_unit) if defender_unit else None
+        attacker_before = max(0, attacker_unit.soldiers)
+        defender_before = defender_unit.soldiers if defender_unit else int(state.cities[target_city_id].population * 145)
+        attack_score = self._attack_score(state, attacker_id, attacker_unit, target_city_id)
+        defender_score = self._defense_score(state, defender_id, target_city_id, defense_bonus)
+        probability = max(0.12, min(0.88, attack_score / max(1.0, attack_score + defender_score)))
+        rng = self._battle_rng(state, attacker_unit.id, source_city_id, target_city_id)
+        attacker_won = rng.random() < probability
+        city = state.cities[target_city_id]
+        attacker_name = state.factions[attacker_id].display_name(222)
+        defender_name = state.factions[defender_id].display_name(222)
+        factors = [
+            f"odds {probability:.0%}",
+            f"attack {attack_score:.1f}",
+            f"defense {defender_score:.1f}",
+            f"terrain {city.terrain}",
+            f"fort {city.fort:.2f}",
+        ]
+        if defense_bonus.get(target_city_id, 0) > 0:
+            factors.append("defender prepared nearby defense")
+        if self._city_supply(state, target_city_id, "food") or self._city_supply(state, target_city_id, "weapons"):
+            factors.append("defender had local supply")
+
+        if attacker_won:
+            attacker_loss_rate = rng.uniform(0.10, 0.28)
+            defender_loss_rate = rng.uniform(0.36, 0.78)
+            attacker_unit.soldiers = max(0, int(attacker_unit.soldiers * (1 - attacker_loss_rate)))
+            if defender_unit:
+                defender_unit.soldiers = max(0, int(defender_unit.soldiers * (1 - defender_loss_rate)))
+            defender_after = defender_unit.soldiers if defender_unit else 0
+            aftermath = self._defender_aftermath(state, rng, defender_unit, defender_general, target_city_id, attacker_id)
+            state.city_owners[target_city_id] = attacker_id
+            state.city_development[target_city_id] = max(0.64, state.city_development.get(target_city_id, 1.0) * 0.88)
+            attacker_unit.city_id = target_city_id
+            attacker_unit.region_id = city.region_id
+            attacker_unit.readiness = max(12, attacker_unit.readiness - 10)
+            attacker_unit.status = "captured city"
+            if aftermath == "surrender_soldiers" and defender_after:
+                joined = max(300, int(defender_after * 0.45))
+                attacker_unit.soldiers = min(attacker_unit.max_soldiers or attacker_unit.soldiers + joined, attacker_unit.soldiers + joined)
+                if defender_unit:
+                    defender_unit.soldiers = max(0, defender_unit.soldiers - joined)
+            elif aftermath == "surrender_general" and defender_unit and defender_general:
+                defender_unit.faction_id = attacker_id
+                defender_unit.city_id = target_city_id
+                defender_unit.region_id = city.region_id
+                defender_unit.status = "surrendered"
+                defender_general.faction_id = attacker_id
+                defender_general.city_id = target_city_id
+                defender_general.status = "surrendered"
+            self._remove_dead_armies(state)
+            summary = f"{attacker_name} takes {city.name_cn}; {defender_name} outcome: {aftermath.replace('_', ' ')}."
+            outcome = "attacker_win"
+            tone = "victory"
+            state.animations.append(AnimationEvent(type="clash", faction_id=attacker_id, general_id=attacker_unit.general_id, from_city_id=source_city_id, to_city_id=target_city_id, tone="victory"))
+            if aftermath.startswith("surrender"):
+                state.animations.append(AnimationEvent(type="surrender", faction_id=defender_id, city_id=target_city_id, tone="diplomacy"))
+        else:
+            attacker_loss_rate = rng.uniform(0.22, 0.55)
+            defender_loss_rate = rng.uniform(0.06, 0.25)
+            attacker_unit.soldiers = max(0, int(attacker_unit.soldiers * (1 - attacker_loss_rate)))
+            if defender_unit:
+                defender_unit.soldiers = max(0, int(defender_unit.soldiers * (1 - defender_loss_rate)))
+            defender_after = defender_unit.soldiers if defender_unit else defender_before
+            attacker_unit.city_id = source_city_id
+            attacker_unit.region_id = state.cities[source_city_id].region_id
+            attacker_unit.readiness = max(0, attacker_unit.readiness - 16)
+            attacker_unit.status = "retreating"
+            self._remove_dead_armies(state)
+            summary = f"{defender_name} holds {city.name_cn}; {attacker_name} retreats to {state.cities[source_city_id].name_cn}."
+            outcome = "defender_win"
+            aftermath = "hold"
+            tone = "defense"
+            state.animations.append(AnimationEvent(type="retreat", faction_id=attacker_id, general_id=attacker_unit.general_id, from_city_id=target_city_id, to_city_id=source_city_id, tone="defense"))
+
+        battle = BattleEvent(
+            round=state.round,
+            attacker_faction=attacker_id,
+            defender_faction=defender_id,
+            attacker_general_id=attacker_unit.general_id or attacker_unit.id,
+            defender_general_id=defender_unit.general_id if defender_unit else None,
+            source_city_id=source_city_id,
+            target_city_id=target_city_id,
+            outcome=outcome,  # type: ignore[arg-type]
+            aftermath=aftermath,  # type: ignore[arg-type]
+            attacker_before=attacker_before,
+            attacker_after=max(0, attacker_unit.soldiers),
+            defender_before=defender_before,
+            defender_after=max(0, defender_after),
+            win_probability=round(probability, 4),
+            factors=factors,
+            summary=summary,
+        )
+        state.battle_events.append(battle)
+        self._log(state, "City battle", summary, faction_id=attacker_id if attacker_won else defender_id, region_id=city.region_id, tone=tone)
+        return attacker_won
+
+    def _defender_aftermath(
+        self,
+        state: AgenticGameState,
+        rng: random.Random,
+        defender_unit: AgenticUnit | None,
+        defender_general: GeneralView | None,
+        lost_city_id: str,
+        attacker_id: str,
+    ) -> str:
+        if defender_unit is None or defender_unit.soldiers <= 0:
+            return "annihilated"
+        retreat_target = self._retreat_city_for_defender(state, defender_unit.faction_id, lost_city_id)
+        risk = defender_general.surrender_risk if defender_general else 0.08
+        low_soldiers = 1.0 - min(1.0, defender_unit.soldiers / max(1, defender_unit.max_soldiers))
+        loyalty_penalty = (100 - (defender_general.loyalty if defender_general else 70)) / 150
+        roll = rng.random()
+        if roll < risk + loyalty_penalty * 0.4:
+            return "surrender_general"
+        if roll < risk + loyalty_penalty * 0.4 + 0.16 + low_soldiers * 0.18:
+            return "surrender_soldiers"
+        if retreat_target:
+            defender_unit.city_id = retreat_target
+            defender_unit.region_id = state.cities[retreat_target].region_id
+            defender_unit.status = "retreating"
+            return "retreat"
+        defender_unit.soldiers = 0
+        return "annihilated"
+
+    def _battle_rng(self, state: AgenticGameState, unit_id: str, source_city_id: str, target_city_id: str) -> random.Random:
+        seed = f"{state.round}:{unit_id}:{source_city_id}:{target_city_id}"
+        return random.Random(seed)
+
     def _apply_round_income(self, state: AgenticGameState) -> None:
         totals = {faction_id: Resources() for faction_id in FACTION_IDS}
-        for region_id, owner in state.region_owners.items():
-            region = state.regions[region_id]
-            development = state.region_development.get(region_id, 1.0)
-            totals[owner].add("food", int((region.population * 0.16 + 5) * development * self._policy_mod(state, owner, "food")))
-            totals[owner].add("gold", int((region.economy * 0.12 + 4) * development * self._policy_mod(state, owner, "gold")))
-            totals[owner].add("weapons", int((region.economy * 0.07 + 3) * development * self._policy_mod(state, owner, "weapons")))
-            totals[owner].add("manpower", int((region.population * 0.05 + 2) * self._policy_mod(state, owner, "manpower")))
+        for city_id, owner in state.city_owners.items():
+            city = state.cities[city_id]
+            development = state.city_development.get(city_id, 1.0)
+            totals[owner].add("food", int((city.population * 0.08 + 3) * development * self._policy_mod(state, owner, "food")))
+            totals[owner].add("gold", int((city.economy * 0.06 + 2) * development * self._policy_mod(state, owner, "gold")))
+            totals[owner].add("weapons", int((city.economy * 0.04 + 2) * development * self._policy_mod(state, owner, "weapons")))
+            totals[owner].add("manpower", int((city.population * 0.03 + 1) * self._policy_mod(state, owner, "manpower")))
         for faction_id, income in totals.items():
             resources = state.resources[faction_id]
             resources.add("food", income.food)
@@ -802,10 +1076,19 @@ class AgenticGameEngine:
                 recovery += 4
             if unit.status == "resting":
                 recovery += 10
-            if self._region_supply(state, unit.region_id, "food") > 0:
-                self._consume_region_supply(state, unit.region_id, "food", 1)
+            if unit.unit_type == "army" and unit.soldiers > 0:
+                general = self._general_for_unit(state, unit)
+                food_need = general.food_need if general else max(1, unit.soldiers // 4000)
+                if state.resources[owner].spend("food", food_need):
+                    recovery += 2
+                    reinforce = min((unit.max_soldiers or unit.soldiers) - unit.soldiers, int(state.resources[owner].manpower * 0.03))
+                    if reinforce > 0 and state.resources[owner].spend("manpower", reinforce):
+                        unit.soldiers += reinforce
+            if unit.city_id and self._city_supply(state, unit.city_id, "food") > 0:
+                self._consume_city_supply(state, unit.city_id, "food", 1)
                 recovery += 3
             unit.readiness = min(100, unit.readiness + recovery)
+        self._sync_generals(state)
 
     def _expire_alliances(self, state: AgenticGameState) -> None:
         before = len(state.alliances)
@@ -814,8 +1097,23 @@ class AgenticGameEngine:
             self._log(state, "Treaty expired", "An alliance expires and border fighting is legal again.", tone="diplomacy")
 
     def _update_victory(self, state: AgenticGameState) -> None:
-        counts = self._region_counts(state)
-        needed = math.ceil(len(state.regions) * DOMINANCE_SHARE)
+        region_counts = self._region_counts(state)
+        region_needed = math.ceil(len(state.regions) * DOMINANCE_SHARE)
+        for faction_id, count in region_counts.items():
+            if count >= region_needed:
+                state.finished = True
+                state.winner = faction_id
+                self._log(
+                    state,
+                    "Dominance victory",
+                    f"{state.factions[faction_id].display_name(222)} controls {count}/{len(state.regions)} regions and wins early.",
+                    faction_id=faction_id,
+                    tone="victory",
+                )
+                return
+        counts = self._city_counts(state) if state.city_owners else self._region_counts(state)
+        total = len(state.city_owners) if state.city_owners else len(state.regions)
+        needed = math.ceil(total * DOMINANCE_SHARE)
         for faction_id, count in counts.items():
             if count >= needed:
                 state.finished = True
@@ -823,7 +1121,7 @@ class AgenticGameEngine:
                 self._log(
                     state,
                     "Dominance victory",
-                    f"{state.factions[faction_id].display_name(222)} controls {count}/{len(state.regions)} regions and wins early.",
+                    f"{state.factions[faction_id].display_name(222)} controls {count}/{total} cities and wins early.",
                     faction_id=faction_id,
                     tone="victory",
                 )
@@ -845,13 +1143,18 @@ class AgenticGameEngine:
 
     def _score_faction(self, state: AgenticGameState, faction_id: str) -> int:
         region_score = len(self._owned_regions(state, faction_id)) * 18
+        city_score = sum(1 for owner in state.city_owners.values() if owner == faction_id) * 7
         ready_score = sum(unit.readiness for unit in state.units if unit.faction_id == faction_id) // 12
+        soldier_score = sum(unit.soldiers for unit in state.units if unit.faction_id == faction_id and unit.unit_type == "army") // 3500
         resources = state.resources[faction_id]
         resource_score = (resources.food + resources.weapons + resources.gold + resources.manpower) // 35
-        return region_score + ready_score + resource_score
+        return region_score + city_score + ready_score + soldier_score + resource_score
 
     def _region_counts(self, state: AgenticGameState) -> dict[str, int]:
         return {faction_id: len(self._owned_regions(state, faction_id)) for faction_id in FACTION_IDS}
+
+    def _city_counts(self, state: AgenticGameState) -> dict[str, int]:
+        return {faction_id: sum(1 for owner in state.city_owners.values() if owner == faction_id) for faction_id in FACTION_IDS}
 
     def _owned_regions(self, state: AgenticGameState, faction_id: str) -> list[str]:
         return [region_id for region_id, owner in state.region_owners.items() if owner == faction_id]
@@ -891,6 +1194,192 @@ class AgenticGameEngine:
         if not candidates:
             return None
         return max(candidates)[1]
+
+    def _source_city_for_order(self, unit: AgenticUnit, order: AgentOrder) -> str | None:
+        return order.source_city_id or unit.city_id or self._first_city_for_region(order.region_id or unit.region_id)
+
+    def _target_cities_for_order(self, state: AgenticGameState, unit: AgenticUnit, order: AgentOrder) -> list[str]:
+        source_city = self._source_city_for_order(unit, order)
+        if not source_city:
+            return []
+        raw_targets = list(order.target_city_ids)
+        if order.target_city_id:
+            raw_targets.insert(0, order.target_city_id)
+        region_target_from_order = False
+        if not raw_targets and order.target_region_id:
+            region_target = self._best_city_in_region_for_attack(state, unit, order.target_region_id)
+            if region_target:
+                raw_targets.append(region_target)
+                region_target_from_order = True
+        if not raw_targets:
+            best = self._best_attack_city_for_unit(state, unit)
+            if best:
+                raw_targets.append(best)
+        targets: list[str] = []
+        current = source_city
+        mobility_limit = max(1, 1 + ((self._general_for_unit(state, unit).mobility if self._general_for_unit(state, unit) else 70) // 34))
+        for target in raw_targets:
+            if target not in state.cities:
+                break
+            region_compatible = bool(
+                region_target_from_order
+                and order.target_region_id
+                and order.target_region_id in state.regions[unit.region_id].neighbors
+                and target == raw_targets[0]
+            )
+            if target not in state.cities[current].neighbors and not region_compatible:
+                break
+            targets.append(target)
+            current = target
+            if len(targets) >= mobility_limit:
+                break
+        return targets
+
+    def _reachable_city_in_region(self, state: AgenticGameState, source_city_id: str, region_id: str) -> str | None:
+        if not source_city_id or not region_id:
+            return None
+        for city in state.cities.values():
+            if city.region_id == region_id and city.id in [source_city_id, *state.cities[source_city_id].neighbors]:
+                return city.id
+        return self._first_city_for_region(region_id)
+
+    def _best_city_in_region_for_attack(self, state: AgenticGameState, unit: AgenticUnit, region_id: str) -> str | None:
+        source_city = unit.city_id
+        if not source_city:
+            return None
+        candidates = []
+        region_is_adjacent = region_id in state.regions[unit.region_id].neighbors or region_id == unit.region_id
+        for city in state.cities.values():
+            if city.region_id != region_id:
+                continue
+            owner = state.city_owners[city.id]
+            if owner == unit.faction_id:
+                continue
+            if self._are_allied(state, unit.faction_id, owner):
+                return city.id
+            if city.id in state.cities[source_city].neighbors or region_is_adjacent:
+                candidates.append((city.population + city.economy + city.fort * 15, city.id))
+        if not candidates:
+            return None
+        return max(candidates)[1]
+
+    def _best_attack_city_for_unit(self, state: AgenticGameState, unit: AgenticUnit) -> str | None:
+        if not unit.city_id or unit.city_id not in state.cities:
+            return None
+        candidates = []
+        for neighbor in state.cities[unit.city_id].neighbors:
+            owner = state.city_owners[neighbor]
+            if owner != unit.faction_id and not self._are_allied(state, unit.faction_id, owner):
+                city = state.cities[neighbor]
+                candidates.append((city.population + city.economy + city.fort * 15, neighbor))
+        if not candidates:
+            return None
+        return max(candidates)[1]
+
+    def _first_enemy_city_neighbor(self, state: AgenticGameState, city_id: str, faction_id: str) -> str | None:
+        city = state.cities.get(city_id)
+        if not city:
+            return None
+        for neighbor in city.neighbors:
+            owner = state.city_owners[neighbor]
+            if owner != faction_id and not self._are_allied(state, faction_id, owner):
+                return neighbor
+        return None
+
+    def _first_border_city(self, state: AgenticGameState, faction_id: str) -> str | None:
+        for city_id in sorted(city_id for city_id, owner in state.city_owners.items() if owner == faction_id):
+            if self._first_enemy_city_neighbor(state, city_id, faction_id):
+                return city_id
+        return next((city_id for city_id, owner in state.city_owners.items() if owner == faction_id), None)
+
+    def _first_city_for_region(self, region_id: str) -> str | None:
+        for city in self.city_config.values():
+            if city.region_id == region_id:
+                return city.id
+        return None
+
+    def _general_for_unit(self, state: AgenticGameState, unit: AgenticUnit | None) -> GeneralView | None:
+        if unit is None or not unit.general_id:
+            return None
+        return state.generals.get(unit.general_id)
+
+    def _unit_label(self, state: AgenticGameState, unit: AgenticUnit) -> str:
+        general = self._general_for_unit(state, unit)
+        if general:
+            return f"{general.name_cn}({unit.soldiers:,})"
+        return unit.id
+
+    def _best_defender_at_city(self, state: AgenticGameState, defender_id: str, city_id: str) -> AgenticUnit | None:
+        defenders = [
+            unit for unit in state.units
+            if unit.faction_id == defender_id and unit.unit_type == "army" and unit.city_id == city_id and unit.soldiers > 0
+        ]
+        if not defenders:
+            return None
+        return max(defenders, key=lambda unit: (unit.soldiers, unit.readiness, unit.power))
+
+    def _retreat_city_for_defender(self, state: AgenticGameState, defender_id: str, lost_city_id: str) -> str | None:
+        for neighbor in state.cities[lost_city_id].neighbors:
+            if state.city_owners.get(neighbor) == defender_id:
+                return neighbor
+        return None
+
+    def _add_city_supply(self, state: AgenticGameState, city_id: str, resource: ResourceType, amount: int) -> None:
+        state.city_supply.setdefault(city_id, {})
+        state.city_supply[city_id][resource] = state.city_supply[city_id].get(resource, 0) + max(0, int(amount))
+
+    def _city_supply(self, state: AgenticGameState, city_id: str, resource: ResourceType) -> int:
+        return int(state.city_supply.get(city_id, {}).get(resource, 0))
+
+    def _consume_city_supply(self, state: AgenticGameState, city_id: str, resource: ResourceType, amount: int) -> int:
+        available = self._city_supply(state, city_id, resource)
+        spent = min(available, max(0, int(amount)))
+        if spent:
+            state.city_supply[city_id][resource] = available - spent
+        return spent
+
+    def _consume_city_supply_or_pool(
+        self,
+        state: AgenticGameState,
+        faction_id: str,
+        city_id: str,
+        resource: ResourceType,
+        amount: int,
+    ) -> int:
+        spent = self._consume_city_supply(state, city_id, resource, amount)
+        if spent >= amount:
+            return spent
+        remaining = amount - spent
+        if state.resources[faction_id].spend(resource, remaining):
+            return amount
+        return spent
+
+    def _remove_dead_armies(self, state: AgenticGameState) -> None:
+        live_units: list[AgenticUnit] = []
+        for unit in state.units:
+            if unit.unit_type == "army" and unit.soldiers <= 0:
+                general = self._general_for_unit(state, unit)
+                if general:
+                    general.soldiers = 0
+                    general.city_id = None
+                    general.status = "lost"
+                continue
+            live_units.append(unit)
+        state.units = live_units
+
+    def _sync_generals(self, state: AgenticGameState) -> None:
+        for general in state.generals.values():
+            general.unit_id = None
+        for unit in state.units:
+            general = self._general_for_unit(state, unit)
+            if not general:
+                continue
+            general.unit_id = unit.id
+            general.faction_id = unit.faction_id
+            general.city_id = unit.city_id
+            general.soldiers = max(0, unit.soldiers)
+            general.max_soldiers = max(general.max_soldiers, unit.max_soldiers)
+            general.status = unit.status
 
     def _add_region_supply(self, state: AgenticGameState, region_id: str, resource: ResourceType, amount: int) -> None:
         state.regional_supply.setdefault(region_id, {})

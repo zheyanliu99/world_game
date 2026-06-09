@@ -358,7 +358,7 @@ For a very small first version:
 - Four policies: balanced, farming, war, logistics.
 - Five action points per faction per round.
 - Alliances prohibit attacks and allow transfers.
-- Combat resolves at region level, not cell level.
+- Combat resolves at city level, while 州 control remains a derived summary.
 - Agents submit JSON only.
 
 That is enough to test whether the core idea is fun before building a larger
@@ -387,6 +387,16 @@ the prepared cache is missing, the server makes a best-effort attempt to rebuild
 it from `configs/maps/sanguo_real_map.json`; otherwise it falls back to the
 older region-polygon canvas.
 
-Resource transfer is implemented through regional supply. Caravans move pooled
-food, weapons, or gold into a target region; local supply then improves battle
-and recovery outcomes in that region.
+The current demo has moved to a curated city graph. Generals lead named armies
+with soldier counts and local portrait assets; cities own income, supply,
+attacks, defense coverage, retreat, surrender, and animations. 州 control is
+derived from city ownership for ranking and map tinting.
+
+Resource transfer is implemented through city supply and summarized by region.
+Caravans move pooled food, weapons, or gold into a target city; local supply then
+improves battle and recovery outcomes there.
+
+General metadata lives in local seed files under `data/generals/`, with a
+BigQuery-compatible schema and optional loader script documented in
+`docs/bigquery_general_seed.md`. The app does not create cloud projects or
+require GCP credentials.

@@ -38,6 +38,9 @@ let orderDrafts = [];
 let diplomacyDrafts = [];
 let realMapBitmap = null;
 let realMapSignature = "";
+let portraitImages = {};
+let animationStartedAt = 0;
+let animationFrame = null;
 
 const elements = {
   canvas: document.getElementById("mapCanvas"),
@@ -54,6 +57,7 @@ const elements = {
   orderDrafts: document.getElementById("orderDrafts"),
   factionList: document.getElementById("factionList"),
   intentList: document.getElementById("intentList"),
+  battleList: document.getElementById("battleList"),
   logList: document.getElementById("logList"),
   statusPill: document.getElementById("statusPill"),
   winnerBanner: document.getElementById("winnerBanner"),
@@ -134,8 +138,10 @@ function render() {
   renderDrafts();
   renderFactions();
   renderIntents();
+  renderBattles();
   renderLogs();
   drawMap();
+  startAnimations();
   renderWinner();
 }
 
@@ -156,31 +162,63 @@ function renderPolicies() {
 
 function renderUnits() {
   const player = game.player_faction;
-  const regions = regionMap();
   const units = game.units.filter((unit) => unit.faction_id === player);
+  const generals = generalMap();
   elements.unitList.innerHTML = "";
   units.forEach((unit) => {
     const card = document.createElement("article");
     card.className = "unit-card";
-    const region = regions[unit.region_id];
+    const city = cityMap()[unit.city_id];
+    const general = unit.general_id ? generals[unit.general_id] : null;
     const top = document.createElement("div");
     top.className = "unit-top";
-    top.innerHTML = `<span>${typeLabels[unit.unit_type]} ${unit.id.split("_").at(-1)}</span><span class="unit-meta">${region?.name_cn || unit.region_id} · ${unit.readiness}%</span>`;
+    const title = general ? `${general.name_cn}` : `${typeLabels[unit.unit_type]} ${unit.id.split("_").at(-1)}`;
+    const soldiers = unit.unit_type === "army" ? ` · ${formatSoldiers(unit.soldiers)}` : "";
+    top.innerHTML = `<span>${title}${soldiers}</span><span class="unit-meta">${city?.name_cn || unit.region_id} · ${unit.readiness}%</span>`;
     card.appendChild(top);
 
-    const row = document.createElement("div");
-    row.className = "action-row";
-    actionButtonsFor(unit).forEach((item) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = item.label;
-      button.disabled = !item.order;
-      button.addEventListener("click", () => {
-        if (item.order) addOrder(item.order);
+    if (unit.unit_type === "army") {
+      const chooser = document.createElement("div");
+      chooser.className = "general-order";
+      const select = document.createElement("select");
+      cityTargetsFor(unit).forEach((cityOption) => {
+        const option = document.createElement("option");
+        option.value = cityOption.id;
+        option.textContent = `${cityOption.name_cn} · ${game.factions[game.city_owners[cityOption.id]]?.name || ""}`;
+        select.appendChild(option);
       });
-      row.appendChild(button);
-    });
-    card.appendChild(row);
+      chooser.appendChild(select);
+      const row = document.createElement("div");
+      row.className = "action-row";
+      [
+        { label: "进攻", build: () => cityAttackOrder(unit, [select.value]) },
+        { label: "连战", build: () => cityAttackOrder(unit, chainTargets(unit, select.value)) },
+        { label: "固守", build: () => ({ unit_id: unit.id, general_id: unit.general_id, action: "defend", source_city_id: unit.city_id, region_id: unit.region_id }) },
+      ].forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = item.label;
+        button.disabled = !select.value && item.label !== "固守";
+        button.addEventListener("click", () => addOrder(item.build()));
+        row.appendChild(button);
+      });
+      chooser.appendChild(row);
+      card.appendChild(chooser);
+    } else {
+      const row = document.createElement("div");
+      row.className = "action-row";
+      actionButtonsFor(unit).forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = item.label;
+        button.disabled = !item.order;
+        button.addEventListener("click", () => {
+          if (item.order) addOrder(item.order);
+        });
+        row.appendChild(button);
+      });
+      card.appendChild(row);
+    }
     elements.unitList.appendChild(card);
   });
 }
@@ -215,20 +253,58 @@ function actionButtonsFor(unit) {
 }
 
 function attackOrder(unit) {
-  const target = firstEnemyNeighbor(unit.region_id, unit.faction_id);
-  if (!target) return null;
-  return { unit_id: unit.id, action: "attack", target_region_id: target };
+  const target = firstEnemyCity(unit.city_id, unit.faction_id);
+  if (target) return cityAttackOrder(unit, [target]);
+  const regionTarget = firstEnemyNeighbor(unit.region_id, unit.faction_id);
+  if (!regionTarget) return null;
+  return { unit_id: unit.id, general_id: unit.general_id, action: "attack", target_region_id: regionTarget };
+}
+
+function cityAttackOrder(unit, targets) {
+  const cleanTargets = targets.filter(Boolean);
+  if (!cleanTargets.length) return null;
+  return { unit_id: unit.id, general_id: unit.general_id, action: "attack", source_city_id: unit.city_id, target_city_ids: cleanTargets };
+}
+
+function cityTargetsFor(unit) {
+  const city = cityMap()[unit.city_id];
+  if (!city) return [];
+  return city.neighbors
+    .map((id) => cityMap()[id])
+    .filter((item) => item && game.city_owners[item.id] !== unit.faction_id && !isAllied(unit.faction_id, game.city_owners[item.id]));
+}
+
+function chainTargets(unit, firstTarget) {
+  const result = [firstTarget].filter(Boolean);
+  const first = cityMap()[firstTarget];
+  if (!first) return result;
+  const second = first.neighbors.find((id) => game.city_owners[id] !== unit.faction_id && !result.includes(id) && !isAllied(unit.faction_id, game.city_owners[id]));
+  if (second) result.push(second);
+  return result;
+}
+
+function firstEnemyCity(cityId, factionId) {
+  const city = cityMap()[cityId];
+  if (!city) return null;
+  return city.neighbors.find((neighbor) => {
+    const owner = game.city_owners[neighbor];
+    return owner && owner !== factionId && !isAllied(factionId, owner);
+  }) || null;
 }
 
 function scoutOrder(unit) {
+  const cityTarget = firstEnemyCity(unit.city_id, unit.faction_id) || cityMap()[unit.city_id]?.neighbors?.[0];
+  if (cityTarget) return { unit_id: unit.id, action: "scout", source_city_id: unit.city_id, target_city_id: cityTarget };
   const target = firstEnemyNeighbor(unit.region_id, unit.faction_id) || firstNeighbor(unit.region_id);
   if (!target) return null;
   return { unit_id: unit.id, action: "scout", target_region_id: target };
 }
 
 function transferOrder(unit, resource) {
-  const target = firstBorderRegion(unit.faction_id) || unit.region_id;
-  return { unit_id: unit.id, action: "transfer", target_region_id: target, resource, amount: 16 };
+  const target = firstBorderCity(unit.faction_id) || unit.city_id;
+  if (target) return { unit_id: unit.id, action: "transfer", source_city_id: unit.city_id, target_city_id: target, resource, amount: 16 };
+  const regionTarget = firstBorderRegion(unit.faction_id) || unit.region_id;
+  return { unit_id: unit.id, action: "transfer", target_region_id: regionTarget, resource, amount: 16 };
 }
 
 function addOrder(order) {
@@ -265,10 +341,13 @@ function renderDrafts() {
 
 function orderLabel(order) {
   const regions = regionMap();
-  const target = order.target_region_id || order.region_id;
+  const cities = cityMap();
+  const targetCity = order.target_city_id || order.target_city_ids?.at?.(-1);
+  const target = targetCity || order.target_region_id || order.region_id;
+  const cityName = targetCity && cities[targetCity] ? cities[targetCity].name_cn : "";
   const regionName = target && regions[target] ? regions[target].name_cn : "";
   const resource = order.resource ? ` ${resourceLabels[order.resource]}` : "";
-  return `${order.unit_id}: ${actionLabels[order.action]}${resource}${regionName ? ` -> ${regionName}` : ""}`;
+  return `${order.unit_id}: ${actionLabels[order.action]}${resource}${cityName || regionName ? ` -> ${cityName || regionName}` : ""}`;
 }
 
 function diplomacyLabel(order) {
@@ -306,6 +385,30 @@ function renderIntents() {
     row.className = "intent-row";
     row.innerHTML = `<strong>${faction.name}</strong><br>${faction.ai_intent || "Awaiting next plan."}`;
     elements.intentList.appendChild(row);
+  });
+}
+
+function renderBattles() {
+  if (!elements.battleList) return;
+  const battles = [...(game.battle_events || [])].reverse().slice(0, 6);
+  elements.battleList.innerHTML = "";
+  if (!battles.length) {
+    const row = document.createElement("article");
+    row.className = "battle-row";
+    row.textContent = "等待交战。";
+    elements.battleList.appendChild(row);
+    return;
+  }
+  battles.forEach((battle) => {
+    const attacker = generalMap()[battle.attacker_general_id];
+    const defender = battle.defender_general_id ? generalMap()[battle.defender_general_id] : null;
+    const city = cityMap()[battle.target_city_id];
+    const row = document.createElement("article");
+    row.className = "battle-row";
+    row.innerHTML = `<strong>${city?.name_cn || battle.target_city_id}</strong> · ${attacker?.name_cn || battle.attacker_general_id} vs ${defender?.name_cn || "守军"}<br>
+      ${formatSoldiers(battle.attacker_before)}→${formatSoldiers(battle.attacker_after)} / ${formatSoldiers(battle.defender_before)}→${formatSoldiers(battle.defender_after)} · 胜率${Math.round(battle.win_probability * 100)}%<br>
+      <span>${battle.summary}</span>`;
+    elements.battleList.appendChild(row);
   });
 }
 
@@ -401,10 +504,13 @@ function drawRealMap() {
   const bitmap = realMapToCanvas();
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(bitmap, offsetX, offsetY, mapWidth * scale, mapHeight * scale);
+  drawCityRoads(ctx, offsetX, offsetY, scale);
   drawRealMapStateLabels(ctx, offsetX, offsetY, scale);
+  drawCityNodes(ctx, offsetX, offsetY, scale);
   drawRealSupply(ctx, offsetX, offsetY, scale);
   drawRealUnits(ctx, offsetX, offsetY, scale);
-  drawRealCapitalLabels(ctx, offsetX, offsetY, scale);
+  drawGeneralTokens(ctx, offsetX, offsetY, scale);
+  drawAnimationOverlay(ctx, offsetX, offsetY, scale);
   drawRealAttribution(ctx, rect.height);
 }
 
@@ -556,12 +662,12 @@ function realFactionCentroid(factionId) {
 }
 
 function drawRealSupply(ctx, offsetX, offsetY, scale) {
-  Object.entries(game.regional_supply).forEach(([regionId, supply]) => {
+  Object.entries(game.city_supply || {}).forEach(([cityId, supply]) => {
     const total = Object.values(supply).reduce((sum, value) => sum + value, 0);
-    const center = displayCenterForRegion(regionId);
-    if (!total || !center) return;
-    const x = offsetX + center[0] * scale;
-    const y = offsetY + center[1] * scale + 24;
+    const city = cityMap()[cityId];
+    if (!total || !city) return;
+    const x = offsetX + city.position[0] * scale;
+    const y = offsetY + city.position[1] * scale + 16;
     const width = Math.min(58, 18 + total * 0.7);
     ctx.fillStyle = "rgba(9,8,6,0.82)";
     ctx.fillRect(x - width / 2, y, width, 7);
@@ -572,12 +678,14 @@ function drawRealSupply(ctx, offsetX, offsetY, scale) {
 
 function drawRealUnits(ctx, offsetX, offsetY, scale) {
   const grouped = {};
-  game.units.forEach((unit) => {
-    grouped[unit.region_id] ||= [];
-    grouped[unit.region_id].push(unit);
+  game.units.filter((unit) => unit.unit_type !== "army").forEach((unit) => {
+    const key = unit.city_id || unit.region_id;
+    grouped[key] ||= [];
+    grouped[key].push(unit);
   });
-  Object.entries(grouped).forEach(([regionId, units]) => {
-    const center = displayCenterForRegion(regionId);
+  Object.entries(grouped).forEach(([key, units]) => {
+    const city = cityMap()[key];
+    const center = city ? city.position : displayCenterForRegion(key);
     if (!center) return;
     units.forEach((unit, index) => {
       const angle = (Math.PI * 2 * index) / Math.max(1, units.length);
@@ -587,6 +695,175 @@ function drawRealUnits(ctx, offsetX, offsetY, scale) {
       drawUnitShape(ctx, unit, x, y, Math.max(4, 7 * scale));
     });
   });
+}
+
+function drawCityRoads(ctx, offsetX, offsetY, scale) {
+  const cities = cityMap();
+  ctx.save();
+  ctx.lineWidth = Math.max(0.8, 1.15 * scale);
+  ctx.strokeStyle = "rgba(245,224,164,0.22)";
+  Object.values(cities).forEach((city) => {
+    city.neighbors.forEach((neighborId) => {
+      if (city.id > neighborId) return;
+      const neighbor = cities[neighborId];
+      if (!neighbor) return;
+      ctx.beginPath();
+      ctx.moveTo(offsetX + city.position[0] * scale, offsetY + city.position[1] * scale);
+      ctx.lineTo(offsetX + neighbor.position[0] * scale, offsetY + neighbor.position[1] * scale);
+      ctx.stroke();
+    });
+  });
+  ctx.restore();
+}
+
+function drawCityNodes(ctx, offsetX, offsetY, scale) {
+  const fontSize = Math.max(9, Math.min(14, 9 * scale + 5));
+  ctx.save();
+  Object.values(cityMap()).forEach((city) => {
+    const owner = game.city_owners[city.id];
+    const faction = game.factions[owner];
+    const x = offsetX + city.position[0] * scale;
+    const y = offsetY + city.position[1] * scale;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(2.5, 3.6 * scale), 0, Math.PI * 2);
+    ctx.fillStyle = faction?.color || "#777";
+    ctx.fill();
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "rgba(255,243,204,0.86)";
+    ctx.stroke();
+    ctx.font = `800 ${fontSize}px "Songti SC", serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "rgba(0,0,0,0.68)";
+    ctx.fillStyle = "rgba(255,239,195,0.88)";
+    ctx.strokeText(city.name_cn, x, y + 5);
+    ctx.fillText(city.name_cn, x, y + 5);
+  });
+  ctx.restore();
+}
+
+function drawGeneralTokens(ctx, offsetX, offsetY, scale) {
+  const grouped = {};
+  game.generals.filter((general) => general.city_id && general.soldiers > 0).forEach((general) => {
+    grouped[general.city_id] ||= [];
+    grouped[general.city_id].push(general);
+    ensurePortrait(general);
+  });
+  Object.entries(grouped).forEach(([cityId, generals]) => {
+    const city = cityMap()[cityId];
+    if (!city) return;
+    generals.forEach((general, index) => {
+      const angle = (Math.PI * 2 * index) / Math.max(1, generals.length);
+      const orbit = generals.length > 1 ? 18 + Math.floor(index / 5) * 8 : 0;
+      const x = offsetX + city.position[0] * scale + Math.cos(angle) * orbit * scale;
+      const y = offsetY + city.position[1] * scale - 16 * scale + Math.sin(angle) * orbit * scale;
+      drawPortraitToken(ctx, general, x, y, Math.max(13, 18 * scale));
+    });
+  });
+}
+
+function drawPortraitToken(ctx, general, x, y, radius) {
+  const faction = game.factions[general.faction_id];
+  const img = portraitImages[general.id];
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = faction?.color || "#777";
+  ctx.fill();
+  ctx.clip();
+  if (img?.complete) {
+    ctx.drawImage(img, x - radius, y - radius, radius * 2, radius * 2);
+  } else {
+    ctx.fillStyle = faction?.color || "#777";
+    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    ctx.fillStyle = "#fff3cc";
+    ctx.font = `900 ${radius * 0.72}px "Songti SC", serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(general.name_cn.slice(0, 1), x, y);
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,243,204,0.96)";
+  ctx.stroke();
+  ctx.font = `900 ${Math.max(10, radius * 0.58)}px "PingFang SC", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(0,0,0,0.78)";
+  ctx.fillStyle = "#fff3cc";
+  const label = formatSoldiers(general.soldiers);
+  ctx.strokeText(label, x, y + radius + 2);
+  ctx.fillText(label, x, y + radius + 2);
+  ctx.restore();
+}
+
+function drawAnimationOverlay(ctx, offsetX, offsetY, scale) {
+  const events = game.animations || [];
+  if (!events.length || !animationStartedAt) return;
+  const elapsed = performance.now() - animationStartedAt;
+  const progress = Math.min(1, elapsed / 1250);
+  events.forEach((event) => {
+    const from = event.from_city_id ? cityMap()[event.from_city_id] : null;
+    const to = event.to_city_id ? cityMap()[event.to_city_id] : null;
+    const city = event.city_id ? cityMap()[event.city_id] : to;
+    ctx.save();
+    if (from && to) {
+      const x1 = offsetX + from.position[0] * scale;
+      const y1 = offsetY + from.position[1] * scale;
+      const x2 = offsetX + to.position[0] * scale;
+      const y2 = offsetY + to.position[1] * scale;
+      ctx.strokeStyle = event.type === "retreat" ? "rgba(130,190,255,0.78)" : "rgba(255,218,95,0.82)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 + (x2 - x1) * progress, y1 + (y2 - y1) * progress);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x1 + (x2 - x1) * progress, y1 + (y2 - y1) * progress, 5 + 4 * Math.sin(progress * Math.PI), 0, Math.PI * 2);
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fill();
+    }
+    if (city && ["clash", "defend", "surrender"].includes(event.type)) {
+      const x = offsetX + city.position[0] * scale;
+      const y = offsetY + city.position[1] * scale;
+      const radius = (18 + progress * 30) * scale;
+      ctx.strokeStyle = event.type === "defend" ? "rgba(135,220,130,0.8)" : event.type === "surrender" ? "rgba(255,240,180,0.86)" : "rgba(255,88,58,0.86)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  });
+}
+
+function ensurePortrait(general) {
+  if (portraitImages[general.id]) return;
+  const img = new Image();
+  img.onload = () => drawMap();
+  img.src = general.portrait_path;
+  portraitImages[general.id] = img;
+}
+
+function startAnimations() {
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame);
+    animationFrame = null;
+  }
+  if (!game?.animations?.length) return;
+  animationStartedAt = performance.now();
+  const tick = () => {
+    drawMap();
+    if (performance.now() - animationStartedAt < 1300) {
+      animationFrame = requestAnimationFrame(tick);
+    }
+  };
+  animationFrame = requestAnimationFrame(tick);
 }
 
 function drawRealAttribution(ctx, height) {
@@ -790,12 +1067,35 @@ function firstBorderRegion(factionId) {
   return border ? border.id : regions[0]?.id || null;
 }
 
+function firstBorderCity(factionId) {
+  const owned = game.cities
+    .filter((city) => game.city_owners[city.id] === factionId)
+    .sort((a, b) => a.id.localeCompare(b.id));
+  const border = owned.find((city) => firstEnemyCity(city.id, factionId));
+  return border ? border.id : owned[0]?.id || null;
+}
+
 function isAllied(a, b) {
   return game.alliances.some((alliance) => alliance.factions.includes(a) && alliance.factions.includes(b));
 }
 
 function regionMap() {
   return Object.fromEntries(game.regions.map((region) => [region.id, region]));
+}
+
+function cityMap() {
+  return Object.fromEntries((game.cities || []).map((city) => [city.id, city]));
+}
+
+function generalMap() {
+  return Object.fromEntries((game.generals || []).map((general) => [general.id, general]));
+}
+
+function formatSoldiers(value) {
+  const number = Number(value || 0);
+  if (number >= 10000) return `${(number / 10000).toFixed(number >= 100000 ? 0 : 1)}万`;
+  if (number >= 1000) return `${Math.round(number / 100) / 10}k`;
+  return `${number}`;
 }
 
 function hexToRgba(hex, alpha) {

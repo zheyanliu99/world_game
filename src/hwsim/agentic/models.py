@@ -12,6 +12,8 @@ UnitType = Literal["army", "worker", "scout", "caravan"]
 UnitAction = Literal["rest", "attack", "defend", "scout", "farm", "transfer"]
 ResourceType = Literal["food", "weapons", "gold", "manpower", "intel"]
 DiplomacyAction = Literal["propose_alliance", "break_alliance"]
+BattleOutcome = Literal["attacker_win", "defender_win", "contested"]
+DefenderAftermath = Literal["hold", "retreat", "surrender_soldiers", "surrender_general", "annihilated"]
 
 
 POLICIES: tuple[Policy, ...] = ("balanced", "farming", "war", "logistics", "defense", "diplomacy")
@@ -44,6 +46,10 @@ class AgenticUnit(BaseModel):
     faction_id: str
     unit_type: UnitType
     region_id: str
+    city_id: str | None = None
+    general_id: str | None = None
+    soldiers: int = 0
+    max_soldiers: int = 0
     readiness: int = 100
     power: float = 1.0
     cargo: dict[ResourceType, int] = Field(default_factory=dict)
@@ -52,9 +58,13 @@ class AgenticUnit(BaseModel):
 
 class AgentOrder(BaseModel):
     unit_id: str | None = None
+    general_id: str | None = None
     action: UnitAction
     region_id: str | None = None
     target_region_id: str | None = None
+    source_city_id: str | None = None
+    target_city_id: str | None = None
+    target_city_ids: list[str] = Field(default_factory=list)
     target_faction: str | None = None
     resource: ResourceType | None = None
     amount: int = 0
@@ -81,8 +91,10 @@ class AgentObservation(BaseModel):
     resources: Resources
     owned_regions: list[str]
     visible_regions: dict[str, str]
+    visible_cities: dict[str, str] = Field(default_factory=dict)
     units: list[AgenticUnit]
     neighbors: dict[str, list[str]]
+    city_neighbors: dict[str, list[str]] = Field(default_factory=dict)
     alliances: list[str]
     recent_log: list[str]
     player_command: str = ""
@@ -117,6 +129,70 @@ class PendingAttack(BaseModel):
     source_region_id: str
     target_region_id: str
     attack_score: float
+    source_city_id: str | None = None
+    target_city_ids: list[str] = Field(default_factory=list)
+
+
+class CityView(BaseModel):
+    id: str
+    name_cn: str
+    region_id: str
+    position: tuple[float, float]
+    terrain: str
+    population: int
+    economy: int
+    fort: float
+    neighbors: list[str]
+
+
+class GeneralView(BaseModel):
+    id: str
+    name_cn: str
+    name_en: str
+    faction_id: str
+    portrait_path: str
+    city_id: str | None
+    unit_id: str | None = None
+    soldiers: int
+    max_soldiers: int
+    command: int
+    attack: int
+    defense: int
+    mobility: int
+    loyalty: int
+    food_need: int
+    surrender_risk: float
+    status: str = "idle"
+
+
+class BattleEvent(BaseModel):
+    round: int
+    attacker_faction: str
+    defender_faction: str
+    attacker_general_id: str
+    defender_general_id: str | None = None
+    source_city_id: str
+    target_city_id: str
+    outcome: BattleOutcome
+    aftermath: DefenderAftermath
+    attacker_before: int
+    attacker_after: int
+    defender_before: int
+    defender_after: int
+    win_probability: float
+    factors: list[str] = Field(default_factory=list)
+    summary: str
+
+
+class AnimationEvent(BaseModel):
+    type: str
+    faction_id: str | None = None
+    general_id: str | None = None
+    from_city_id: str | None = None
+    to_city_id: str | None = None
+    city_id: str | None = None
+    value: int | None = None
+    tone: str = "neutral"
 
 
 class AgenticGameState(BaseModel):
@@ -127,7 +203,12 @@ class AgenticGameState(BaseModel):
     factions: dict[str, Faction]
     regions: dict[str, Region]
     region_owners: dict[str, str]
+    cities: dict[str, CityView] = Field(default_factory=dict)
+    city_owners: dict[str, str] = Field(default_factory=dict)
+    city_development: dict[str, float] = Field(default_factory=dict)
+    city_supply: dict[str, dict[ResourceType, int]] = Field(default_factory=dict)
     units: list[AgenticUnit]
+    generals: dict[str, GeneralView] = Field(default_factory=dict)
     resources: dict[str, Resources]
     policies: dict[str, Policy]
     alliances: list[AgenticAlliance] = Field(default_factory=list)
@@ -139,6 +220,8 @@ class AgenticGameState(BaseModel):
     current_player_orders: list[AgentOrder] = Field(default_factory=list)
     current_player_diplomacy: list[DiplomacyOrder] = Field(default_factory=list)
     last_plans: dict[str, AgentPlan] = Field(default_factory=dict)
+    battle_events: list[BattleEvent] = Field(default_factory=list)
+    animations: list[AnimationEvent] = Field(default_factory=list)
     logs: list[RoundLog] = Field(default_factory=list)
     winner: str | None = None
     finished: bool = False
@@ -189,11 +272,18 @@ class GameView(BaseModel):
     real_map: RealMapView | None = None
     regions: list[Region]
     region_owners: dict[str, str]
+    cities: list[CityView] = Field(default_factory=list)
+    city_owners: dict[str, str] = Field(default_factory=dict)
+    city_development: dict[str, float] = Field(default_factory=dict)
+    city_supply: dict[str, dict[ResourceType, int]] = Field(default_factory=dict)
     region_development: dict[str, float]
     regional_supply: dict[str, dict[ResourceType, int]]
     region_pressure: dict[str, int]
     factions: dict[str, FactionView]
     units: list[AgenticUnit]
+    generals: list[GeneralView] = Field(default_factory=list)
+    battle_events: list[BattleEvent] = Field(default_factory=list)
+    animations: list[AnimationEvent] = Field(default_factory=list)
     alliances: list[AgenticAlliance]
     logs: list[RoundLog]
     current_player_command: str

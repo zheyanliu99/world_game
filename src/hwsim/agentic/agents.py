@@ -53,6 +53,24 @@ class MockAgentProvider:
         orders: list[AgentOrder] = []
         armies = [unit for unit in observation.units if unit.unit_type == "army"]
         for unit in sorted(armies, key=lambda item: (-item.readiness, item.id)):
+            if unit.city_id and observation.city_neighbors:
+                for neighbor in observation.city_neighbors.get(unit.city_id, []):
+                    owner = observation.visible_cities.get(neighbor)
+                    if owner and owner != observation.faction_id and owner not in observation.alliances:
+                        orders.append(
+                            AgentOrder(
+                                unit_id=unit.id,
+                                general_id=unit.general_id,
+                                action="attack",
+                                source_city_id=unit.city_id,
+                                target_city_ids=[neighbor],
+                            )
+                        )
+                        break
+                if len(orders) >= limit:
+                    break
+                if orders and orders[-1].unit_id == unit.id:
+                    continue
             for neighbor in observation.neighbors.get(unit.region_id, []):
                 owner = observation.visible_regions.get(neighbor)
                 if owner and owner != observation.faction_id and owner not in observation.alliances:
@@ -66,23 +84,35 @@ class MockAgentProvider:
         orders: list[AgentOrder] = []
         for unit in sorted(observation.units, key=lambda item: item.id):
             if unit.unit_type == "worker":
-                orders.append(AgentOrder(unit_id=unit.id, action="farm", region_id=unit.region_id))
+                orders.append(AgentOrder(unit_id=unit.id, action="farm", region_id=unit.region_id, source_city_id=unit.city_id))
             elif unit.unit_type == "scout":
-                target = self._first_enemy_neighbor(observation, unit.region_id)
+                target = self._first_enemy_city_neighbor(observation, unit.city_id or "") or self._first_enemy_neighbor(observation, unit.region_id)
                 if target:
-                    orders.append(AgentOrder(unit_id=unit.id, action="scout", target_region_id=target))
+                    if target in observation.visible_cities:
+                        orders.append(AgentOrder(unit_id=unit.id, action="scout", source_city_id=unit.city_id, target_city_id=target))
+                    else:
+                        orders.append(AgentOrder(unit_id=unit.id, action="scout", target_region_id=target))
             elif unit.unit_type == "caravan":
-                target = self._first_border_region(observation) or unit.region_id
+                target = self._first_border_city(observation) or self._first_border_region(observation) or unit.region_id
+                kwargs = {"target_city_id": target} if target in observation.visible_cities else {"target_region_id": target}
                 orders.append(
                     AgentOrder(
                         unit_id=unit.id,
                         action="transfer",
-                        target_region_id=target,
+                        source_city_id=unit.city_id,
                         resource=prefer_resource,  # type: ignore[arg-type]
                         amount=14,
+                        **kwargs,
                     )
                 )
         return orders
+
+    def _first_enemy_city_neighbor(self, observation: AgentObservation, city_id: str) -> str | None:
+        for neighbor in observation.city_neighbors.get(city_id, []):
+            owner = observation.visible_cities.get(neighbor)
+            if owner and owner != observation.faction_id and owner not in observation.alliances:
+                return neighbor
+        return None
 
     def _first_enemy_neighbor(self, observation: AgentObservation, region_id: str) -> str | None:
         for neighbor in observation.neighbors.get(region_id, []):
@@ -96,6 +126,13 @@ class MockAgentProvider:
             if self._first_enemy_neighbor(observation, region_id):
                 return region_id
         return observation.owned_regions[0] if observation.owned_regions else None
+
+    def _first_border_city(self, observation: AgentObservation) -> str | None:
+        owned = [unit.city_id for unit in observation.units if unit.city_id]
+        for city_id in sorted(set(owned)):
+            if self._first_enemy_city_neighbor(observation, city_id):
+                return city_id
+        return owned[0] if owned else None
 
 
 class OpenAIAgentProvider:

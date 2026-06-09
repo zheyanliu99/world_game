@@ -28,6 +28,26 @@ outputs/sanguo_demo_001_config.json
 The MP4 composer uses the `imageio-ffmpeg` bundled binary, so a system `ffmpeg`
 install is not required.
 
+## Agentic City Web Demo
+
+Run the city-level Three Kingdoms web demo:
+
+```bash
+.venv/bin/python scripts/play_agentic_web.py --port 8010
+```
+
+Open `http://127.0.0.1:8010/`. The player controls 蜀汉 with natural-language
+strategy text plus guided general cards. Named generals lead armies between
+curated cities, portrait tokens show soldier counts on the real map, and each
+manual round can animate movement, defense, battle, retreat, or surrender.
+
+General seed data is reusable from `data/generals/`. To validate the
+BigQuery-ready schema and CSV/JSON seed:
+
+```bash
+.venv/bin/python scripts/load_general_seed_bigquery.py --validate-only
+```
+
 ## Marble Real-Map Mode
 
 Prepare the real China ADM1 map cache:

@@ -1,0 +1,17 @@
+[
+  {"name": "id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "name_cn", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "name_en", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "faction_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "portrait_path", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "starting_city_id", "type": "STRING", "mode": "REQUIRED"},
+  {"name": "soldiers", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "max_soldiers", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "command", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "attack", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "defense", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "mobility", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "loyalty", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "food_need", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "surrender_risk", "type": "FLOAT", "mode": "REQUIRED"}
+]

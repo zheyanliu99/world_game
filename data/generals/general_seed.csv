@@ -1,0 +1,16 @@
+id,name_cn,name_en,faction_id,portrait_path,starting_city_id,soldiers,max_soldiers,command,attack,defense,mobility,loyalty,food_need,surrender_risk
+cao_cao,曹操,Cao Cao,cao,/static/portraits/cao_cao.svg,xuchang,28000,36000,96,88,84,78,99,9,0.01
+xiahou_dun,夏侯惇,Xiahou Dun,cao,/static/portraits/xiahou_dun.svg,luoyang,18000,26000,82,80,84,70,94,7,0.03
+zhang_liao,张辽,Zhang Liao,cao,/static/portraits/zhang_liao.svg,hefei,16000,24000,88,90,82,86,90,7,0.04
+sima_yi,司马懿,Sima Yi,cao,/static/portraits/sima_yi.svg,ye,17000,26000,94,78,92,76,78,7,0.06
+xu_huang,徐晃,Xu Huang,cao,/static/portraits/xu_huang.svg,changan,15000,23000,83,84,80,74,88,6,0.05
+guan_yu,关羽,Guan Yu,liu_bei,/static/portraits/guan_yu.svg,xiangyang,19000,27000,90,95,86,76,98,8,0.01
+zhang_fei,张飞,Zhang Fei,liu_bei,/static/portraits/zhang_fei.svg,hanzhong,17000,25000,82,92,80,78,96,7,0.02
+zhao_yun,赵云,Zhao Yun,liu_bei,/static/portraits/zhao_yun.svg,chengdu,15000,23000,86,88,88,90,97,6,0.02
+zhuge_liang,诸葛亮,Zhuge Liang,liu_bei,/static/portraits/zhuge_liang.svg,jiangzhou,12000,21000,98,74,94,72,99,5,0.01
+ma_chao,马超,Ma Chao,liu_bei,/static/portraits/ma_chao.svg,wudu,14000,23000,80,91,76,92,86,6,0.06
+sun_quan,孙权,Sun Quan,sun_quan,/static/portraits/sun_quan.svg,jianye,21000,30000,88,76,86,75,98,8,0.01
+zhou_yu,周瑜,Zhou Yu,sun_quan,/static/portraits/zhou_yu.svg,chaishang,18000,26000,94,86,84,82,95,7,0.03
+lu_xun,陆逊,Lu Xun,sun_quan,/static/portraits/lu_xun.svg,wujun,15000,24000,92,82,88,80,92,6,0.04
+gan_ning,甘宁,Gan Ning,sun_quan,/static/portraits/gan_ning.svg,nanchang,13000,21000,78,88,74,88,82,6,0.08
+lu_meng,吕蒙,Lu Meng,sun_quan,/static/portraits/lu_meng.svg,changsha,14000,22000,86,84,82,78,90,6,0.05

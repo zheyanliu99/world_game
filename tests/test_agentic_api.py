@@ -26,6 +26,8 @@ def test_agentic_api_create_command_resolve_and_reset() -> None:
     assert game["player_faction"] == "liu_bei"
     assert game["real_map"]["grid_size"] == [480, 270]
     assert len(game["real_map"]["provinces"]) >= 30
+    assert len(game["cities"]) >= 25
+    assert any(general["portrait_path"].endswith(".svg") for general in game["generals"])
 
     command = client.post(
         f"/api/games/{game_id}/command",
@@ -80,3 +82,4 @@ def test_agentic_static_ui_is_served() -> None:
     assert response.status_code == 200
     assert "mapCanvas" in response.text
     assert "结算回合" in response.text
+    assert "battleList" in response.text

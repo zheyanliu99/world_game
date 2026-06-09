@@ -32,7 +32,8 @@ body {
 }
 
 button,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -296,6 +297,20 @@ textarea:focus {
   border-color: rgba(255, 231, 160, 0.86);
 }
 
+select {
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 7px;
+  padding: 0 8px;
+  border: 1px solid rgba(212, 198, 161, 0.38);
+  border-radius: 6px;
+  outline: none;
+  background: rgba(5, 5, 4, 0.86);
+  color: var(--text);
+  font-family: "PingFang SC", system-ui, sans-serif;
+  font-size: 12px;
+}
+
 .segmented {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -370,6 +385,10 @@ textarea:focus {
   padding: 0 5px;
   font-family: "PingFang SC", system-ui, sans-serif;
   font-size: 11px;
+}
+
+.general-order {
+  min-width: 0;
 }
 
 .diplomacy-row {
@@ -474,13 +493,15 @@ textarea:focus {
   padding: 14px 18px;
 }
 
-.intent-list {
+.intent-list,
+.battle-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
-.intent-row {
+.intent-row,
+.battle-row {
   min-width: 0;
   padding: 8px 10px;
   border: 1px solid rgba(212, 198, 161, 0.16);
@@ -492,8 +513,13 @@ textarea:focus {
   line-height: 1.35;
 }
 
-.intent-row strong {
+.intent-row strong,
+.battle-row strong {
   color: var(--gold);
+}
+
+.battle-row span {
+  color: var(--text);
 }
 
 @media (max-width: 1180px) {
@@ -533,7 +559,8 @@ textarea:focus {
     max-height: none;
   }
 
-  .intent-list {
+  .intent-list,
+  .battle-list {
     grid-template-columns: 1fr;
   }
 }
