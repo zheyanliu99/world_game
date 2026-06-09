@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from hwsim.agentic.agents import AgentProvider, MockAgentProvider
+from hwsim.agentic.agents import AdvisorProvider, AgentProvider, DeterministicAdvisorProvider, MockAgentProvider
 from hwsim.agentic.city_data import load_city_graph, load_general_seeds
 from hwsim.agentic.models import (
     AnimationEvent,
@@ -17,6 +17,7 @@ from hwsim.agentic.models import (
     AgenticAlliance,
     AgenticGameState,
     AgenticUnit,
+    AdvisorRecommendation,
     BattleEvent,
     CityView,
     DiplomacyOrder,
@@ -40,8 +41,8 @@ from hwsim.utils.file_utils import read_json, resolve_path
 
 FACTION_IDS = ("cao", "liu_bei", "sun_quan")
 PLAYER_FACTION = "liu_bei"
-MAX_ROUNDS = 20
-ACTION_POINTS = 5
+MAX_ROUNDS = 100
+DIPLOMACY_ACTIONS_PER_ROUND = 1
 DOMINANCE_SHARE = 0.75
 DEFAULT_SCENARIO = Path("configs/scenarios/sanguo_shu_unification_demo.json")
 REAL_MAP_CONFIG = Path("configs/maps/sanguo_real_map.json")
@@ -118,11 +119,13 @@ class AgenticGameEngine:
         map_config: MapConfig,
         agent_provider: AgentProvider | None = None,
         fallback_provider: AgentProvider | None = None,
+        advisor_provider: AdvisorProvider | None = None,
     ) -> None:
         self.scenario = scenario
         self.map_config = map_config
         self.agent_provider = agent_provider or MockAgentProvider()
         self.fallback_provider = fallback_provider or MockAgentProvider()
+        self.advisor_provider = advisor_provider or DeterministicAdvisorProvider()
         self.real_map_view = self._load_real_map_view()
         self.city_graph = load_city_graph()
         self.city_config = self.city_graph.city_map()
@@ -133,9 +136,10 @@ class AgenticGameEngine:
         cls,
         agent_provider: AgentProvider | None = None,
         fallback_provider: AgentProvider | None = None,
+        advisor_provider: AdvisorProvider | None = None,
     ) -> "AgenticGameEngine":
         scenario, map_config, _events, _style = load_bundle(DEFAULT_SCENARIO)
-        return cls(scenario, map_config, agent_provider=agent_provider, fallback_provider=fallback_provider)
+        return cls(scenario, map_config, agent_provider=agent_provider, fallback_provider=fallback_provider, advisor_provider=advisor_provider)
 
     def new_game(self, player_faction: str = PLAYER_FACTION, game_id: str | None = None) -> AgenticGameState:
         factions = self._three_kingdom_factions()
@@ -167,7 +171,7 @@ class AgenticGameEngine:
                 RoundLog(
                     round=0,
                     title="三国开局",
-                    detail="你控制蜀汉。魏强、吴稳，二十回合内用政策、补给、联盟和战役改写局势。",
+                    detail="你控制蜀汉。魏强、吴稳，一百回合内用政策、补给、联盟和战役改写局势。",
                     faction_id=player_faction,
                     tone="info",
                 )
@@ -208,15 +212,16 @@ class AgenticGameEngine:
         self._apply_policies(state, plans)
         defense_bonus: dict[str, float] = defaultdict(float)
         attacks: list[PendingAttack] = []
-        remaining_ap = {faction_id: ACTION_POINTS for faction_id in FACTION_IDS}
+        diplomacy_used = {faction_id: 0 for faction_id in FACTION_IDS}
         used_units: set[str] = set()
 
         for faction_id in FACTION_IDS:
-            self._apply_diplomacy(state, faction_id, plans[faction_id].diplomacy, remaining_ap)
+            self._apply_diplomacy(state, faction_id, plans[faction_id].diplomacy, diplomacy_used)
 
         for faction_id in FACTION_IDS:
             for order in plans[faction_id].orders:
-                self._try_execute_order(state, faction_id, order, remaining_ap, used_units, defense_bonus, attacks)
+                self._try_execute_order(state, faction_id, order, used_units, defense_bonus, attacks)
+            self._apply_default_defense_orders(state, faction_id, used_units, defense_bonus, attacks)
 
         self._resolve_attacks(state, attacks, defense_bonus)
         self._sync_generals(state)
@@ -274,7 +279,18 @@ class AgenticGameEngine:
             current_player_command=state.current_player_command,
             current_player_policy=state.current_player_policy,
             current_player_orders=state.current_player_orders,
+            advisor_recommendation=self.recommend_player_plan(state),
         )
+
+    def recommend_player_plan(self, state: AgenticGameState) -> AdvisorRecommendation:
+        observation = self._observation_for(state, state.player_faction, min(state.round + 1, state.max_rounds))
+        try:
+            recommendation = self.advisor_provider.recommend(observation)
+        except Exception as exc:
+            fallback = DeterministicAdvisorProvider().recommend(observation)
+            fallback.summary = f"Local advisor fallback used after recommendation error: {exc}"
+            return fallback
+        return AdvisorRecommendation.model_validate(recommendation)
 
     def _three_kingdom_factions(self) -> dict[str, Faction]:
         factions: dict[str, Faction] = {}
@@ -541,12 +557,10 @@ class AgenticGameEngine:
                     target = self._best_attack_city_for_unit(state, unit)
                     if target:
                         orders.append(AgentOrder(unit_id=unit.id, general_id=unit.general_id, action="attack", source_city_id=unit.city_id, target_city_ids=[target]))
-                        break
         if wants_farm or not orders:
             for unit in units:
                 if unit.unit_type == "worker":
                     orders.append(AgentOrder(unit_id=unit.id, action="farm", region_id=unit.region_id, source_city_id=unit.city_id))
-                    break
         if wants_scout or not any(order.action == "scout" for order in orders):
             for unit in units:
                 if unit.unit_type == "scout":
@@ -559,12 +573,11 @@ class AgenticGameEngine:
                 if unit.unit_type == "caravan":
                     target = self._first_border_city(state, unit.faction_id) or unit.city_id
                     orders.append(AgentOrder(unit_id=unit.id, action="transfer", source_city_id=unit.city_id, target_city_id=target, resource="weapons", amount=16))
-                    break
         if not wants_attack:
             for unit in units:
-                if unit.unit_type == "army" and len(orders) < 4:
+                if unit.unit_type == "army":
                     orders.append(AgentOrder(unit_id=unit.id, general_id=unit.general_id, action="defend", source_city_id=unit.city_id, region_id=unit.region_id))
-        return orders[:5]
+        return orders
 
     def _observation_for(self, state: AgenticGameState, faction_id: str, round_number: int) -> AgentObservation:
         units = [unit for unit in state.units if unit.faction_id == faction_id]
@@ -616,16 +629,16 @@ class AgenticGameEngine:
         state: AgenticGameState,
         faction_id: str,
         diplomacy: list[DiplomacyOrder],
-        remaining_ap: dict[str, int],
+        diplomacy_used: dict[str, int],
     ) -> None:
         for order in diplomacy:
-            if remaining_ap[faction_id] < 2:
-                self._log(state, "Diplomacy skipped", f"{faction_id} lacks action points for diplomacy.", faction_id=faction_id, tone="warning")
+            if diplomacy_used[faction_id] >= DIPLOMACY_ACTIONS_PER_ROUND:
+                self._log(state, "Diplomacy skipped", f"{faction_id} already used diplomacy this round.", faction_id=faction_id, tone="warning")
                 continue
             if order.target not in FACTION_IDS or order.target == faction_id:
                 self._log(state, "Diplomacy rejected", f"{faction_id} used an invalid diplomacy target.", faction_id=faction_id, tone="warning")
                 continue
-            remaining_ap[faction_id] -= 2
+            diplomacy_used[faction_id] += 1
             pair = tuple(sorted((faction_id, order.target)))
             if order.type == "propose_alliance":
                 state.alliances = [alliance for alliance in state.alliances if alliance.factions != pair]
@@ -656,7 +669,6 @@ class AgenticGameEngine:
         state: AgenticGameState,
         faction_id: str,
         order: AgentOrder,
-        remaining_ap: dict[str, int],
         used_units: set[str],
         defense_bonus: dict[str, float],
         attacks: list[PendingAttack],
@@ -668,13 +680,29 @@ class AgenticGameEngine:
         if unit.id in used_units:
             self._log(state, "Order rejected", f"{unit.id} already has an order this round.", faction_id=faction_id, tone="warning")
             return
-        cost = ACTION_COSTS[order.action]
-        if remaining_ap[faction_id] < cost:
-            self._log(state, "Order skipped", f"{faction_id} lacks AP for {order.action}.", faction_id=faction_id, tone="warning")
-            return
         if self._execute_order(state, faction_id, unit, order, defense_bonus, attacks):
-            remaining_ap[faction_id] -= cost
             used_units.add(unit.id)
+
+    def _apply_default_defense_orders(
+        self,
+        state: AgenticGameState,
+        faction_id: str,
+        used_units: set[str],
+        defense_bonus: dict[str, float],
+        attacks: list[PendingAttack],
+    ) -> None:
+        for unit in state.units:
+            if unit.faction_id != faction_id or unit.id in used_units:
+                continue
+            order = AgentOrder(
+                unit_id=unit.id,
+                general_id=unit.general_id,
+                action="defend",
+                source_city_id=unit.city_id,
+                region_id=unit.region_id,
+            )
+            if self._execute_order(state, faction_id, unit, order, defense_bonus, attacks):
+                used_units.add(unit.id)
 
     def _execute_order(
         self,
@@ -703,13 +731,18 @@ class AgenticGameEngine:
             )
             for city_id in defended_cities:
                 defense_bonus[city_id] += bonus
+            state.city_development[source_city] = min(1.75, state.city_development.get(source_city, 1.0) + 0.035)
+            state.region_development[state.cities[source_city].region_id] = min(
+                1.6,
+                state.region_development.get(state.cities[source_city].region_id, 1.0) + 0.015,
+            )
             unit.readiness = max(0, unit.readiness - 7)
             unit.city_id = source_city
             unit.region_id = state.cities[source_city].region_id
             unit.status = "defending"
             state.animations.append(AnimationEvent(type="defend", faction_id=faction_id, general_id=unit.general_id, city_id=source_city, tone="defense"))
             city_name = state.cities[source_city].name_cn
-            self._log(state, "Defense set", f"{self._unit_label(state, unit)} fortifies {city_name} and nearby friendly cities.", faction_id=faction_id, region_id=unit.region_id)
+            self._log(state, "Defense set", f"{self._unit_label(state, unit)} fortifies {city_name}, guards nearby friendly cities, and steadies local farms.", faction_id=faction_id, region_id=unit.region_id)
             return True
 
         if order.action == "scout":
@@ -948,7 +981,7 @@ class AgenticGameEngine:
             defender_after = defender_unit.soldiers if defender_unit else 0
             aftermath = self._defender_aftermath(state, rng, defender_unit, defender_general, target_city_id, attacker_id)
             state.city_owners[target_city_id] = attacker_id
-            state.city_development[target_city_id] = max(0.64, state.city_development.get(target_city_id, 1.0) * 0.88)
+            conquest_rewards = self._award_city_conquest(state, attacker_id, defender_id, target_city_id, attacker_loss_rate + defender_loss_rate)
             attacker_unit.city_id = target_city_id
             attacker_unit.region_id = city.region_id
             attacker_unit.readiness = max(12, attacker_unit.readiness - 10)
@@ -967,7 +1000,8 @@ class AgenticGameEngine:
                 defender_general.city_id = target_city_id
                 defender_general.status = "surrendered"
             self._remove_dead_armies(state)
-            summary = f"{attacker_name} takes {city.name_cn}; {defender_name} outcome: {aftermath.replace('_', ' ')}."
+            reward_text = self._conquest_reward_text(conquest_rewards)
+            summary = f"{attacker_name} takes {city.name_cn}; {defender_name} outcome: {aftermath.replace('_', ' ')}. {reward_text}"
             outcome = "attacker_win"
             tone = "victory"
             state.animations.append(AnimationEvent(type="clash", faction_id=attacker_id, general_id=attacker_unit.general_id, from_city_id=source_city_id, to_city_id=target_city_id, tone="victory"))
@@ -1040,6 +1074,46 @@ class AgenticGameEngine:
             return "retreat"
         defender_unit.soldiers = 0
         return "annihilated"
+
+    def _award_city_conquest(
+        self,
+        state: AgenticGameState,
+        attacker_id: str,
+        defender_id: str,
+        city_id: str,
+        battle_damage: float,
+    ) -> dict[str, int]:
+        rewards: dict[str, int] = {"food": 0, "weapons": 0, "gold": 0, "manpower": 0}
+        supply = state.city_supply.setdefault(city_id, {})
+        for resource in ("food", "weapons", "gold"):
+            available = int(supply.get(resource, 0))
+            captured = int(available * 0.65)
+            if captured:
+                supply[resource] = available - captured
+                state.resources[attacker_id].add(resource, captured)  # type: ignore[arg-type]
+                rewards[resource] = captured
+        city = state.cities[city_id]
+        damage_penalty = max(0.45, min(0.95, 1.0 - battle_damage * 0.18))
+        manpower = max(80, int(city.population * 35 * damage_penalty))
+        state.resources[attacker_id].add("manpower", manpower)
+        rewards["manpower"] = manpower
+        state.city_development[city_id] = max(0.58, state.city_development.get(city_id, 1.0) * max(0.72, damage_penalty * 0.92))
+        city.population = max(8, int(city.population * max(0.86, damage_penalty)))
+        state.animations.append(AnimationEvent(type="capture", faction_id=attacker_id, city_id=city_id, value=manpower, tone="victory"))
+        self._log(
+            state,
+            "City spoils",
+            f"{state.factions[attacker_id].display_name(222)} seizes {city.name_cn}'s stores from {state.factions[defender_id].display_name(222)}: {self._conquest_reward_text(rewards)}",
+            faction_id=attacker_id,
+            region_id=city.region_id,
+            tone="victory",
+        )
+        return rewards
+
+    def _conquest_reward_text(self, rewards: dict[str, int]) -> str:
+        labels = {"food": "food", "weapons": "weapons", "gold": "gold", "manpower": "manpower"}
+        parts = [f"+{amount} {labels[resource]}" for resource, amount in rewards.items() if amount > 0]
+        return "Spoils: " + (", ".join(parts) if parts else "no stores survived")
 
     def _battle_rng(self, state: AgenticGameState, unit_id: str, source_city_id: str, target_city_id: str) -> random.Random:
         seed = f"{state.round}:{unit_id}:{source_city_id}:{target_city_id}"
@@ -1127,7 +1201,7 @@ class AgenticGameEngine:
                 )
                 return
         if state.round >= state.max_rounds:
-            self._finish_by_score(state, "Round 20 reached")
+            self._finish_by_score(state, f"Round {state.max_rounds} reached")
 
     def _finish_by_score(self, state: AgenticGameState, reason: str) -> None:
         winner = max(FACTION_IDS, key=lambda faction_id: self._score_faction(state, faction_id))

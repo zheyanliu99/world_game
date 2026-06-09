@@ -7,6 +7,7 @@ The city-level agentic demo stores reusable general metadata in local seed files
 - `data/generals/general_seed_bigquery_schema.json`
 
 The app reads the local JSON seed at runtime. BigQuery is optional and is only for reuse outside the demo.
+The current seed contains 18 generals: 8 for Cao Wei, 5 for Shu Han, and 5 for Eastern Wu.
 
 Validate the local files:
 

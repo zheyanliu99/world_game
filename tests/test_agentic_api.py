@@ -24,10 +24,13 @@ def test_agentic_api_create_command_resolve_and_reset() -> None:
     game_id = game["game_id"]
     assert game["round"] == 0
     assert game["player_faction"] == "liu_bei"
+    assert game["max_rounds"] == 100
     assert game["real_map"]["grid_size"] == [480, 270]
     assert len(game["real_map"]["provinces"]) >= 30
     assert len(game["cities"]) >= 25
     assert any(general["portrait_path"].endswith(".svg") for general in game["generals"])
+    assert game["advisor_recommendation"]["summary"]
+    assert game["advisor_recommendation"]["orders"]
 
     command = client.post(
         f"/api/games/{game_id}/command",
@@ -59,6 +62,7 @@ def test_agentic_api_create_command_resolve_and_reset() -> None:
     fetched = client.get(f"/api/games/{game_id}")
     assert fetched.status_code == 200
     assert fetched.json()["round"] == 1
+    assert fetched.json()["advisor_recommendation"]["policy"]
 
     reset = client.post(f"/api/games/{game_id}/reset")
     assert reset.status_code == 200
@@ -83,3 +87,4 @@ def test_agentic_static_ui_is_served() -> None:
     assert "mapCanvas" in response.text
     assert "结算回合" in response.text
     assert "battleList" in response.text
+    assert "advisorList" in response.text

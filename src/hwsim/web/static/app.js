@@ -48,6 +48,7 @@ const elements = {
   newGameBtn: document.getElementById("newGameBtn"),
   saveBtn: document.getElementById("saveBtn"),
   resolveBtn: document.getElementById("resolveBtn"),
+  applyAdvisorBtn: document.getElementById("applyAdvisorBtn"),
   clearOrdersBtn: document.getElementById("clearOrdersBtn"),
   allyWuBtn: document.getElementById("allyWuBtn"),
   breakWuBtn: document.getElementById("breakWuBtn"),
@@ -55,6 +56,8 @@ const elements = {
   policyButtons: document.getElementById("policyButtons"),
   unitList: document.getElementById("unitList"),
   orderDrafts: document.getElementById("orderDrafts"),
+  advisorSummary: document.getElementById("advisorSummary"),
+  advisorList: document.getElementById("advisorList"),
   factionList: document.getElementById("factionList"),
   intentList: document.getElementById("intentList"),
   battleList: document.getElementById("battleList"),
@@ -131,9 +134,10 @@ function render() {
   elements.roundLine.textContent = `${game.round} / ${game.max_rounds} 回合`;
   elements.strategyInput.value = game.current_player_command || elements.strategyInput.value;
   elements.edictText.textContent = game.finished
-    ? `${game.factions[game.winner]?.name || "天下"}定鼎，二十回合之争落幕。`
-    : `蜀汉军议：${elements.strategyInput.value || "结吴、守汉中、探荆州，二十回合内争天下。"}`;
+    ? `${game.factions[game.winner]?.name || "天下"}定鼎，一百回合之争落幕。`
+    : `蜀汉军议：${elements.strategyInput.value || "结吴、守汉中、探荆州，一百回合内争天下。"}`;
   renderPolicies();
+  renderAdvisor();
   renderUnits();
   renderDrafts();
   renderFactions();
@@ -143,6 +147,46 @@ function render() {
   drawMap();
   startAnimations();
   renderWinner();
+}
+
+function renderAdvisor() {
+  const recommendation = game.advisor_recommendation || {};
+  const orders = recommendation.orders || [];
+  const diplomacy = recommendation.diplomacy || [];
+  elements.advisorSummary.textContent = recommendation.summary || "军师正在等待新的局势。";
+  elements.advisorList.innerHTML = "";
+  const policyRow = document.createElement("article");
+  policyRow.className = "advisor-row";
+  policyRow.innerHTML = `<strong>政策</strong><span>${policyLabels[recommendation.policy] || recommendation.policy || "均衡"}</span>`;
+  elements.advisorList.appendChild(policyRow);
+  [...orders.slice(0, 10).map((order) => orderLabel(order)), ...diplomacy.map((order) => diplomacyLabel(order))].forEach((label) => {
+    const row = document.createElement("article");
+    row.className = "advisor-row";
+    row.innerHTML = `<strong>建议</strong><span>${label}</span>`;
+    elements.advisorList.appendChild(row);
+  });
+  if (orders.length > 10) {
+    const row = document.createElement("article");
+    row.className = "advisor-row";
+    row.innerHTML = `<strong>还有</strong><span>${orders.length - 10} 条默认防务/补给建议</span>`;
+    elements.advisorList.appendChild(row);
+  }
+}
+
+function applyAdvisorRecommendation() {
+  if (!game?.advisor_recommendation) return;
+  const recommendation = game.advisor_recommendation;
+  selectedPolicy = recommendation.policy || selectedPolicy;
+  orderDrafts = cloneDrafts(recommendation.orders || []);
+  diplomacyDrafts = cloneDrafts(recommendation.diplomacy || []);
+  renderPolicies();
+  renderDrafts();
+  renderAdvisor();
+  setStatus("已采用");
+}
+
+function cloneDrafts(items) {
+  return items.map((item) => JSON.parse(JSON.stringify(item)));
 }
 
 function renderPolicies() {
@@ -701,12 +745,14 @@ function drawCityRoads(ctx, offsetX, offsetY, scale) {
   const cities = cityMap();
   ctx.save();
   ctx.lineWidth = Math.max(0.8, 1.15 * scale);
-  ctx.strokeStyle = "rgba(245,224,164,0.22)";
   Object.values(cities).forEach((city) => {
     city.neighbors.forEach((neighborId) => {
       if (city.id > neighborId) return;
       const neighbor = cities[neighborId];
       if (!neighbor) return;
+      const owner = game.city_owners[city.id];
+      const neighborOwner = game.city_owners[neighbor.id];
+      ctx.strokeStyle = owner === neighborOwner ? hexToRgba(game.factions[owner]?.color || "#d4c6a1", 0.28) : "rgba(255,224,150,0.42)";
       ctx.beginPath();
       ctx.moveTo(offsetX + city.position[0] * scale, offsetY + city.position[1] * scale);
       ctx.lineTo(offsetX + neighbor.position[0] * scale, offsetY + neighbor.position[1] * scale);
@@ -758,7 +804,7 @@ function drawGeneralTokens(ctx, offsetX, offsetY, scale) {
       const orbit = generals.length > 1 ? 18 + Math.floor(index / 5) * 8 : 0;
       const x = offsetX + city.position[0] * scale + Math.cos(angle) * orbit * scale;
       const y = offsetY + city.position[1] * scale - 16 * scale + Math.sin(angle) * orbit * scale;
-      drawPortraitToken(ctx, general, x, y, Math.max(13, 18 * scale));
+      drawPortraitToken(ctx, general, x, y, Math.max(8, 10.8 * scale));
     });
   });
 }
@@ -787,18 +833,18 @@ function drawPortraitToken(ctx, general, x, y, radius) {
   ctx.save();
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.4;
   ctx.strokeStyle = "rgba(255,243,204,0.96)";
   ctx.stroke();
-  ctx.font = `900 ${Math.max(10, radius * 0.58)}px "PingFang SC", sans-serif`;
+  ctx.font = `900 ${Math.max(8, radius * 0.7)}px "PingFang SC", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.5;
   ctx.strokeStyle = "rgba(0,0,0,0.78)";
   ctx.fillStyle = "#fff3cc";
   const label = formatSoldiers(general.soldiers);
-  ctx.strokeText(label, x, y + radius + 2);
-  ctx.fillText(label, x, y + radius + 2);
+  ctx.strokeText(label, x, y + radius + 1);
+  ctx.fillText(label, x, y + radius + 1);
   ctx.restore();
 }
 
@@ -1114,6 +1160,7 @@ function hexToRgb(hex) {
 elements.newGameBtn.addEventListener("click", startGame);
 elements.saveBtn.addEventListener("click", () => saveCommand().catch(showError));
 elements.resolveBtn.addEventListener("click", () => resolveRound().catch(showError));
+elements.applyAdvisorBtn.addEventListener("click", applyAdvisorRecommendation);
 elements.clearOrdersBtn.addEventListener("click", () => {
   orderDrafts = [];
   diplomacyDrafts = [];

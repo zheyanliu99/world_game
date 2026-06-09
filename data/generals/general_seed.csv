@@ -1,9 +1,12 @@
 id,name_cn,name_en,faction_id,portrait_path,starting_city_id,soldiers,max_soldiers,command,attack,defense,mobility,loyalty,food_need,surrender_risk
-cao_cao,曹操,Cao Cao,cao,/static/portraits/cao_cao.svg,xuchang,28000,36000,96,88,84,78,99,9,0.01
-xiahou_dun,夏侯惇,Xiahou Dun,cao,/static/portraits/xiahou_dun.svg,luoyang,18000,26000,82,80,84,70,94,7,0.03
-zhang_liao,张辽,Zhang Liao,cao,/static/portraits/zhang_liao.svg,hefei,16000,24000,88,90,82,86,90,7,0.04
-sima_yi,司马懿,Sima Yi,cao,/static/portraits/sima_yi.svg,ye,17000,26000,94,78,92,76,78,7,0.06
-xu_huang,徐晃,Xu Huang,cao,/static/portraits/xu_huang.svg,changan,15000,23000,83,84,80,74,88,6,0.05
+cao_cao,曹操,Cao Cao,cao,/static/portraits/cao_cao.svg,xuchang,35000,45000,96,88,84,78,99,11,0.01
+xiahou_dun,夏侯惇,Xiahou Dun,cao,/static/portraits/xiahou_dun.svg,luoyang,22500,32500,82,80,84,70,94,9,0.03
+zhang_liao,张辽,Zhang Liao,cao,/static/portraits/zhang_liao.svg,hefei,20000,30000,88,90,82,86,90,9,0.04
+sima_yi,司马懿,Sima Yi,cao,/static/portraits/sima_yi.svg,ye,21250,32500,94,78,92,76,78,9,0.06
+xu_huang,徐晃,Xu Huang,cao,/static/portraits/xu_huang.svg,changan,18750,28750,83,84,80,74,88,8,0.05
+dian_wei,典韦,Dian Wei,cao,/static/portraits/dian_wei.svg,xuchang,22000,30000,78,94,86,74,99,8,0.01
+cao_ren,曹仁,Cao Ren,cao,/static/portraits/cao_ren.svg,shouchun,24000,33000,86,78,94,68,96,9,0.02
+jia_xu,贾诩,Jia Xu,cao,/static/portraits/jia_xu.svg,changan,16000,25000,92,72,88,70,74,6,0.07
 guan_yu,关羽,Guan Yu,liu_bei,/static/portraits/guan_yu.svg,xiangyang,19000,27000,90,95,86,76,98,8,0.01
 zhang_fei,张飞,Zhang Fei,liu_bei,/static/portraits/zhang_fei.svg,hanzhong,17000,25000,82,92,80,78,96,7,0.02
 zhao_yun,赵云,Zhao Yun,liu_bei,/static/portraits/zhao_yun.svg,chengdu,15000,23000,86,88,88,90,97,6,0.02

@@ -25,6 +25,9 @@ def test_city_graph_and_general_seed_validate() -> None:
     assert 25 <= len(graph.cities) <= 40
     assert any(city.name_cn == "建业" for city in graph.cities)
     assert any(seed.name_cn == "关羽" and seed.soldiers > 10000 for seed in seeds)
+    assert len([seed for seed in seeds if seed.faction_id == "cao"]) == 8
+    assert next(seed for seed in seeds if seed.id == "cao_cao").soldiers == 35000
+    assert next(seed for seed in seeds if seed.id == "xiahou_dun").max_soldiers == 32500
     assert all((ROOT / "src/hwsim/web/static" / seed.portrait_path.removeprefix("/static/")).exists() for seed in seeds)
 
 
@@ -35,7 +38,7 @@ def test_bigquery_schema_matches_csv_seed() -> None:
         rows = list(reader)
 
     assert reader.fieldnames == [field["name"] for field in schema]
-    assert len(rows) >= 12
+    assert len(rows) >= 18
     assert {field["type"] for field in schema} <= {"STRING", "INTEGER", "FLOAT"}
 
 
@@ -57,6 +60,7 @@ def test_city_level_initialization_derives_region_summary() -> None:
     assert state.cities
     assert state.city_owners["chengdu"] == "liu_bei"
     assert state.region_owners["yizhou"] == "liu_bei"
+    assert len([general for general in state.generals.values() if general.faction_id == "cao"]) == 8
     guan_yu = state.generals["guan_yu"]
     assert guan_yu.city_id == "xiangyang"
     assert guan_yu.unit_id == "liu_bei_army_1"
@@ -164,3 +168,25 @@ def test_city_transfer_adds_exact_city_and_region_supply() -> None:
 
     assert state.city_supply["hanzhong"]["weapons"] >= 16
     assert state.regional_supply["hanzhong"]["weapons"] >= 16
+
+
+def test_city_capture_transfers_spoils_and_recolors_summary() -> None:
+    engine = _engine()
+    state = engine.new_game(game_id="city-spoils")
+    state.round = 1
+    state.city_supply["tianshui"] = {"food": 40, "weapons": 20, "gold": 10}
+    unit = next(unit for unit in state.units if unit.general_id == "ma_chao")
+    unit.soldiers = 120000
+    unit.max_soldiers = 130000
+    before_food = state.resources["liu_bei"].food
+    before_manpower = state.resources["liu_bei"].manpower
+
+    won = engine._resolve_city_battle(state, unit, "wudu", "tianshui", "cao", {})
+    state.region_owners = engine._derive_region_owners_from_cities(state.city_owners, state.regions)
+
+    assert won
+    assert state.city_owners["tianshui"] == "liu_bei"
+    assert state.resources["liu_bei"].food >= before_food + 26
+    assert state.resources["liu_bei"].manpower > before_manpower
+    assert state.city_supply["tianshui"]["weapons"] == 7
+    assert any("Spoils" in event.summary for event in state.battle_events)

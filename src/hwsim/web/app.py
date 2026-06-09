@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from hwsim.agentic.agents import MockAgentProvider, default_agent_provider
+from hwsim.agentic.agents import MockAgentProvider, default_advisor_provider, default_agent_provider
 from hwsim.agentic.models import AgentOrder, DiplomacyOrder, GameView, Policy
 from hwsim.agentic.simulator import PLAYER_FACTION, AgenticGameEngine
 
@@ -31,6 +31,7 @@ class GameStore:
         self.engine = engine or AgenticGameEngine.from_default_scenario(
             agent_provider=default_agent_provider(),
             fallback_provider=MockAgentProvider(),
+            advisor_provider=default_advisor_provider(),
         )
         self.states = {}
 

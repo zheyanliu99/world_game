@@ -198,7 +198,7 @@ class AnimationEvent(BaseModel):
 class AgenticGameState(BaseModel):
     game_id: str
     round: int = 0
-    max_rounds: int = 20
+    max_rounds: int = 100
     player_faction: str = "liu_bei"
     factions: dict[str, Faction]
     regions: dict[str, Region]
@@ -262,6 +262,13 @@ class RealMapView(BaseModel):
     attribution: str = ""
 
 
+class AdvisorRecommendation(BaseModel):
+    policy: Policy = "balanced"
+    orders: list[AgentOrder] = Field(default_factory=list)
+    diplomacy: list[DiplomacyOrder] = Field(default_factory=list)
+    summary: str = ""
+
+
 class GameView(BaseModel):
     game_id: str
     round: int
@@ -289,3 +296,4 @@ class GameView(BaseModel):
     current_player_command: str
     current_player_policy: Policy
     current_player_orders: list[AgentOrder]
+    advisor_recommendation: AdvisorRecommendation = Field(default_factory=AdvisorRecommendation)

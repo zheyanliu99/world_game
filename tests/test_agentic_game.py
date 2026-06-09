@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from hwsim.agentic.agents import MockAgentProvider
 from hwsim.agentic.models import AgentObservation, AgentOrder, AgentPlan, AgenticAlliance, DiplomacyOrder
-from hwsim.agentic.simulator import ACTION_POINTS, POLICY_MODIFIERS, AgenticGameEngine
+from hwsim.agentic.simulator import POLICY_MODIFIERS, AgenticGameEngine
 
 
 def _engine(agent_provider=None) -> AgenticGameEngine:
@@ -16,6 +16,7 @@ def test_agentic_game_initializes_three_kingdoms() -> None:
     assert state.game_id == "test"
     assert state.player_faction == "liu_bei"
     assert state.round == 0
+    assert state.max_rounds == 100
     assert set(state.factions) == {"cao", "liu_bei", "sun_quan"}
     assert len([region for region, owner in state.region_owners.items() if owner == "liu_bei"]) == 4
     assert any(unit.unit_type == "caravan" for unit in state.units if unit.faction_id == "liu_bei")
@@ -38,15 +39,16 @@ def test_mock_agentic_game_is_deterministic() -> None:
     assert [log.title for log in first.logs] == [log.title for log in second.logs]
 
 
-def test_game_finishes_no_later_than_round_20() -> None:
+def test_game_finishes_at_configured_round_cap() -> None:
     engine = _engine()
     state = engine.new_game()
+    state.max_rounds = 3
 
-    for _ in range(25):
+    for _ in range(5):
         engine.resolve_round(state)
 
     assert state.finished
-    assert state.round <= 20
+    assert state.round <= 3
     assert state.winner in {"cao", "liu_bei", "sun_quan"}
 
 
@@ -108,24 +110,53 @@ def test_alliance_blocks_player_attack() -> None:
     assert any("Alliance blocks" in log.detail for log in state.logs)
 
 
-def test_action_point_budget_limits_orders() -> None:
+def test_each_general_can_act_once_without_faction_ap_cap() -> None:
     engine = _engine()
     state = engine.new_game()
+    guan = next(unit for unit in state.units if unit.general_id == "guan_yu")
+    guan.city_id = "xinye"
+    guan.region_id = "jingzhou"
     engine.save_player_command(
         state,
-        "ally Wu and attack on two fronts",
+        "attack on two fronts",
         "war",
         orders=[
-            AgentOrder(unit_id="liu_bei_army_1", action="attack", target_region_id="sili"),
-            AgentOrder(unit_id="liu_bei_army_2", action="attack", target_region_id="yuzhou"),
+            AgentOrder(unit_id="liu_bei_army_1", general_id="guan_yu", action="attack", source_city_id="xinye", target_city_ids=["xuchang"]),
+            AgentOrder(unit_id="liu_bei_army_5", general_id="ma_chao", action="attack", source_city_id="wudu", target_city_ids=["tianshui"]),
         ],
-        diplomacy=[DiplomacyOrder(type="propose_alliance", target="sun_quan", duration_rounds=5)],
     )
 
     engine.resolve_round(state)
 
-    assert ACTION_POINTS == 5
-    assert any("lacks AP" in log.detail for log in state.logs)
+    assert any(log.title == "Attack launched" and "关羽" in log.detail for log in state.logs)
+    assert any(log.title == "Attack launched" and "马超" in log.detail for log in state.logs)
+    assert not any("lacks AP" in log.detail for log in state.logs)
+
+
+def test_unordered_units_default_to_defense_and_improve_farms() -> None:
+    engine = _engine()
+    state = engine.new_game()
+    before = state.city_development["chengdu"]
+    engine.save_player_command(state, "", "balanced", orders=[])
+
+    engine.resolve_round(state)
+
+    assert state.city_development["chengdu"] > before
+    assert any(unit.status == "defending" for unit in state.units if unit.faction_id == "liu_bei")
+
+
+def test_advisor_recommendation_returns_legal_player_orders() -> None:
+    engine = _engine()
+    state = engine.new_game()
+
+    recommendation = engine.recommend_player_plan(state)
+    player_units = {unit.id for unit in state.units if unit.faction_id == state.player_faction}
+
+    assert recommendation.policy in POLICY_MODIFIERS
+    assert recommendation.summary
+    assert recommendation.orders
+    assert {order.unit_id for order in recommendation.orders if order.unit_id} <= player_units
+    assert len([order.unit_id for order in recommendation.orders if order.unit_id]) == len({order.unit_id for order in recommendation.orders if order.unit_id})
 
 
 def test_transfer_adds_regional_supply() -> None:

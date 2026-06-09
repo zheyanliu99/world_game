@@ -259,6 +259,7 @@ h2 {
 }
 
 .command-panel,
+.advisor-panel,
 .orders-panel {
   min-width: 0;
 }
@@ -432,6 +433,57 @@ select {
   padding: 0 8px;
   border-radius: 999px;
   font-size: 10px;
+}
+
+.advisor-panel {
+  padding: 9px;
+  border: 1px solid rgba(255, 231, 160, 0.28);
+  border-radius: 6px;
+  background: rgba(28, 22, 14, 0.72);
+}
+
+.advisor-summary {
+  margin-bottom: 8px;
+  color: var(--subgold);
+  font-family: "PingFang SC", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.advisor-list {
+  display: grid;
+  gap: 5px;
+  max-height: 118px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.advisor-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 7px;
+  min-width: 0;
+  padding: 5px 7px;
+  border: 1px solid rgba(212, 198, 161, 0.14);
+  border-radius: 5px;
+  background: rgba(9, 8, 6, 0.5);
+  color: var(--muted);
+  font-family: "PingFang SC", system-ui, sans-serif;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.advisor-row strong {
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.advisor-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .log-panel {

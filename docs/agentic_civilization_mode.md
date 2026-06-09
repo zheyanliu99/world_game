@@ -62,8 +62,8 @@ committing.
 
 ## Move Budget
 
-Each kingdom gets a limited number of action points per round. A simple first
-version could give each faction 5 action points.
+Each general-led army and support unit can act once per round. Diplomacy remains
+separately limited so a faction cannot spam treaties and betrayals in one turn.
 
 Example costs:
 
@@ -356,7 +356,7 @@ For a very small first version:
 - Four unit types: army, worker, scout, caravan.
 - Six actions: rest, attack, defend, scout, farm, transfer.
 - Four policies: balanced, farming, war, logistics.
-- Five action points per faction per round.
+- One action per unit or general per round, with idle units defaulting to defense.
 - Alliances prohibit attacks and allow transfers.
 - Combat resolves at city level, while 州 control remains a derived summary.
 - Agents submit JSON only.
@@ -371,9 +371,13 @@ unchanged. The player controls 蜀汉, while 曹魏 and 东吴 are controlled by
 agent provider. Tests and offline play use deterministic mock agents; a live
 OpenAI-backed provider can be used when credentials are configured.
 
-The demo is manually paced. It has at most 20 rounds, and the player advances
+The demo is manually paced. It has at most 100 rounds, and the player advances
 each round from the web UI after editing a strategy command, selecting a policy,
 and optionally adding structured unit or diplomacy orders.
+
+The Shu UI includes a deterministic advisor recommendation each round. It
+suggests a policy, one legal action per available unit, optional diplomacy, and a
+short rationale; applying the recommendation writes normal structured orders.
 
 The v1 web stack is FastAPI plus static HTML/CSS/JS canvas rendering. Unit
 orders are stored as structured JSON, while the strategy text is saved as agent
@@ -395,6 +399,10 @@ derived from city ownership for ranking and map tinting.
 Resource transfer is implemented through city supply and summarized by region.
 Caravans move pooled food, weapons, or gold into a target city; local supply then
 improves battle and recovery outcomes there.
+
+City conquest now awards most stored food, weapons, and gold in the captured
+city plus manpower drawn from the local population, while battle damage reduces
+the city's development and population.
 
 General metadata lives in local seed files under `data/generals/`, with a
 BigQuery-compatible schema and optional loader script documented in
