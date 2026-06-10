@@ -262,6 +262,13 @@ class AnimationEvent(BaseModel):
     tone: str = "neutral"
 
 
+class AdvisorRecommendation(BaseModel):
+    policy: Policy = "balanced"
+    orders: list[AgentOrder] = Field(default_factory=list)
+    diplomacy: list[DiplomacyOrder] = Field(default_factory=list)
+    summary: str = ""
+
+
 class AgenticGameState(BaseModel):
     game_id: str
     round: int = 0
@@ -286,6 +293,10 @@ class AgenticGameState(BaseModel):
     current_player_policy: Policy = "balanced"
     current_player_orders: list[AgentOrder] = Field(default_factory=list)
     current_player_diplomacy: list[DiplomacyOrder] = Field(default_factory=list)
+    cached_advisor_recommendation: AdvisorRecommendation | None = None
+    advisor_source: str = "deterministic"
+    advisor_error: str = ""
+    advisor_cache_round: int | None = None
     last_plans: dict[str, AgentPlan] = Field(default_factory=dict)
     battle_events: list[BattleEvent] = Field(default_factory=list)
     active_battles: list[ActiveBattle] = Field(default_factory=list)
@@ -358,13 +369,6 @@ class CityStackView(BaseModel):
     power_score: float
 
 
-class AdvisorRecommendation(BaseModel):
-    policy: Policy = "balanced"
-    orders: list[AgentOrder] = Field(default_factory=list)
-    diplomacy: list[DiplomacyOrder] = Field(default_factory=list)
-    summary: str = ""
-
-
 class GameView(BaseModel):
     game_id: str
     round: int
@@ -398,3 +402,5 @@ class GameView(BaseModel):
     current_player_policy: Policy
     current_player_orders: list[AgentOrder]
     advisor_recommendation: AdvisorRecommendation = Field(default_factory=AdvisorRecommendation)
+    advisor_source: str = "deterministic"
+    advisor_error: str = ""

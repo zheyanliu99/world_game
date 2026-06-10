@@ -2,9 +2,16 @@ from __future__ import annotations
 
 import json
 import os
-from typing import Protocol
+import re
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Callable, Protocol
 
 from hwsim.agentic.models import AdvisorRecommendation, AgentObservation, AgentOrder, AgentPlan, DiplomacyOrder
+from hwsim.agentic.models import POLICIES, RESOURCE_TYPES, UNIT_ACTIONS
+from hwsim.utils.file_utils import project_root
 
 
 class AgentProvider(Protocol):
@@ -15,6 +22,10 @@ class AgentProvider(Protocol):
 class AdvisorProvider(Protocol):
     def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
         ...
+
+
+class LocalCodexAdvisorError(RuntimeError):
+    """Raised when the local Codex CLI cannot produce a valid advisor plan."""
 
 
 class MockAgentProvider:
@@ -355,6 +366,336 @@ class DeterministicAdvisorProvider:
 
     def _policy_cn(self, policy: str) -> str:
         return {"balanced": "均衡", "farming": "屯田", "war": "征伐", "logistics": "转运", "defense": "固守", "diplomacy": "外交"}.get(policy, policy)
+
+
+class LocalCodexAdvisorProvider:
+    """Manual Shu advisor backed by the local Codex CLI."""
+
+    def __init__(
+        self,
+        model: str | None = None,
+        timeout_seconds: float | None = None,
+        cwd: Path | None = None,
+        runner: Callable[..., subprocess.CompletedProcess[str]] | None = None,
+    ) -> None:
+        self.model = model or os.environ.get("LOCAL_CODEX_ADVISOR_MODEL", "gpt-5.4-mini")
+        self.timeout_seconds = timeout_seconds or float(os.environ.get("LOCAL_CODEX_ADVISOR_TIMEOUT", "90"))
+        self.cwd = cwd or project_root()
+        self.runner = runner or subprocess.run
+
+    def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+        codex_command = self._codex_command()
+        schema = self._advisor_output_schema()
+        with tempfile.TemporaryDirectory(prefix="hwsim-codex-advisor-") as temp_dir:
+            temp_path = Path(temp_dir)
+            schema_path = temp_path / "advisor_schema.json"
+            output_path = temp_path / "advisor_output.json"
+            schema_path.write_text(json.dumps(schema, ensure_ascii=False), encoding="utf-8")
+            prompt = self._prompt(observation)
+            command = [
+                codex_command,
+                "exec",
+                "--model",
+                self.model,
+                "--sandbox",
+                "read-only",
+                "--ephemeral",
+                "--ignore-user-config",
+                "--ignore-rules",
+                "--skip-git-repo-check",
+                "--cd",
+                str(temp_path),
+                "--color",
+                "never",
+                "--output-schema",
+                str(schema_path),
+                "--output-last-message",
+                str(output_path),
+                prompt,
+            ]
+            env = dict(os.environ)
+            env["RUST_LOG"] = "error"
+            try:
+                completed = self.runner(
+                    command,
+                    cwd=str(temp_path),
+                    text=True,
+                    capture_output=True,
+                    timeout=self.timeout_seconds,
+                    env=env,
+                )
+            except subprocess.TimeoutExpired as exc:
+                raise LocalCodexAdvisorError(f"本地 Codex 超时（{self.timeout_seconds:.0f}秒）。") from exc
+            except OSError as exc:
+                raise LocalCodexAdvisorError(f"无法启动本地 Codex：{exc}") from exc
+            output_text = ""
+            if output_path.exists():
+                output_text = output_path.read_text(encoding="utf-8").strip()
+            if not output_text:
+                output_text = (getattr(completed, "stdout", "") or "").strip()
+            if output_text:
+                try:
+                    return self._parse_recommendation(output_text)
+                except LocalCodexAdvisorError as exc:
+                    parse_error = str(exc)
+                else:
+                    parse_error = ""
+            else:
+                parse_error = "空输出"
+            if getattr(completed, "returncode", 1) != 0:
+                raise LocalCodexAdvisorError(self._cli_error_message(completed, parse_error))
+            raise LocalCodexAdvisorError(parse_error[:500] or "本地 Codex 输出不是合法军师 JSON。")
+
+    def _codex_command(self) -> str:
+        configured = os.environ.get("LOCAL_CODEX_COMMAND")
+        if configured:
+            return configured
+        resolved = shutil.which("codex")
+        if resolved:
+            return resolved
+        app_bundle = Path("/Applications/Codex.app/Contents/Resources/codex")
+        if app_bundle.exists():
+            return str(app_bundle)
+        raise LocalCodexAdvisorError("未找到本地 Codex CLI。请确认 Codex.app 已安装，或设置 LOCAL_CODEX_COMMAND。")
+
+    def _prompt(self, observation: AgentObservation) -> str:
+        return (
+            "你是蜀汉军师，正在为一个城市级三国策略游戏给玩家建议。\n"
+            "不要运行任何工具命令，不要读取文件；你需要的全部局势都在下面的 JSON 里。\n"
+            "目标：消灭其他势力，夺取城池，同时避免孤军深入和补给断裂。\n"
+            "必须优先尊重玩家输入的方略；如果玩家方略不合法，请给出最接近且合法的替代军令。\n"
+            "每个 unit 最多一个 order。move、attack、scout、transfer、reinforce 只能走相邻道路，且要考虑粮、金、损兵、疲劳成本。\n"
+            "每条 order 必须包含 schema 要求的所有字段；不使用的可选字段请填 null，target_city_ids 可填空数组，amount 填 0。\n"
+            "输出必须只是一段 JSON，完全符合 AdvisorRecommendation schema：policy、orders、diplomacy、summary。\n"
+            "summary 使用中文，说明为什么这样安排。\n\n"
+            f"局势观察 JSON：\n{json.dumps(self._compact_observation(observation), ensure_ascii=False, separators=(',', ':'))}"
+        )
+
+    def _compact_observation(self, observation: AgentObservation) -> dict[str, object]:
+        unit_city_ids = {unit.city_id for unit in observation.units if unit.city_id}
+        relevant_city_ids = set(unit_city_ids)
+        for city_id in list(unit_city_ids):
+            relevant_city_ids.update(observation.city_neighbors.get(city_id, []))
+        for battle in observation.active_battles:
+            relevant_city_ids.add(battle.source_city_id)
+            relevant_city_ids.add(battle.target_city_id)
+
+        roads: list[dict[str, object]] = []
+        seen_roads: set[tuple[str, str]] = set()
+        for road in observation.roads:
+            if road.from_city_id not in relevant_city_ids or road.to_city_id not in relevant_city_ids:
+                continue
+            key = tuple(sorted((road.from_city_id, road.to_city_id)))
+            if key in seen_roads:
+                continue
+            seen_roads.add(key)
+            roads.append(
+                {
+                    "from": road.from_city_id,
+                    "to": road.to_city_id,
+                    "type": road.route_type,
+                    "km": road.distance_km,
+                    "food": road.food_cost,
+                    "gold": road.gold_cost,
+                    "loss_bps": road.soldier_loss_bps,
+                    "readiness": road.readiness_cost,
+                }
+            )
+
+        return {
+            "faction_id": observation.faction_id,
+            "round": observation.round,
+            "max_rounds": observation.max_rounds,
+            "policy": observation.policy,
+            "resources": observation.resources.model_dump(mode="json"),
+            "alliances": observation.alliances,
+            "player_command": observation.player_command,
+            "units": [
+                {
+                    "id": unit.id,
+                    "general_id": unit.general_id,
+                    "type": unit.unit_type,
+                    "region": unit.region_id,
+                    "city": unit.city_id,
+                    "soldiers": unit.soldiers,
+                    "readiness": unit.readiness,
+                    "status": unit.status,
+                }
+                for unit in observation.units
+            ],
+            "city_owners": {city_id: observation.visible_cities.get(city_id) for city_id in sorted(relevant_city_ids) if city_id in observation.visible_cities},
+            "city_neighbors": {
+                city_id: [neighbor for neighbor in observation.city_neighbors.get(city_id, []) if neighbor in observation.visible_cities]
+                for city_id in sorted(relevant_city_ids)
+            },
+            "roads": roads,
+            "active_battles": [
+                {
+                    "id": battle.id,
+                    "target_city_id": battle.target_city_id,
+                    "source_city_id": battle.source_city_id,
+                    "attacker_faction": battle.attacker_faction,
+                    "defender_faction": battle.defender_faction,
+                    "elapsed_rounds": battle.elapsed_rounds,
+                    "duration_rounds": battle.duration_rounds,
+                    "odds": battle.odds,
+                    "summary": battle.summary,
+                }
+                for battle in observation.active_battles
+            ],
+            "recent_log": observation.recent_log[-8:],
+        }
+
+    def _advisor_output_schema(self) -> dict[str, object]:
+        string_or_null = {"type": ["string", "null"]}
+        order_properties: dict[str, object] = {
+            "unit_id": string_or_null,
+            "general_id": string_or_null,
+            "action": {"type": "string", "enum": list(UNIT_ACTIONS)},
+            "region_id": string_or_null,
+            "target_region_id": string_or_null,
+            "source_city_id": string_or_null,
+            "target_city_id": string_or_null,
+            "target_city_ids": {"type": "array", "items": {"type": "string"}},
+            "target_faction": string_or_null,
+            "battle_id": string_or_null,
+            "resource": {"type": ["string", "null"], "enum": [*RESOURCE_TYPES, None]},
+            "amount": {"type": "integer"},
+        }
+        diplomacy_properties: dict[str, object] = {
+            "type": {"type": "string", "enum": ["propose_alliance", "break_alliance"]},
+            "target": {"type": "string"},
+            "duration_rounds": {"type": "integer"},
+        }
+        return {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["policy", "orders", "diplomacy", "summary"],
+            "properties": {
+                "policy": {"type": "string", "enum": list(POLICIES)},
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": list(order_properties),
+                        "properties": order_properties,
+                    },
+                },
+                "diplomacy": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": list(diplomacy_properties),
+                        "properties": diplomacy_properties,
+                    },
+                },
+                "summary": {"type": "string"},
+            },
+        }
+
+    def _parse_recommendation(self, output_text: str) -> AdvisorRecommendation:
+        errors: list[str] = []
+        for candidate in self._json_candidates(output_text):
+            if not self._looks_like_advisor_json(candidate):
+                continue
+            try:
+                return AdvisorRecommendation.model_validate_json(candidate)
+            except Exception as exc:  # pydantic returns several validation subclasses.
+                errors.append(str(exc))
+        raise LocalCodexAdvisorError(f"本地 Codex 输出不是合法军师 JSON：{errors[-1][:300] if errors else '空输出'}")
+
+    def _looks_like_advisor_json(self, candidate: str) -> bool:
+        try:
+            value = json.loads(candidate)
+        except json.JSONDecodeError:
+            return False
+        return isinstance(value, dict) and bool({"orders", "diplomacy", "summary"} & set(value))
+
+    def _json_candidates(self, output_text: str) -> list[str]:
+        text = output_text.strip()
+        candidates = [text] if text.startswith("{") else []
+        fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
+        if fenced:
+            candidates.append(fenced.group(1).strip())
+        candidates.extend(self._embedded_json_objects(text))
+        unique: list[str] = []
+        for candidate in candidates:
+            if candidate and candidate not in unique:
+                unique.append(candidate)
+        return unique
+
+    def _embedded_json_objects(self, text: str) -> list[str]:
+        decoder = json.JSONDecoder()
+        candidates: list[str] = []
+        brace_positions = [match.start() for match in re.finditer(r"\{", text)]
+        for position in reversed(brace_positions[-200:]):
+            try:
+                value, end = decoder.raw_decode(text[position:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict):
+                candidates.append(text[position : position + end].strip())
+        return candidates
+
+    def _cli_error_message(self, completed: subprocess.CompletedProcess[str], parse_error: str) -> str:
+        raw = "\n".join(
+            part
+            for part in [
+                getattr(completed, "stderr", "") or "",
+                getattr(completed, "stdout", "") or "",
+            ]
+            if part
+        )
+        cleaned = self._clean_cli_error(raw)
+        if cleaned:
+            return cleaned[:500]
+        if parse_error and parse_error != "空输出":
+            return parse_error[:500]
+        return "本地 Codex 没有生成合法军师 JSON；已忽略 CLI 启动 warning。请稍后重试，或检查 Codex 登录、模型权限和用量限制。"
+
+    def _clean_cli_error(self, raw: str) -> str:
+        warning_markers = (
+            "codex_rollout::list",
+            "state db discrepancy",
+            "codex_core_plugins::manifest",
+            "codex_core_skills::loader",
+            "ignoring interface.defaultprompt",
+            "ignoring interface.icon_",
+            "state db backfill",
+        )
+        error_markers = (
+            "error",
+            "failed",
+            "fatal",
+            "timed out",
+            "timeout",
+            "usage limit",
+            "rate limit",
+            "unauthorized",
+            "forbidden",
+            "jwt verification",
+            "not found",
+            "invalid",
+            "unavailable",
+            "401",
+            "403",
+            "429",
+        )
+        cleaned_lines: list[str] = []
+        for line in raw.replace("\r\n", "\n").splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            lowered = stripped.lower()
+            if any(marker in lowered for marker in warning_markers):
+                continue
+            if re.match(r"^\d{4}-\d{2}-\d{2}t.+\bwarn\b", lowered) and "error:" not in lowered:
+                continue
+            if any(marker in lowered for marker in error_markers):
+                cleaned_lines.append(stripped)
+        return "\n".join(cleaned_lines[-8:])
 
 
 class OpenAIAdvisorProvider:

@@ -66,6 +66,7 @@ const elements = {
   newGameBtn: document.getElementById("newGameBtn"),
   saveBtn: document.getElementById("saveBtn"),
   resolveBtn: document.getElementById("resolveBtn"),
+  codexAdvisorBtn: document.getElementById("codexAdvisorBtn"),
   applyAdvisorBtn: document.getElementById("applyAdvisorBtn"),
   clearOrdersBtn: document.getElementById("clearOrdersBtn"),
   allyWuBtn: document.getElementById("allyWuBtn"),
@@ -135,6 +136,22 @@ async function resolveRound() {
   setStatus(game.finished ? "终局" : "待命");
 }
 
+async function requestLocalCodexAdvisor() {
+  if (!game) return;
+  setStatus("本地Codex推演");
+  elements.codexAdvisorBtn.disabled = true;
+  elements.codexAdvisorBtn.textContent = "推演中";
+  try {
+    await saveCommand();
+    game = await api(`/api/games/${game.game_id}/codex-advisor`, { method: "POST" });
+    render();
+    setStatus(game.advisor_source === "local_codex" ? "Codex建议" : "规则接管");
+  } finally {
+    elements.codexAdvisorBtn.disabled = false;
+    elements.codexAdvisorBtn.textContent = "本地Codex军师";
+  }
+}
+
 function commandPayload() {
   return {
     strategy_text: elements.strategyInput.value,
@@ -173,7 +190,14 @@ function renderAdvisor() {
   const recommendation = game.advisor_recommendation || {};
   const orders = recommendation.orders || [];
   const diplomacy = recommendation.diplomacy || [];
-  elements.advisorSummary.textContent = recommendation.summary || "军师正在等待新的局势。";
+  const sourceLabels = {
+    deterministic: "规则军师",
+    local_codex: "本地Codex",
+    local_codex_fallback: "规则接管",
+  };
+  const source = sourceLabels[game.advisor_source] || "规则军师";
+  const error = game.advisor_error ? ` 错误：${shortText(game.advisor_error, 90)}` : "";
+  elements.advisorSummary.textContent = `${source}：${recommendation.summary || "军师正在等待新的局势。"}${error}`;
   elements.advisorList.innerHTML = "";
   const policyRow = document.createElement("article");
   policyRow.className = "advisor-row";
@@ -207,6 +231,11 @@ function applyAdvisorRecommendation() {
 
 function cloneDrafts(items) {
   return items.map((item) => JSON.parse(JSON.stringify(item)));
+}
+
+function shortText(text, maxLength) {
+  if (!text || text.length <= maxLength) return text || "";
+  return `${text.slice(0, maxLength - 1)}…`;
 }
 
 function renderPolicies() {
@@ -1903,6 +1932,7 @@ function hexToRgb(hex) {
 elements.newGameBtn.addEventListener("click", startGame);
 elements.saveBtn.addEventListener("click", () => saveCommand().catch(showError));
 elements.resolveBtn.addEventListener("click", () => resolveRound().catch(showError));
+elements.codexAdvisorBtn.addEventListener("click", () => requestLocalCodexAdvisor().catch(showError));
 elements.applyAdvisorBtn.addEventListener("click", applyAdvisorRecommendation);
 elements.clearOrdersBtn.addEventListener("click", () => {
   orderDrafts = [];

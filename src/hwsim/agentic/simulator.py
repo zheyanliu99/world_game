@@ -7,7 +7,14 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from hwsim.agentic.agents import AdvisorProvider, AgentProvider, DeterministicAdvisorProvider, MockAgentProvider
+from hwsim.agentic.agents import (
+    AdvisorProvider,
+    AgentProvider,
+    DeterministicAdvisorProvider,
+    LocalCodexAdvisorError,
+    LocalCodexAdvisorProvider,
+    MockAgentProvider,
+)
 from hwsim.agentic.city_data import RoadConfig, load_city_graph, load_general_seeds
 from hwsim.agentic.models import (
     ActiveBattle,
@@ -142,12 +149,14 @@ class AgenticGameEngine:
         agent_provider: AgentProvider | None = None,
         fallback_provider: AgentProvider | None = None,
         advisor_provider: AdvisorProvider | None = None,
+        local_codex_advisor_provider: AdvisorProvider | None = None,
     ) -> None:
         self.scenario = scenario
         self.map_config = map_config
         self.agent_provider = agent_provider or MockAgentProvider()
         self.fallback_provider = fallback_provider or MockAgentProvider()
         self.advisor_provider = advisor_provider or DeterministicAdvisorProvider()
+        self.local_codex_advisor_provider = local_codex_advisor_provider or LocalCodexAdvisorProvider()
         self.real_map_view = self._load_real_map_view()
         self.city_graph = load_city_graph()
         self.city_config = self.city_graph.city_map()
@@ -161,9 +170,17 @@ class AgenticGameEngine:
         agent_provider: AgentProvider | None = None,
         fallback_provider: AgentProvider | None = None,
         advisor_provider: AdvisorProvider | None = None,
+        local_codex_advisor_provider: AdvisorProvider | None = None,
     ) -> "AgenticGameEngine":
         scenario, map_config, _events, _style = load_bundle(DEFAULT_SCENARIO)
-        return cls(scenario, map_config, agent_provider=agent_provider, fallback_provider=fallback_provider, advisor_provider=advisor_provider)
+        return cls(
+            scenario,
+            map_config,
+            agent_provider=agent_provider,
+            fallback_provider=fallback_provider,
+            advisor_provider=advisor_provider,
+            local_codex_advisor_provider=local_codex_advisor_provider,
+        )
 
     def new_game(self, player_faction: str = PLAYER_FACTION, game_id: str | None = None) -> AgenticGameState:
         factions = self._three_kingdom_factions()
@@ -215,6 +232,7 @@ class AgenticGameEngine:
         state.current_player_policy = policy
         state.current_player_orders = orders or []
         state.current_player_diplomacy = diplomacy or []
+        self._clear_advisor_cache(state)
         return state
 
     def resolve_round(self, state: AgenticGameState) -> AgenticGameState:
@@ -257,6 +275,7 @@ class AgenticGameEngine:
         self._update_victory(state)
         state.current_player_orders = []
         state.current_player_diplomacy = []
+        self._clear_advisor_cache(state)
         return state
 
     def to_view(self, state: AgenticGameState) -> GameView:
@@ -309,8 +328,15 @@ class AgenticGameEngine:
             current_player_command=state.current_player_command,
             current_player_policy=state.current_player_policy,
             current_player_orders=state.current_player_orders,
-            advisor_recommendation=self.recommend_player_plan(state),
+            advisor_recommendation=self._advisor_recommendation_for_view(state),
+            advisor_source=state.advisor_source,
+            advisor_error=state.advisor_error,
         )
+
+    def _advisor_recommendation_for_view(self, state: AgenticGameState) -> AdvisorRecommendation:
+        if state.cached_advisor_recommendation and state.advisor_cache_round == state.round:
+            return state.cached_advisor_recommendation
+        return self.recommend_player_plan(state)
 
     def recommend_player_plan(self, state: AgenticGameState) -> AdvisorRecommendation:
         observation = self._observation_for(state, state.player_faction, min(state.round + 1, state.max_rounds))
@@ -318,9 +344,153 @@ class AgenticGameEngine:
             recommendation = self.advisor_provider.recommend(observation)
         except Exception as exc:
             fallback = DeterministicAdvisorProvider().recommend(observation)
-            fallback.summary = f"Local advisor fallback used after recommendation error: {exc}"
+            fallback.summary = f"规则军师已接管：原建议出错（{exc}）。{fallback.summary}"
             return fallback
         return AdvisorRecommendation.model_validate(recommendation)
+
+    def request_local_codex_advisor(self, state: AgenticGameState) -> AdvisorRecommendation:
+        observation = self._observation_for(state, state.player_faction, min(state.round + 1, state.max_rounds))
+        try:
+            recommendation = AdvisorRecommendation.model_validate(self.local_codex_advisor_provider.recommend(observation))
+            self._ensure_legal_player_recommendation(state, recommendation)
+            state.cached_advisor_recommendation = recommendation
+            state.advisor_source = "local_codex"
+            state.advisor_error = ""
+        except Exception as exc:
+            fallback = DeterministicAdvisorProvider().recommend(observation)
+            fallback.summary = f"本地Codex军师暂不可用，规则军师已接管。{fallback.summary}"
+            state.cached_advisor_recommendation = fallback
+            state.advisor_source = "local_codex_fallback"
+            state.advisor_error = str(exc)
+        state.advisor_cache_round = state.round
+        return state.cached_advisor_recommendation
+
+    def _clear_advisor_cache(self, state: AgenticGameState) -> None:
+        state.cached_advisor_recommendation = None
+        state.advisor_source = "deterministic"
+        state.advisor_error = ""
+        state.advisor_cache_round = None
+
+    def _ensure_legal_player_recommendation(self, state: AgenticGameState, recommendation: AdvisorRecommendation) -> None:
+        if recommendation.policy not in POLICY_MODIFIERS:
+            raise LocalCodexAdvisorError(f"非法政策：{recommendation.policy}")
+        player = state.player_faction
+        units = {unit.id: unit for unit in state.units if unit.faction_id == player}
+        if not recommendation.orders:
+            raise LocalCodexAdvisorError("本地 Codex 没有返回任何军令。")
+        seen_units: set[str] = set()
+        repaired_orders: list[AgentOrder] = []
+        repaired_count = 0
+        for order in recommendation.orders:
+            if not order.unit_id or order.unit_id not in units:
+                raise LocalCodexAdvisorError(f"军令引用了不存在的蜀汉单位：{order.unit_id or '空'}")
+            if order.unit_id in seen_units:
+                raise LocalCodexAdvisorError(f"同一单位被重复下令：{order.unit_id}")
+            seen_units.add(order.unit_id)
+            unit = units[order.unit_id]
+            try:
+                self._ensure_legal_player_order(state, unit, order)
+                repaired_orders.append(order)
+            except LocalCodexAdvisorError:
+                safe_order = self._safe_player_order(unit)
+                self._ensure_legal_player_order(state, unit, safe_order)
+                repaired_orders.append(safe_order)
+                repaired_count += 1
+        if repaired_count:
+            recommendation.orders = repaired_orders
+            recommendation.summary = f"{recommendation.summary}（{repaired_count}条不合法军令已自动改为固守。）"
+        for order in recommendation.diplomacy:
+            if order.target not in FACTION_IDS or order.target == player:
+                raise LocalCodexAdvisorError(f"非法外交目标：{order.target}")
+            if order.duration_rounds <= 0:
+                raise LocalCodexAdvisorError("外交时长必须大于 0。")
+
+    def _safe_player_order(self, unit: AgenticUnit) -> AgentOrder:
+        return AgentOrder(unit_id=unit.id, general_id=unit.general_id, action="defend", region_id=unit.region_id, source_city_id=unit.city_id)
+
+    def _ensure_legal_player_order(self, state: AgenticGameState, unit: AgenticUnit, order: AgentOrder) -> None:
+        faction_id = state.player_faction
+        source_city = self._source_city_for_order(unit, order)
+        if source_city and unit.city_id and source_city != unit.city_id:
+            raise LocalCodexAdvisorError(f"{unit.id} 不在 {source_city}，不能从该城出发。")
+        if order.action == "rest":
+            return
+        if order.action == "defend":
+            if not source_city or state.city_owners.get(source_city) != faction_id:
+                raise LocalCodexAdvisorError(f"{unit.id} 不能在非己方城池固守。")
+            return
+        if order.action == "farm":
+            if unit.unit_type != "worker":
+                raise LocalCodexAdvisorError(f"{unit.id} 不是屯田单位。")
+            if not source_city or state.city_owners.get(source_city) != faction_id:
+                raise LocalCodexAdvisorError(f"{unit.id} 不能在非己方城池屯田。")
+            return
+        if order.action == "move":
+            target = order.target_city_id or (order.target_city_ids[0] if order.target_city_ids else None)
+            self._ensure_adjacent_city_target(state, unit, source_city, target, allow_enemy=False)
+            return
+        if order.action == "scout":
+            if unit.unit_type != "scout":
+                raise LocalCodexAdvisorError(f"{unit.id} 不是斥候。")
+            target = order.target_city_id or (order.target_city_ids[0] if order.target_city_ids else None)
+            self._ensure_adjacent_city_target(state, unit, source_city, target, allow_enemy=True)
+            return
+        if order.action == "transfer":
+            if unit.unit_type != "caravan":
+                raise LocalCodexAdvisorError(f"{unit.id} 不是辎重队。")
+            if order.resource not in ("food", "weapons", "gold"):
+                raise LocalCodexAdvisorError(f"转运资源非法：{order.resource}")
+            target = order.target_city_id or (order.target_city_ids[0] if order.target_city_ids else None) or source_city
+            self._ensure_adjacent_city_target(state, unit, source_city, target, allow_enemy=False, allow_same=True)
+            return
+        if order.action == "reinforce":
+            if unit.unit_type != "army":
+                raise LocalCodexAdvisorError(f"{unit.id} 不是战斗部队。")
+            if self._battle_for_order(state, order, unit) is None:
+                raise LocalCodexAdvisorError(f"{unit.id} 没有可增援的相邻战役。")
+            return
+        if order.action == "retreat":
+            if unit.unit_type != "army" or self._active_battle_for_unit(state, unit.id) is None:
+                raise LocalCodexAdvisorError(f"{unit.id} 不在可撤退战役中。")
+            return
+        if order.action == "attack":
+            if unit.unit_type != "army":
+                raise LocalCodexAdvisorError(f"{unit.id} 不是战斗部队。")
+            raw_targets = [order.target_city_id] if order.target_city_id else []
+            raw_targets.extend(order.target_city_ids)
+            if not source_city or not raw_targets:
+                raise LocalCodexAdvisorError(f"{unit.id} 进攻必须指定相邻目标城。")
+            targets = self._target_cities_for_order(state, unit, order)
+            if len(targets) != len(raw_targets):
+                raise LocalCodexAdvisorError(f"{unit.id} 的进攻路线不是连续相邻道路。")
+            for target in targets:
+                owner = state.city_owners[target]
+                if owner == faction_id or self._are_allied(state, faction_id, owner):
+                    raise LocalCodexAdvisorError(f"{unit.id} 不能进攻友城或盟友城池。")
+            return
+        raise LocalCodexAdvisorError(f"未知军令：{order.action}")
+
+    def _ensure_adjacent_city_target(
+        self,
+        state: AgenticGameState,
+        unit: AgenticUnit,
+        source_city: str | None,
+        target_city: str | None,
+        *,
+        allow_enemy: bool,
+        allow_same: bool = False,
+    ) -> None:
+        if not source_city or source_city not in state.cities or not target_city or target_city not in state.cities:
+            raise LocalCodexAdvisorError(f"{unit.id} 缺少合法出发城或目标城。")
+        if target_city == source_city:
+            if allow_same:
+                return
+            raise LocalCodexAdvisorError(f"{unit.id} 目标城不能与出发城相同。")
+        if self._road_between(source_city, target_city) is None:
+            raise LocalCodexAdvisorError(f"{state.cities[source_city].name_cn}到{state.cities[target_city].name_cn}没有相邻道路。")
+        owner = state.city_owners[target_city]
+        if not allow_enemy and owner != unit.faction_id and not self._are_allied(state, unit.faction_id, owner):
+            raise LocalCodexAdvisorError(f"{state.cities[target_city].name_cn}不是己方或盟友城池。")
 
     def _three_kingdom_factions(self) -> dict[str, Faction]:
         factions: dict[str, Faction] = {}

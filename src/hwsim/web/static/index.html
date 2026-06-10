@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>三国军令</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23251f19'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='34'%3E%E5%85%B5%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/static/styles.css?v=china-map-1" />
+    <link rel="stylesheet" href="/static/styles.css?v=codex-advisor-1" />
   </head>
   <body>
     <main class="shell">
@@ -47,7 +47,10 @@
           <div class="advisor-panel">
             <div class="panel-head">
               <h2>军师建议</h2>
-              <button id="applyAdvisorBtn" type="button" class="quiet">采用</button>
+              <div class="advisor-actions">
+                <button id="codexAdvisorBtn" type="button" class="quiet">本地Codex军师</button>
+                <button id="applyAdvisorBtn" type="button" class="quiet">采用</button>
+              </div>
             </div>
             <div id="advisorSummary" class="advisor-summary">等待军师推演。</div>
             <div id="advisorList" class="advisor-list"></div>
@@ -83,6 +86,6 @@
     </main>
 
     <script src="/static/vendor/phaser.min.js"></script>
-    <script src="/static/app.js?v=china-map-1"></script>
+    <script src="/static/app.js?v=codex-advisor-1"></script>
   </body>
 </html>

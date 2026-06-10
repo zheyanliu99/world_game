@@ -4,7 +4,8 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from hwsim.agentic.agents import MockAgentProvider
+from hwsim.agentic.agents import DeterministicAdvisorProvider, MockAgentProvider
+from hwsim.agentic.models import AdvisorRecommendation, AgentObservation, AgentOrder
 from hwsim.agentic.simulator import AgenticGameEngine
 from hwsim.web.app import GameStore, create_app
 
@@ -12,10 +13,11 @@ from hwsim.web.app import GameStore, create_app
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _client() -> TestClient:
+def _client(local_codex_advisor_provider=None) -> TestClient:
     engine = AgenticGameEngine.from_default_scenario(
         agent_provider=MockAgentProvider(),
         fallback_provider=MockAgentProvider(),
+        local_codex_advisor_provider=local_codex_advisor_provider,
     )
     return TestClient(create_app(GameStore(engine)))
 
@@ -88,6 +90,42 @@ def test_agentic_api_create_command_resolve_and_reset() -> None:
     assert reset.json()["round"] == 0
 
 
+def test_agentic_api_local_codex_advisor_success() -> None:
+    class LegalLocalProvider:
+        def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+            return DeterministicAdvisorProvider().recommend(observation)
+
+    client = _client(local_codex_advisor_provider=LegalLocalProvider())
+    created = client.post("/api/games", json={"player_faction": "liu_bei"})
+    game_id = created.json()["game_id"]
+
+    response = client.post(f"/api/games/{game_id}/codex-advisor")
+
+    assert response.status_code == 200
+    game = response.json()
+    assert game["advisor_source"] == "local_codex"
+    assert game["advisor_error"] == ""
+    assert game["advisor_recommendation"]["orders"]
+
+
+def test_agentic_api_local_codex_advisor_fallback_on_illegal_plan() -> None:
+    class IllegalLocalProvider:
+        def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+            return AdvisorRecommendation(policy="war", orders=[AgentOrder(unit_id="cao_army_1", action="defend")], summary="bad")
+
+    client = _client(local_codex_advisor_provider=IllegalLocalProvider())
+    created = client.post("/api/games", json={"player_faction": "liu_bei"})
+    game_id = created.json()["game_id"]
+
+    response = client.post(f"/api/games/{game_id}/codex-advisor")
+
+    assert response.status_code == 200
+    game = response.json()
+    assert game["advisor_source"] == "local_codex_fallback"
+    assert "不存在的蜀汉单位" in game["advisor_error"]
+    assert game["advisor_recommendation"]["orders"]
+
+
 def test_agentic_api_404_for_unknown_game() -> None:
     client = _client()
 
@@ -106,6 +144,7 @@ def test_agentic_static_ui_is_served() -> None:
     assert "mapCanvas" in response.text
     assert "vendor/phaser.min.js" in response.text
     assert "结算回合" in response.text
+    assert "本地Codex军师" in response.text
     assert "battleList" in response.text
     assert "advisorList" in response.text
     assert "drawPhaserRoads();" not in app_js

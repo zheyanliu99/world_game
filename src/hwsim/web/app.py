@@ -62,6 +62,11 @@ class GameStore:
         self.engine.resolve_round(state)
         return self.engine.to_view(state)
 
+    def codex_advisor(self, game_id: str) -> GameView:
+        state = self._state(game_id)
+        self.engine.request_local_codex_advisor(state)
+        return self.engine.to_view(state)
+
     def reset(self, game_id: str) -> GameView:
         state = self._state(game_id)
         return self.create(player_faction=state.player_faction, game_id=game_id)
@@ -106,6 +111,13 @@ def create_app(store: GameStore | None = None) -> FastAPI:
     def resolve_game(game_id: str) -> GameView:
         try:
             return game_store.resolve(game_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Game not found") from exc
+
+    @app.post("/api/games/{game_id}/codex-advisor", response_model=GameView)
+    def codex_advisor_game(game_id: str) -> GameView:
+        try:
+            return game_store.codex_advisor(game_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Game not found") from exc
 

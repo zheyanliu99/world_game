@@ -1,7 +1,16 @@
 from __future__ import annotations
 
-from hwsim.agentic.agents import MockAgentProvider
-from hwsim.agentic.models import AgentObservation, AgentOrder, AgentPlan, AgenticAlliance, DiplomacyOrder
+from types import SimpleNamespace
+
+import pytest
+
+from hwsim.agentic.agents import (
+    DeterministicAdvisorProvider,
+    LocalCodexAdvisorError,
+    LocalCodexAdvisorProvider,
+    MockAgentProvider,
+)
+from hwsim.agentic.models import AdvisorRecommendation, AgentObservation, AgentOrder, AgentPlan, AgenticAlliance, DiplomacyOrder
 from hwsim.agentic.simulator import POLICY_MODIFIERS, AgenticGameEngine
 
 
@@ -206,6 +215,265 @@ def test_advisor_recommendation_returns_legal_player_orders() -> None:
     assert recommendation.orders
     assert {order.unit_id for order in recommendation.orders if order.unit_id} <= player_units
     assert len([order.unit_id for order in recommendation.orders if order.unit_id]) == len({order.unit_id for order in recommendation.orders if order.unit_id})
+
+
+def test_local_codex_advisor_provider_parses_valid_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_CODEX_COMMAND", "/usr/bin/codex-fake")
+    captured: dict[str, object] = {}
+
+    def runner(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(
+            returncode=0,
+            stdout='{"policy":"defense","orders":[{"unit_id":"liu_bei_army_1","action":"defend"}],"diplomacy":[],"summary":"固守汉中。"}',
+            stderr="",
+        )
+
+    engine = _engine()
+    state = engine.new_game()
+    observation = engine._observation_for(state, state.player_faction, 1)
+    provider = LocalCodexAdvisorProvider(runner=runner, timeout_seconds=2)
+
+    recommendation = provider.recommend(observation)
+
+    assert recommendation.policy == "defense"
+    assert recommendation.orders[0].unit_id == "liu_bei_army_1"
+    command = captured["command"]
+    kwargs = captured["kwargs"]
+    assert "--model" in command
+    assert "gpt-5.4-mini" in command
+    assert "--sandbox" in command
+    assert "read-only" in command
+    assert "--ignore-user-config" in command
+    assert "--ignore-rules" in command
+    assert "--skip-git-repo-check" in command
+    assert "--cd" in command
+    assert "--ask-for-approval" not in command
+    assert kwargs["env"]["RUST_LOG"] == "error"
+    assert "hwsim-codex-advisor-" in kwargs["cwd"]
+
+
+def test_local_codex_advisor_schema_is_strict_for_codex() -> None:
+    provider = LocalCodexAdvisorProvider(runner=lambda command, **kwargs: None)
+    schema = provider._advisor_output_schema()
+
+    assert schema["additionalProperties"] is False
+    order_schema = schema["properties"]["orders"]["items"]
+    diplomacy_schema = schema["properties"]["diplomacy"]["items"]
+    assert order_schema["additionalProperties"] is False
+    assert diplomacy_schema["additionalProperties"] is False
+    assert "amount" in order_schema["required"]
+    assert order_schema["properties"]["amount"]["type"] == "integer"
+
+
+def test_local_codex_advisor_prompt_uses_compact_observation(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("LOCAL_CODEX_ADVISOR_TIMEOUT", raising=False)
+    engine = _engine()
+    state = engine.new_game()
+    observation = engine._observation_for(state, state.player_faction, 1)
+    provider = LocalCodexAdvisorProvider(runner=lambda command, **kwargs: None)
+    prompt = provider._prompt(observation)
+    compact = provider._compact_observation(observation)
+
+    assert provider.timeout_seconds == 90
+    assert len(prompt) < len(observation.model_dump_json()) * 0.55
+    assert "city_roads" not in prompt
+    assert compact["units"]
+    assert compact["roads"]
+
+
+def test_local_codex_advisor_provider_rejects_bad_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_CODEX_COMMAND", "/usr/bin/codex-fake")
+
+    def runner(command, **kwargs):
+        return SimpleNamespace(returncode=0, stdout="not json", stderr="")
+
+    engine = _engine()
+    state = engine.new_game()
+    observation = engine._observation_for(state, state.player_faction, 1)
+    provider = LocalCodexAdvisorProvider(runner=runner, timeout_seconds=2)
+
+    with pytest.raises(LocalCodexAdvisorError):
+        provider.recommend(observation)
+
+
+def test_local_codex_advisor_uses_valid_output_despite_cli_warning(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_CODEX_COMMAND", "/usr/bin/codex-fake")
+
+    def runner(command, **kwargs):
+        output_path = command[command.index("--output-last-message") + 1]
+        with open(output_path, "w", encoding="utf-8") as handle:
+            handle.write(
+                '{"policy":"defense","orders":[{"unit_id":"liu_bei_army_1","action":"defend"}],'
+                '"diplomacy":[],"summary":"虽有 CLI warning，仍采用合法 JSON。"}'
+            )
+        return SimpleNamespace(
+            returncode=1,
+            stdout="",
+            stderr="2026-06-10T04:58:12Z WARN codex_rollout::list: state db discrepancy during find_task",
+        )
+
+    engine = _engine()
+    state = engine.new_game()
+    observation = engine._observation_for(state, state.player_faction, 1)
+    provider = LocalCodexAdvisorProvider(runner=runner, timeout_seconds=2)
+
+    recommendation = provider.recommend(observation)
+
+    assert recommendation.policy == "defense"
+    assert recommendation.summary.startswith("虽有 CLI warning")
+
+
+def test_local_codex_advisor_parses_json_from_cli_transcript(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_CODEX_COMMAND", "/usr/bin/codex-fake")
+
+    def runner(command, **kwargs):
+        return SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "OpenAI Codex v0.136.0-alpha.2\n"
+                "--------\n"
+                "user\n"
+                '局势观察 JSON：{"faction_id":"liu_bei","round":1}\n'
+                "assistant\n"
+                '{"policy":"war","orders":[{"unit_id":"liu_bei_army_1","action":"defend"}],'
+                '"diplomacy":[],"summary":"从 transcript 末尾提取军师 JSON。"}'
+            ),
+            stderr="",
+        )
+
+    engine = _engine()
+    state = engine.new_game()
+    observation = engine._observation_for(state, state.player_faction, 1)
+    provider = LocalCodexAdvisorProvider(runner=runner, timeout_seconds=2)
+
+    recommendation = provider.recommend(observation)
+
+    assert recommendation.policy == "war"
+    assert recommendation.summary == "从 transcript 末尾提取军师 JSON。"
+
+
+def test_local_codex_advisor_filters_startup_warning_without_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LOCAL_CODEX_COMMAND", "/usr/bin/codex-fake")
+
+    def runner(command, **kwargs):
+        return SimpleNamespace(
+            returncode=1,
+            stdout="",
+            stderr=(
+                "2026-06-10T05:00:33.174940Z WARN codex_rollout::list: "
+                "state db discrepancy during find_task\n"
+                "2026-06-10T05:00:33.175101Z WARN codex_core_plugins::manifest: "
+                "ignoring interface.defaultPrompt[0]: prompt must be at most 128 characters"
+            ),
+        )
+
+    engine = _engine()
+    state = engine.new_game()
+    observation = engine._observation_for(state, state.player_faction, 1)
+    provider = LocalCodexAdvisorProvider(runner=runner, timeout_seconds=2)
+
+    with pytest.raises(LocalCodexAdvisorError) as exc_info:
+        provider.recommend(observation)
+
+    message = str(exc_info.value)
+    assert "codex_rollout" not in message
+    assert "defaultPrompt" not in message
+    assert "没有生成合法军师 JSON" in message
+
+
+def test_to_view_does_not_call_local_codex_provider() -> None:
+    class CountingLocalProvider:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+            self.calls += 1
+            raise AssertionError("local Codex should be manual only")
+
+    local_provider = CountingLocalProvider()
+    engine = AgenticGameEngine.from_default_scenario(
+        agent_provider=MockAgentProvider(),
+        fallback_provider=MockAgentProvider(),
+        local_codex_advisor_provider=local_provider,
+    )
+    state = engine.new_game()
+
+    view = engine.to_view(state)
+
+    assert local_provider.calls == 0
+    assert view.advisor_source == "deterministic"
+    assert view.advisor_error == ""
+
+
+def test_local_codex_advisor_success_and_illegal_fallback() -> None:
+    class LegalLocalProvider:
+        def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+            return DeterministicAdvisorProvider().recommend(observation)
+
+    engine = AgenticGameEngine.from_default_scenario(
+        agent_provider=MockAgentProvider(),
+        fallback_provider=MockAgentProvider(),
+        local_codex_advisor_provider=LegalLocalProvider(),
+    )
+    state = engine.new_game()
+
+    recommendation = engine.request_local_codex_advisor(state)
+
+    assert recommendation.orders
+    assert state.advisor_source == "local_codex"
+    assert state.advisor_error == ""
+
+    class IllegalLocalProvider:
+        def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+            return AdvisorRecommendation(policy="war", orders=[AgentOrder(unit_id="cao_army_1", action="defend")], summary="bad")
+
+    engine = AgenticGameEngine.from_default_scenario(
+        agent_provider=MockAgentProvider(),
+        fallback_provider=MockAgentProvider(),
+        local_codex_advisor_provider=IllegalLocalProvider(),
+    )
+    state = engine.new_game()
+
+    recommendation = engine.request_local_codex_advisor(state)
+
+    assert recommendation.orders
+    assert state.advisor_source == "local_codex_fallback"
+    assert "不存在的蜀汉单位" in state.advisor_error
+
+
+def test_local_codex_advisor_repairs_illegal_player_order() -> None:
+    class PartlyIllegalLocalProvider:
+        def recommend(self, observation: AgentObservation) -> AdvisorRecommendation:
+            return AdvisorRecommendation(
+                policy="war",
+                orders=[
+                    AgentOrder(
+                        unit_id="liu_bei_army_5",
+                        general_id="ma_chao",
+                        action="move",
+                        source_city_id="wudu",
+                        target_city_id=None,
+                    )
+                ],
+                summary="马超尝试移动。",
+            )
+
+    engine = AgenticGameEngine.from_default_scenario(
+        agent_provider=MockAgentProvider(),
+        fallback_provider=MockAgentProvider(),
+        local_codex_advisor_provider=PartlyIllegalLocalProvider(),
+    )
+    state = engine.new_game()
+
+    recommendation = engine.request_local_codex_advisor(state)
+
+    assert state.advisor_source == "local_codex"
+    assert state.advisor_error == ""
+    assert recommendation.orders[0].unit_id == "liu_bei_army_5"
+    assert recommendation.orders[0].action == "defend"
+    assert "已自动改为固守" in recommendation.summary
 
 
 def test_transfer_adds_regional_supply() -> None:
