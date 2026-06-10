@@ -1,24 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hans">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Agentic Three Kingdoms</title>
+    <title>三国军令</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23251f19'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-size='34'%3E%E5%85%B5%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=china-map-1" />
   </head>
   <body>
     <main class="shell">
       <section class="battlefield">
-        <canvas id="mapCanvas" aria-label="Three Kingdoms strategy map"></canvas>
+        <div id="mapCanvas" class="phaser-stage" role="img" aria-label="三国城池战略图"></div>
 
         <div class="year-panel">
-          <div id="roundLine" class="round-line">Round 0 / 100</div>
+          <div id="roundLine" class="round-line">第0 / 100回合</div>
           <span id="statusPill" class="status-pill">待命</span>
         </div>
 
         <div class="edict-panel">
-          <h1>Agentic Three Kingdoms</h1>
+          <h1>三国军令</h1>
           <p id="edictText">蜀汉军议：结吴、守汉中、探荆州，一百回合内争天下。</p>
         </div>
 
@@ -39,7 +39,7 @@
                 <button id="resolveBtn" type="button" class="primary">结算回合</button>
               </div>
             </div>
-            <textarea id="strategyInput" rows="3">Form alliance with Wu, defend Hanzhong, scout Jingzhou, and prepare weapons for a northern attack.</textarea>
+            <textarea id="strategyInput" rows="3">优先压制魏国，守住汉中与襄阳；若吴国愿意结盟，则用十回合盟约换取北伐时间。</textarea>
             <div id="policyButtons" class="segmented"></div>
             <div id="orderDrafts" class="drafts"></div>
           </div>
@@ -62,6 +62,8 @@
             <div class="diplomacy-row">
               <button id="allyWuBtn" type="button">联吴</button>
               <button id="breakWuBtn" type="button">破盟</button>
+              <button id="allyWeiBtn" type="button">联魏</button>
+              <button id="breakWeiBtn" type="button">绝魏</button>
             </div>
           </div>
         </section>
@@ -80,6 +82,7 @@
       </section>
     </main>
 
-    <script src="/static/app.js"></script>
+    <script src="/static/vendor/phaser.min.js"></script>
+    <script src="/static/app.js?v=china-map-1"></script>
   </body>
 </html>

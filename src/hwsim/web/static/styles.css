@@ -38,7 +38,7 @@ select {
 }
 
 button {
-  min-height: 34px;
+  min-height: 28px;
   border: 1px solid var(--line-dim);
   border-radius: 6px;
   background: rgba(14, 12, 9, 0.86);
@@ -92,7 +92,7 @@ h1 {
 
 h2 {
   color: var(--text);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 900;
   letter-spacing: 0;
 }
@@ -112,10 +112,23 @@ h2 {
 }
 
 #mapCanvas {
+  position: relative;
   display: block;
   width: 100%;
   height: 100vh;
-  min-height: 720px;
+  min-height: 100vh;
+  cursor: grab;
+  touch-action: none;
+}
+
+#mapCanvas:active {
+  cursor: grabbing;
+}
+
+#mapCanvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .year-panel,
@@ -133,16 +146,16 @@ h2 {
 
 .year-panel {
   position: absolute;
-  top: 22px;
-  left: 24px;
-  width: 220px;
-  min-height: 70px;
-  padding: 15px 20px;
+  top: 14px;
+  left: 16px;
+  width: 178px;
+  min-height: 54px;
+  padding: 10px 14px;
 }
 
 .round-line {
   color: var(--text);
-  font-size: 28px;
+  font-size: 21px;
   font-weight: 900;
   line-height: 1;
 }
@@ -150,9 +163,9 @@ h2 {
 .status-pill {
   display: inline-flex;
   align-items: center;
-  height: 24px;
-  margin-top: 9px;
-  padding: 0 10px;
+  height: 20px;
+  margin-top: 6px;
+  padding: 0 8px;
   border: 1px solid rgba(103, 167, 100, 0.62);
   border-radius: 999px;
   background: rgba(40, 86, 42, 0.4);
@@ -163,35 +176,35 @@ h2 {
 
 .edict-panel {
   position: absolute;
-  top: 42px;
+  top: 18px;
   left: 50%;
   width: min(670px, calc(100vw - 620px));
   min-width: 420px;
   transform: translateX(-50%);
-  padding: 16px 24px 15px;
+  padding: 10px 18px 11px;
   text-align: center;
 }
 
 .edict-panel p {
-  margin-top: 8px;
+  margin-top: 5px;
   color: var(--subgold);
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .score-panel {
   position: absolute;
-  top: 22px;
-  right: 22px;
-  width: 280px;
-  min-height: 246px;
-  padding: 19px 20px;
+  top: 10px;
+  right: max(10px, env(safe-area-inset-right));
+  width: min(300px, calc(100vw - 20px));
+  min-height: 0;
+  padding: 10px 12px;
 }
 
 .faction-list {
   display: grid;
-  gap: 13px;
-  margin-top: 14px;
+  gap: 7px;
+  margin-top: 8px;
 }
 
 .faction-row {
@@ -206,7 +219,7 @@ h2 {
   align-items: baseline;
   gap: 8px;
   color: var(--text);
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -219,22 +232,22 @@ h2 {
 
 .swatch {
   display: inline-block;
-  width: 22px;
-  height: 22px;
-  margin-right: 10px;
-  vertical-align: -5px;
+  width: 16px;
+  height: 16px;
+  margin-right: 7px;
+  vertical-align: -3px;
   border: 1px solid rgba(255, 243, 204, 0.72);
 }
 
 .resource-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px 7px;
-  margin-top: 6px;
-  padding-left: 34px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px 5px;
+  margin-top: 3px;
+  padding-left: 23px;
   color: var(--muted);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .resource-grid span {
@@ -246,15 +259,15 @@ h2 {
 
 .command-dock {
   position: absolute;
-  top: 340px;
-  right: 22px;
-  bottom: 22px;
-  width: 360px;
+  top: 198px;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: 10px;
+  width: min(300px, calc(100vw - 20px));
   display: grid;
   grid-template-columns: 1fr;
   align-content: start;
-  gap: 12px;
-  padding: 12px;
+  gap: 8px;
+  padding: 8px;
   overflow: auto;
 }
 
@@ -268,30 +281,30 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 9px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .top-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.35fr;
-  gap: 8px;
+  grid-template-columns: 0.9fr 0.9fr 1.25fr;
+  gap: 5px;
 }
 
 textarea {
   width: 100%;
-  min-height: 74px;
-  max-height: 98px;
+  min-height: 54px;
+  max-height: 70px;
   resize: vertical;
-  padding: 10px 12px;
+  padding: 7px 9px;
   border: 1px solid rgba(212, 198, 161, 0.38);
   border-radius: 6px;
   outline: none;
   background: rgba(5, 5, 4, 0.72);
   color: var(--text);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 textarea:focus {
@@ -300,32 +313,32 @@ textarea:focus {
 
 select {
   width: 100%;
-  min-height: 30px;
-  margin-bottom: 7px;
-  padding: 0 8px;
+  min-height: 24px;
+  margin-bottom: 5px;
+  padding: 0 6px;
   border: 1px solid rgba(212, 198, 161, 0.38);
   border-radius: 6px;
   outline: none;
   background: rgba(5, 5, 4, 0.86);
   color: var(--text);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .segmented {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 7px;
-  margin-top: 8px;
+  gap: 5px;
+  margin-top: 6px;
 }
 
 .segmented button {
   min-width: 0;
-  min-height: 30px;
-  padding: 0 6px;
+  min-height: 25px;
+  padding: 0 4px;
   color: var(--muted);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .segmented button.active {
@@ -337,15 +350,15 @@ select {
 .unit-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
-  max-height: 170px;
+  gap: 5px;
+  max-height: 160px;
   overflow: auto;
   padding-right: 4px;
 }
 
 .unit-card {
   min-width: 0;
-  padding: 8px;
+  padding: 6px;
   border: 1px solid rgba(212, 198, 161, 0.22);
   border-radius: 6px;
   background: rgba(18, 15, 11, 0.72);
@@ -354,11 +367,11 @@ select {
 .unit-top {
   display: flex;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 7px;
+  gap: 6px;
+  margin-bottom: 5px;
   color: var(--text);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
 }
 
@@ -372,38 +385,56 @@ select {
 
 .unit-meta {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .action-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
 }
 
 .action-row button {
-  min-height: 27px;
-  padding: 0 5px;
+  min-height: 23px;
+  padding: 0 3px;
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .general-order {
   min-width: 0;
 }
 
+.route-preview {
+  min-height: 18px;
+  margin: -2px 0 5px;
+  color: var(--subgold);
+  font-family: "PingFang SC", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .diplomacy-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  margin-top: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.diplomacy-row button {
+  min-width: 0;
+  padding: 0 4px;
+  font-size: 10px;
 }
 
 .drafts {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 .draft {
@@ -411,14 +442,14 @@ select {
   align-items: center;
   gap: 8px;
   max-width: 100%;
-  min-height: 26px;
-  padding: 4px 6px 4px 9px;
+  min-height: 22px;
+  padding: 3px 5px 3px 7px;
   border: 1px solid rgba(212, 198, 161, 0.2);
   border-radius: 999px;
   background: rgba(40, 34, 24, 0.9);
   color: var(--muted);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .draft span {
@@ -436,41 +467,41 @@ select {
 }
 
 .advisor-panel {
-  padding: 9px;
+  padding: 7px;
   border: 1px solid rgba(255, 231, 160, 0.28);
   border-radius: 6px;
   background: rgba(28, 22, 14, 0.72);
 }
 
 .advisor-summary {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--subgold);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1.35;
 }
 
 .advisor-list {
   display: grid;
-  gap: 5px;
-  max-height: 118px;
+  gap: 4px;
+  max-height: 92px;
   overflow: auto;
   padding-right: 3px;
 }
 
 .advisor-row {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  gap: 7px;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 5px;
   min-width: 0;
-  padding: 5px 7px;
+  padding: 4px 6px;
   border: 1px solid rgba(212, 198, 161, 0.14);
   border-radius: 5px;
   background: rgba(9, 8, 6, 0.5);
   color: var(--muted);
   font-family: "PingFang SC", system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.25;
 }
 
@@ -489,11 +520,11 @@ select {
 .log-panel {
   position: absolute;
   left: 50%;
-  bottom: 42px;
+  bottom: 26px;
   width: min(620px, calc(100vw - 470px));
   min-width: 420px;
   transform: translateX(-50%);
-  padding: 11px 18px 12px;
+  padding: 9px 14px 10px;
 }
 
 .log-panel h2 {
@@ -502,14 +533,14 @@ select {
 
 .log-list {
   display: block;
-  max-height: 78px;
+  max-height: 64px;
   overflow: hidden;
 }
 
 .log-row {
   display: none;
   color: var(--text);
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 900;
   line-height: 1.32;
   text-align: center;
@@ -543,6 +574,26 @@ select {
   align-items: start;
   margin: 14px 24px 24px;
   padding: 14px 18px;
+}
+
+@media (min-width: 1181px) {
+  .battlefield {
+    padding-right: 320px;
+  }
+
+  #mapCanvas {
+    width: calc(100vw - 320px);
+  }
+
+  .edict-panel {
+    left: calc((100vw - 320px) / 2);
+    width: min(620px, calc(100vw - 650px));
+  }
+
+  .log-panel {
+    left: calc((100vw - 320px) / 2);
+    width: min(560px, calc(100vw - 420px));
+  }
 }
 
 .intent-list,
@@ -619,12 +670,12 @@ select {
 
 @media (max-width: 760px) {
   .battlefield {
-    min-height: 1120px;
+    min-height: 940px;
   }
 
   #mapCanvas {
-    height: 1120px;
-    min-height: 1120px;
+    height: 940px;
+    min-height: 940px;
   }
 
   .year-panel {
@@ -662,34 +713,52 @@ select {
   }
 
   .score-panel {
-    top: 188px;
+    top: 176px;
     left: 12px;
     right: 12px;
     width: auto;
     min-height: 0;
-    padding: 12px 14px;
+    padding: 8px 10px;
+    background: rgba(8, 7, 5, 0.72);
+  }
+
+  .score-panel h2 {
+    display: none;
   }
 
   .faction-list {
-    gap: 8px;
-    margin-top: 8px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 0;
   }
 
   .faction-title {
-    font-size: 14px;
+    display: block;
+    font-size: 12px;
+    line-height: 1.15;
   }
 
   .resource-grid {
     grid-template-columns: repeat(5, 1fr);
-    padding-left: 28px;
+    gap: 2px;
+    margin-top: 4px;
+    padding-left: 0;
+    font-size: 9px;
+  }
+
+  .swatch {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    vertical-align: -2px;
   }
 
   .command-dock {
     left: 12px;
     right: 12px;
     bottom: 12px;
-    max-height: 432px;
-    padding: 12px;
+    max-height: 418px;
+    padding: 10px;
   }
 
   .panel-head {
@@ -712,7 +781,7 @@ select {
   .log-panel {
     left: 12px;
     right: 12px;
-    bottom: 396px;
+    bottom: 382px;
     width: auto;
     transform: none;
     padding: 10px 12px;

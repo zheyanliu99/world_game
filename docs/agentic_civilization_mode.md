@@ -386,17 +386,61 @@ orders are stored as structured JSON, while the strategy text is saved as agent
 context and used for simple player-plan assistance when no explicit orders are
 selected.
 
-The web map reuses the Marble-mode real-map cache
-`data/maps/sanguo_real_map_prepared.json` when available, grouped through
-`configs/maps/sanguo_state_regions.json` into coarse historical 州 labels. If
-the prepared cache is missing, the server makes a best-effort attempt to rebuild
-it from `configs/maps/sanguo_real_map.json`; otherwise it falls back to the
-older region-polygon canvas.
+The web map currently uses the reusable China real-map cache at
+`data/maps/sanguo_real_map_prepared.json`, generated from the
+`configs/maps/sanguo_real_map.json` source config. City ownership, stacks, and
+combat effects remain city-level overlays on top of that familiar China map.
+Roads still drive movement and supply costs in the simulation, but the browser
+does not draw road lines by default so the campaign view stays readable.
+The city graph uses the same 1280x720 coordinate system as the current China
+map cache. Any future map swap must either update `configs/maps/sanguo_cities.json`
+to the new canvas size or add an explicit coordinate transform before the UI is
+considered valid.
+
+Route flavor and city placement were checked against public Three Kingdoms
+map references such as Kongming's AD262 map page, IKCEST's AD262 description,
+CHGIS historical GIS downloads, Academia Sinica's Sanguo WMTS metadata, and
+Qinling/Shu Roads notes. These are used as references for city placement,
+broad historical regions, and route types only.
 
 The current demo has moved to a curated city graph. Generals lead named armies
 with soldier counts and local portrait assets; cities own income, supply,
 attacks, defense coverage, retreat, surrender, and animations. 州 control is
 derived from city ownership for ranking and map tinting.
+
+The city graph now contains 48 curated cities, enough to give every displayed
+州 at least one city and to make control changes happen visibly at the city
+level. The real-map renderer keeps the broad 州 summary, but city nodes and
+local control influence are colored directly from `city_owners`; road lines are
+kept hidden in the UI.
+
+Cities are connected by explicit symmetric `roads`. Neighbors are derived from
+the road table instead of freeform city lists. Each road stores route type,
+distance, food cost, gold cost, soldier attrition, readiness cost, and a source
+note. Movement is one adjacent road per round, so 成都 can reach 武都 only by
+future-route planning through 汉中 or 褒郡, not by a direct order.
+
+`move`, `attack`, `scout`, `transfer`, `reinforce`, and retreat all use the
+same travel-cost function. Normal travel requires enough food and gold from the
+source city or faction pool; forced retreat can continue when short on supply
+but doubles attrition and fatigue.
+
+The map UI aggregates same-city armies into faction stacks. Each stack chooses
+a lead general by historical fame and office priority, then renders one scalable
+token with the leader portrait/name, general count, and total soldiers. This
+keeps crowded cities readable while preserving the importance of figures such
+as 诸葛亮, 关羽, 张飞, 赵云, 曹操, 司马懿, 周瑜, and 陆逊.
+
+Battles are active campaigns rather than instant incidents. An attack creates a
+city battle lasting 2-10 rounds; both sides can reinforce from adjacent cities,
+and committed armies can retreat. Final battle results still use deterministic
+weighted randomness with soldier count, general stats, readiness, policy,
+terrain, fortification, and supply as factors.
+
+After every round and capture, stranded units are cleaned up. A general or unit
+standing in an enemy city without an active battle, retreat path, or alliance
+must retreat, surrender, or be destroyed, so armies cannot linger indefinitely
+inside hostile territory.
 
 Resource transfer is implemented through city supply and summarized by region.
 Caravans move pooled food, weapons, or gold into a target city; local supply then
@@ -414,3 +458,26 @@ General metadata lives in local seed files under `data/generals/`, with a
 BigQuery-compatible schema and optional loader script documented in
 `docs/bigquery_general_seed.md`. The app does not create cloud projects or
 require GCP credentials.
+
+The local general seed database currently contains 98 curated historical
+generals: 38 for 魏, 30 for 蜀, and 30 for 吴. A new game deploys a larger
+initial subset while keeping the rest as a discoverable pool. Each round,
+factions may discover a new general based on owned population and how depleted
+their active general roster is.
+
+Random incidents are deterministic by game round and can affect a city or area:
+weather, drought, flood, banditry, harvests, volunteers, armory finds, and trade
+booms can change food, gold, weapons, manpower, population, soldiers, or
+development. These events are exposed in API state and rendered as map/log
+events.
+
+The web UI is localized for Chinese gameplay. 军师建议 is generated for every
+movable object, uses Chinese unit/general labels, prioritizes the player's
+strategy text when legal, and can propose ten-round alliances with either 魏 or
+吴. Target factions may accept or object through deterministic weighted
+diplomacy logic.
+
+For future UI work, browser QA is required for any map, layout, Phaser/canvas,
+coordinate, avatar, or command-panel change. The acceptance check must include
+a fresh local browser reload, a screenshot, and a quick visual confirmation that
+city nodes, general stacks, labels, and animations align with the current map.

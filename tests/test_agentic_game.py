@@ -104,12 +104,20 @@ def test_alliance_blocks_player_attack() -> None:
         state,
         "attack north",
         "war",
-        orders=[AgentOrder(unit_id="liu_bei_army_1", action="attack", target_region_id="sili")],
+        orders=[
+            AgentOrder(
+                unit_id="liu_bei_army_5",
+                general_id="ma_chao",
+                action="attack",
+                source_city_id="wudu",
+                target_city_ids=["tianshui"],
+            )
+        ],
     )
 
     engine.resolve_round(state)
 
-    assert state.region_owners["sili"] == "cao"
+    assert state.city_owners["tianshui"] == "cao"
     assert any("Alliance blocks" in log.detail for log in state.logs)
 
 
@@ -131,8 +139,8 @@ def test_each_general_can_act_once_without_faction_ap_cap() -> None:
 
     engine.resolve_round(state)
 
-    assert any(log.title == "Attack launched" and "关羽" in log.detail for log in state.logs)
-    assert any(log.title == "Attack launched" and "马超" in log.detail for log in state.logs)
+    assert any(log.title == "战役爆发" and "许昌" in log.detail for log in state.logs)
+    assert any(log.title == "战役爆发" and "天水" in log.detail for log in state.logs)
     assert not any("lacks AP" in log.detail for log in state.logs)
 
 
@@ -143,7 +151,8 @@ def test_attack_requires_and_spends_food() -> None:
     guan.city_id = "xinye"
     guan.region_id = "jingzhou"
     state.resources["liu_bei"].food = 0
-    state.city_supply["xinye"] = {"food": 0}
+    state.resources["liu_bei"].gold = 0
+    state.city_supply["xinye"] = {"food": 0, "gold": 0}
     engine.save_player_command(
         state,
         "attack without food",
@@ -153,8 +162,8 @@ def test_attack_requires_and_spends_food() -> None:
 
     engine.resolve_round(state)
 
-    assert any("lacks 5 food" in log.detail for log in state.logs)
-    assert not any(log.title == "Attack launched" and "关羽" in log.detail for log in state.logs)
+    assert any(log.title == "行军被拒" and "缺少" in log.detail for log in state.logs)
+    assert not any(log.title == "战役爆发" and "许昌" in log.detail for log in state.logs)
 
 
 def test_gold_and_manpower_reinforce_armies() -> None:
@@ -236,3 +245,20 @@ def test_agent_provider_failure_falls_back_to_mock() -> None:
     assert state.round == 1
     assert state.last_plans["cao"].reasoning_summary
     assert any(log.title == "AI fallback" for log in state.logs)
+
+
+def test_weighted_wei_alliance_proposal_has_ten_round_outcome() -> None:
+    engine = _engine()
+    state = engine.new_game(game_id="wei-diplomacy")
+    engine.save_player_command(
+        state,
+        "联魏换取喘息",
+        "diplomacy",
+        diplomacy=[DiplomacyOrder(type="propose_alliance", target="cao", duration_rounds=1)],
+    )
+
+    engine.resolve_round(state)
+
+    assert any(log.title in {"盟约缔结", "结盟受阻"} and ("曹魏" in log.detail or log.faction_id == "cao") for log in state.logs)
+    if state.alliances:
+        assert all(alliance.expires_round - state.round == 10 for alliance in state.alliances if "cao" in alliance.factions)

@@ -34,7 +34,7 @@
     "liu_bei": {
       "name_cn": "刘备",
       "display_name_by_year": {"221": "蜀汉"},
-      "color": "#64A24C",
+      "color": "#B84A3A",
       "troops": 36000,
       "morale": 78,
       "economy": 44,
@@ -49,7 +49,7 @@
     "sun_quan": {
       "name_cn": "孙权",
       "display_name_by_year": {"222": "东吴"},
-      "color": "#D1903F",
+      "color": "#64A24C",
       "troops": 62000,
       "morale": 70,
       "economy": 67,

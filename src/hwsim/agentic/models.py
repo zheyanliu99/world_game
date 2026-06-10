@@ -9,7 +9,7 @@ from hwsim.core.models import Faction, Region
 
 Policy = Literal["balanced", "farming", "war", "logistics", "defense", "diplomacy"]
 UnitType = Literal["army", "worker", "scout", "caravan"]
-UnitAction = Literal["rest", "attack", "defend", "scout", "farm", "transfer"]
+UnitAction = Literal["rest", "move", "attack", "defend", "scout", "farm", "transfer", "reinforce", "retreat"]
 ResourceType = Literal["food", "weapons", "gold", "manpower", "intel"]
 DiplomacyAction = Literal["propose_alliance", "break_alliance"]
 BattleOutcome = Literal["attacker_win", "defender_win", "contested"]
@@ -18,7 +18,7 @@ DefenderAftermath = Literal["hold", "retreat", "surrender_soldiers", "surrender_
 
 POLICIES: tuple[Policy, ...] = ("balanced", "farming", "war", "logistics", "defense", "diplomacy")
 UNIT_TYPES: tuple[UnitType, ...] = ("army", "worker", "scout", "caravan")
-UNIT_ACTIONS: tuple[UnitAction, ...] = ("rest", "attack", "defend", "scout", "farm", "transfer")
+UNIT_ACTIONS: tuple[UnitAction, ...] = ("rest", "move", "attack", "defend", "scout", "farm", "transfer", "reinforce", "retreat")
 RESOURCE_TYPES: tuple[ResourceType, ...] = ("food", "weapons", "gold", "manpower", "intel")
 
 
@@ -66,6 +66,7 @@ class AgentOrder(BaseModel):
     target_city_id: str | None = None
     target_city_ids: list[str] = Field(default_factory=list)
     target_faction: str | None = None
+    battle_id: str | None = None
     resource: ResourceType | None = None
     amount: int = 0
 
@@ -95,9 +96,12 @@ class AgentObservation(BaseModel):
     units: list[AgenticUnit]
     neighbors: dict[str, list[str]]
     city_neighbors: dict[str, list[str]] = Field(default_factory=dict)
+    roads: list["RoadView"] = Field(default_factory=list)
+    city_roads: dict[str, list["RoadView"]] = Field(default_factory=dict)
     alliances: list[str]
     recent_log: list[str]
     player_command: str = ""
+    active_battles: list["ActiveBattle"] = Field(default_factory=list)
 
 
 class AgenticAlliance(BaseModel):
@@ -145,6 +149,25 @@ class CityView(BaseModel):
     neighbors: list[str]
 
 
+class RoadView(BaseModel):
+    from_city_id: str
+    to_city_id: str
+    route_type: str
+    distance_km: int
+    food_cost: int
+    gold_cost: int
+    soldier_loss_bps: int
+    readiness_cost: int
+    source_note: str = ""
+
+    def other(self, city_id: str) -> str | None:
+        if city_id == self.from_city_id:
+            return self.to_city_id
+        if city_id == self.to_city_id:
+            return self.from_city_id
+        return None
+
+
 class GeneralView(BaseModel):
     id: str
     name_cn: str
@@ -181,6 +204,50 @@ class BattleEvent(BaseModel):
     defender_after: int
     win_probability: float
     factors: list[str] = Field(default_factory=list)
+    summary: str
+
+
+class ActiveBattle(BaseModel):
+    id: str
+    target_city_id: str
+    source_city_id: str
+    attacker_faction: str
+    defender_faction: str
+    attacker_unit_ids: list[str] = Field(default_factory=list)
+    defender_unit_ids: list[str] = Field(default_factory=list)
+    started_round: int
+    duration_rounds: int
+    elapsed_rounds: int = 0
+    status: str = "active"
+    odds: float = 0.5
+    summary: str = ""
+
+
+class IncidentEvent(BaseModel):
+    id: str
+    round: int
+    type: str
+    city_id: str | None = None
+    region_id: str | None = None
+    faction_id: str | None = None
+    food_delta: int = 0
+    gold_delta: int = 0
+    weapons_delta: int = 0
+    manpower_delta: int = 0
+    population_delta: int = 0
+    soldier_delta: int = 0
+    development_delta: float = 0.0
+    summary: str = ""
+
+
+class GeneralDiscoveryEvent(BaseModel):
+    id: str
+    round: int
+    faction_id: str
+    general_id: str
+    city_id: str
+    soldiers: int
+    probability: float
     summary: str
 
 
@@ -221,6 +288,9 @@ class AgenticGameState(BaseModel):
     current_player_diplomacy: list[DiplomacyOrder] = Field(default_factory=list)
     last_plans: dict[str, AgentPlan] = Field(default_factory=dict)
     battle_events: list[BattleEvent] = Field(default_factory=list)
+    active_battles: list[ActiveBattle] = Field(default_factory=list)
+    incident_events: list[IncidentEvent] = Field(default_factory=list)
+    general_discovery_events: list[GeneralDiscoveryEvent] = Field(default_factory=list)
     animations: list[AnimationEvent] = Field(default_factory=list)
     logs: list[RoundLog] = Field(default_factory=list)
     winner: str | None = None
@@ -253,13 +323,39 @@ class RealMapStateLabel(BaseModel):
     centroid: tuple[float, float]
 
 
+class RealMapRegionPolygon(BaseModel):
+    id: int
+    name: str
+    region_id: str
+    points: list[tuple[float, float]]
+
+
+class RealMapPolyline(BaseModel):
+    id: str
+    name_cn: str = ""
+    kind: str = ""
+    points: list[tuple[float, float]]
+
+
 class RealMapView(BaseModel):
     canvas_size: tuple[int, int]
     grid_size: tuple[int, int]
     province_id_grid: list[list[int]]
     provinces: list[RealMapProvinceView]
     state_labels: list[RealMapStateLabel]
+    region_polygons: list[RealMapRegionPolygon] = Field(default_factory=list)
+    rivers: list[RealMapPolyline] = Field(default_factory=list)
+    terrain_lines: list[RealMapPolyline] = Field(default_factory=list)
     attribution: str = ""
+
+
+class CityStackView(BaseModel):
+    city_id: str
+    faction_id: str
+    leader_general_id: str
+    general_count: int
+    total_soldiers: int
+    power_score: float
 
 
 class AdvisorRecommendation(BaseModel):
@@ -280,6 +376,8 @@ class GameView(BaseModel):
     regions: list[Region]
     region_owners: dict[str, str]
     cities: list[CityView] = Field(default_factory=list)
+    roads: list[RoadView] = Field(default_factory=list)
+    city_stacks: list[CityStackView] = Field(default_factory=list)
     city_owners: dict[str, str] = Field(default_factory=dict)
     city_development: dict[str, float] = Field(default_factory=dict)
     city_supply: dict[str, dict[ResourceType, int]] = Field(default_factory=dict)
@@ -290,6 +388,9 @@ class GameView(BaseModel):
     units: list[AgenticUnit]
     generals: list[GeneralView] = Field(default_factory=list)
     battle_events: list[BattleEvent] = Field(default_factory=list)
+    active_battles: list[ActiveBattle] = Field(default_factory=list)
+    incident_events: list[IncidentEvent] = Field(default_factory=list)
+    general_discovery_events: list[GeneralDiscoveryEvent] = Field(default_factory=list)
     animations: list[AnimationEvent] = Field(default_factory=list)
     alliances: list[AgenticAlliance]
     logs: list[RoundLog]

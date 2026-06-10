@@ -1,41 +1,1922 @@
 {
-  "canvas_size": [1280, 720],
+  "canvas_size": [
+    1280,
+    720
+  ],
   "cities": [
-    {"id": "gucang", "name_cn": "姑臧", "region_id": "liangzhou", "position": [421, 285], "terrain": "plain", "population": 28, "economy": 30, "fort": 1.0, "initial_owner": "cao", "neighbors": ["tianshui"]},
-    {"id": "tianshui", "name_cn": "天水", "region_id": "liangzhou", "position": [520, 358], "terrain": "mountain", "population": 31, "economy": 30, "fort": 1.15, "initial_owner": "cao", "neighbors": ["changan", "gucang", "wudu"]},
-    {"id": "wudu", "name_cn": "武都", "region_id": "hanzhong", "position": [562, 404], "terrain": "mountain", "population": 24, "economy": 24, "fort": 1.2, "initial_owner": "liu_bei", "neighbors": ["hanzhong", "tianshui"]},
-    {"id": "changan", "name_cn": "长安", "region_id": "sili", "position": [638, 360], "terrain": "pass", "population": 72, "economy": 76, "fort": 1.35, "initial_owner": "cao", "neighbors": ["jinyang", "luoyang", "tianshui"]},
-    {"id": "luoyang", "name_cn": "洛阳", "region_id": "sili", "position": [716, 365], "terrain": "pass", "population": 78, "economy": 82, "fort": 1.4, "initial_owner": "cao", "neighbors": ["changan", "xinye", "xuchang", "ye"]},
-    {"id": "xuchang", "name_cn": "许昌", "region_id": "yanzhou", "position": [758, 402], "terrain": "plain", "population": 74, "economy": 79, "fort": 1.22, "initial_owner": "cao", "neighbors": ["linzi", "luoyang", "shouchun", "xinye", "ye"]},
-    {"id": "ye", "name_cn": "邺", "region_id": "jizhou", "position": [758, 318], "terrain": "plain", "population": 80, "economy": 78, "fort": 1.25, "initial_owner": "cao", "neighbors": ["jinyang", "luoyang", "nanpi", "xuchang"]},
-    {"id": "jinyang", "name_cn": "晋阳", "region_id": "bingzhou", "position": [688, 290], "terrain": "mountain", "population": 49, "economy": 47, "fort": 1.2, "initial_owner": "cao", "neighbors": ["changan", "ye"]},
-    {"id": "beiping", "name_cn": "北平", "region_id": "youzhou", "position": [806, 244], "terrain": "plain", "population": 43, "economy": 45, "fort": 1.08, "initial_owner": "cao", "neighbors": ["nanpi", "xiangping"]},
-    {"id": "xiangping", "name_cn": "襄平", "region_id": "liaodong", "position": [929, 216], "terrain": "plain", "population": 34, "economy": 33, "fort": 1.04, "initial_owner": "cao", "neighbors": ["beiping"]},
-    {"id": "nanpi", "name_cn": "南皮", "region_id": "jizhou", "position": [824, 306], "terrain": "plain", "population": 58, "economy": 57, "fort": 1.12, "initial_owner": "cao", "neighbors": ["beiping", "linzi", "ye"]},
-    {"id": "linzi", "name_cn": "临淄", "region_id": "qingzhou", "position": [848, 374], "terrain": "plain", "population": 64, "economy": 65, "fort": 1.1, "initial_owner": "cao", "neighbors": ["nanpi", "xiapi", "xuchang"]},
-    {"id": "xiapi", "name_cn": "下邳", "region_id": "xuzhou", "position": [848, 432], "terrain": "plain", "population": 64, "economy": 62, "fort": 1.12, "initial_owner": "cao", "neighbors": ["guangling", "linzi", "shouchun"]},
-    {"id": "shouchun", "name_cn": "寿春", "region_id": "yuzhou", "position": [800, 446], "terrain": "plain", "population": 66, "economy": 67, "fort": 1.25, "initial_owner": "cao", "neighbors": ["hefei", "xiapi", "xuchang"]},
-    {"id": "hefei", "name_cn": "合肥", "region_id": "yuzhou", "position": [824, 486], "terrain": "river", "population": 58, "economy": 62, "fort": 1.32, "initial_owner": "cao", "neighbors": ["chaishang", "guangling", "jianye", "shouchun"]},
-    {"id": "guangling", "name_cn": "广陵", "region_id": "yangzhou", "position": [885, 464], "terrain": "river", "population": 54, "economy": 59, "fort": 1.08, "initial_owner": "cao", "neighbors": ["hefei", "jianye", "xiapi"]},
-    {"id": "xinye", "name_cn": "新野", "region_id": "jingzhou", "position": [728, 442], "terrain": "plain", "population": 42, "economy": 42, "fort": 1.05, "initial_owner": "liu_bei", "neighbors": ["luoyang", "xiangyang", "xuchang"]},
-    {"id": "xiangyang", "name_cn": "襄阳", "region_id": "jingzhou", "position": [715, 486], "terrain": "river", "population": 72, "economy": 73, "fort": 1.35, "initial_owner": "liu_bei", "neighbors": ["hanzhong", "jiangling", "xinye", "changsha"]},
-    {"id": "jiangling", "name_cn": "江陵", "region_id": "jingzhou", "position": [722, 536], "terrain": "river", "population": 68, "economy": 70, "fort": 1.28, "initial_owner": "liu_bei", "neighbors": ["changsha", "xiangyang", "wuling", "yongan"]},
-    {"id": "wuling", "name_cn": "武陵", "region_id": "jingzhou", "position": [695, 586], "terrain": "mountain", "population": 40, "economy": 39, "fort": 1.12, "initial_owner": "liu_bei", "neighbors": ["changsha", "jiangling", "lingling"]},
-    {"id": "changsha", "name_cn": "长沙", "region_id": "jingzhou", "position": [765, 578], "terrain": "river", "population": 62, "economy": 66, "fort": 1.12, "initial_owner": "sun_quan", "neighbors": ["chaishang", "guiyang", "jiangling", "lingling", "nanchang", "wuling", "xiangyang"]},
-    {"id": "lingling", "name_cn": "零陵", "region_id": "jingzhou", "position": [722, 635], "terrain": "mountain", "population": 38, "economy": 36, "fort": 1.08, "initial_owner": "liu_bei", "neighbors": ["changsha", "guiyang", "wuling"]},
-    {"id": "guiyang", "name_cn": "桂阳", "region_id": "jingzhou", "position": [774, 640], "terrain": "mountain", "population": 36, "economy": 36, "fort": 1.05, "initial_owner": "sun_quan", "neighbors": ["changsha", "lingling", "nanhai"]},
-    {"id": "hanzhong", "name_cn": "汉中", "region_id": "hanzhong", "position": [606, 443], "terrain": "mountain", "population": 48, "economy": 46, "fort": 1.35, "initial_owner": "liu_bei", "neighbors": ["chengdu", "wudu", "xiangyang"]},
-    {"id": "chengdu", "name_cn": "成都", "region_id": "yizhou", "position": [566, 500], "terrain": "mountain", "population": 78, "economy": 79, "fort": 1.32, "initial_owner": "liu_bei", "neighbors": ["hanzhong", "jiangzhou", "jianning"]},
-    {"id": "jiangzhou", "name_cn": "江州", "region_id": "yizhou", "position": [625, 538], "terrain": "river", "population": 56, "economy": 58, "fort": 1.12, "initial_owner": "liu_bei", "neighbors": ["chengdu", "jianning", "yongan", "yunnan"]},
-    {"id": "yongan", "name_cn": "永安", "region_id": "yizhou", "position": [665, 526], "terrain": "mountain", "population": 38, "economy": 37, "fort": 1.25, "initial_owner": "liu_bei", "neighbors": ["jiangling", "jiangzhou"]},
-    {"id": "jianning", "name_cn": "建宁", "region_id": "nanzhong", "position": [587, 602], "terrain": "mountain", "population": 35, "economy": 35, "fort": 1.05, "initial_owner": "liu_bei", "neighbors": ["chengdu", "jiangzhou", "yunnan"]},
-    {"id": "yunnan", "name_cn": "云南", "region_id": "nanzhong", "position": [558, 646], "terrain": "mountain", "population": 32, "economy": 32, "fort": 1.0, "initial_owner": "liu_bei", "neighbors": ["hepu", "jiangzhou", "jianning"]},
-    {"id": "jianye", "name_cn": "建业", "region_id": "yangzhou", "position": [887, 506], "terrain": "river", "population": 72, "economy": 80, "fort": 1.25, "initial_owner": "sun_quan", "neighbors": ["chaishang", "guangling", "hefei", "wujun"]},
-    {"id": "wujun", "name_cn": "吴郡", "region_id": "yangzhou", "position": [927, 526], "terrain": "river", "population": 65, "economy": 77, "fort": 1.14, "initial_owner": "sun_quan", "neighbors": ["jianye", "kuaiji"]},
-    {"id": "kuaiji", "name_cn": "会稽", "region_id": "yangzhou", "position": [954, 569], "terrain": "river", "population": 54, "economy": 61, "fort": 1.06, "initial_owner": "sun_quan", "neighbors": ["nanchang", "wujun"]},
-    {"id": "chaishang", "name_cn": "柴桑", "region_id": "yangzhou", "position": [824, 544], "terrain": "river", "population": 55, "economy": 61, "fort": 1.15, "initial_owner": "sun_quan", "neighbors": ["changsha", "hefei", "jianye", "nanchang"]},
-    {"id": "nanchang", "name_cn": "南昌", "region_id": "yangzhou", "position": [846, 590], "terrain": "river", "population": 48, "economy": 55, "fort": 1.05, "initial_owner": "sun_quan", "neighbors": ["chaishang", "changsha", "kuaiji"]},
-    {"id": "nanhai", "name_cn": "南海", "region_id": "jiaozhou", "position": [823, 681], "terrain": "river", "population": 42, "economy": 52, "fort": 1.02, "initial_owner": "sun_quan", "neighbors": ["guiyang", "hepu"]},
-    {"id": "hepu", "name_cn": "合浦", "region_id": "jiaozhou", "position": [744, 690], "terrain": "river", "population": 34, "economy": 40, "fort": 1.0, "initial_owner": "sun_quan", "neighbors": ["nanhai", "yunnan"]}
+    {
+      "id": "gucang",
+      "name_cn": "姑臧",
+      "region_id": "liangzhou",
+      "position": [
+        421,
+        285
+      ],
+      "terrain": "plain",
+      "population": 28,
+      "economy": 30,
+      "fort": 1.0,
+      "initial_owner": "cao",
+      "neighbors": [
+        "dunhuang",
+        "tianshui"
+      ]
+    },
+    {
+      "id": "tianshui",
+      "name_cn": "天水",
+      "region_id": "liangzhou",
+      "position": [
+        520,
+        358
+      ],
+      "terrain": "mountain",
+      "population": 31,
+      "economy": 30,
+      "fort": 1.15,
+      "initial_owner": "cao",
+      "neighbors": [
+        "changan",
+        "gucang",
+        "wudu"
+      ]
+    },
+    {
+      "id": "wudu",
+      "name_cn": "武都",
+      "region_id": "hanzhong",
+      "position": [
+        562,
+        404
+      ],
+      "terrain": "mountain",
+      "population": 24,
+      "economy": 24,
+      "fort": 1.2,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "baojun",
+        "hanzhong",
+        "tianshui"
+      ]
+    },
+    {
+      "id": "changan",
+      "name_cn": "长安",
+      "region_id": "sili",
+      "position": [
+        638,
+        360
+      ],
+      "terrain": "pass",
+      "population": 72,
+      "economy": 76,
+      "fort": 1.35,
+      "initial_owner": "cao",
+      "neighbors": [
+        "jinyang",
+        "luoyang",
+        "tianshui"
+      ]
+    },
+    {
+      "id": "luoyang",
+      "name_cn": "洛阳",
+      "region_id": "sili",
+      "position": [
+        716,
+        365
+      ],
+      "terrain": "pass",
+      "population": 78,
+      "economy": 82,
+      "fort": 1.4,
+      "initial_owner": "cao",
+      "neighbors": [
+        "changan",
+        "chenliu",
+        "shangdang",
+        "xinye",
+        "xuchang",
+        "ye"
+      ]
+    },
+    {
+      "id": "xuchang",
+      "name_cn": "许昌",
+      "region_id": "yanzhou",
+      "position": [
+        758,
+        402
+      ],
+      "terrain": "plain",
+      "population": 74,
+      "economy": 79,
+      "fort": 1.22,
+      "initial_owner": "cao",
+      "neighbors": [
+        "chenliu",
+        "linzi",
+        "luoyang",
+        "runan",
+        "shouchun",
+        "xinye",
+        "ye"
+      ]
+    },
+    {
+      "id": "ye",
+      "name_cn": "邺",
+      "region_id": "jizhou",
+      "position": [
+        758,
+        318
+      ],
+      "terrain": "plain",
+      "population": 80,
+      "economy": 78,
+      "fort": 1.25,
+      "initial_owner": "cao",
+      "neighbors": [
+        "jinyang",
+        "luoyang",
+        "nanpi",
+        "pingyuan",
+        "shangdang",
+        "xuchang"
+      ]
+    },
+    {
+      "id": "jinyang",
+      "name_cn": "晋阳",
+      "region_id": "bingzhou",
+      "position": [
+        688,
+        290
+      ],
+      "terrain": "mountain",
+      "population": 49,
+      "economy": 47,
+      "fort": 1.2,
+      "initial_owner": "cao",
+      "neighbors": [
+        "changan",
+        "shangdang",
+        "ye"
+      ]
+    },
+    {
+      "id": "beiping",
+      "name_cn": "北平",
+      "region_id": "youzhou",
+      "position": [
+        806,
+        244
+      ],
+      "terrain": "plain",
+      "population": 43,
+      "economy": 45,
+      "fort": 1.08,
+      "initial_owner": "cao",
+      "neighbors": [
+        "nanpi",
+        "xiangping",
+        "zhuojun"
+      ]
+    },
+    {
+      "id": "xiangping",
+      "name_cn": "襄平",
+      "region_id": "liaodong",
+      "position": [
+        929,
+        216
+      ],
+      "terrain": "plain",
+      "population": 34,
+      "economy": 33,
+      "fort": 1.04,
+      "initial_owner": "cao",
+      "neighbors": [
+        "beiping"
+      ]
+    },
+    {
+      "id": "nanpi",
+      "name_cn": "南皮",
+      "region_id": "jizhou",
+      "position": [
+        824,
+        306
+      ],
+      "terrain": "plain",
+      "population": 58,
+      "economy": 57,
+      "fort": 1.12,
+      "initial_owner": "cao",
+      "neighbors": [
+        "beiping",
+        "linzi",
+        "pingyuan",
+        "ye",
+        "zhuojun"
+      ]
+    },
+    {
+      "id": "linzi",
+      "name_cn": "临淄",
+      "region_id": "qingzhou",
+      "position": [
+        848,
+        374
+      ],
+      "terrain": "plain",
+      "population": 64,
+      "economy": 65,
+      "fort": 1.1,
+      "initial_owner": "cao",
+      "neighbors": [
+        "chenliu",
+        "nanpi",
+        "pengcheng",
+        "pingyuan",
+        "xiapi",
+        "xuchang"
+      ]
+    },
+    {
+      "id": "xiapi",
+      "name_cn": "下邳",
+      "region_id": "xuzhou",
+      "position": [
+        848,
+        432
+      ],
+      "terrain": "plain",
+      "population": 64,
+      "economy": 62,
+      "fort": 1.12,
+      "initial_owner": "cao",
+      "neighbors": [
+        "guangling",
+        "linzi",
+        "pengcheng",
+        "shouchun"
+      ]
+    },
+    {
+      "id": "shouchun",
+      "name_cn": "寿春",
+      "region_id": "yuzhou",
+      "position": [
+        800,
+        446
+      ],
+      "terrain": "plain",
+      "population": 66,
+      "economy": 67,
+      "fort": 1.25,
+      "initial_owner": "cao",
+      "neighbors": [
+        "hefei",
+        "pengcheng",
+        "runan",
+        "xiapi",
+        "xuchang"
+      ]
+    },
+    {
+      "id": "hefei",
+      "name_cn": "合肥",
+      "region_id": "yuzhou",
+      "position": [
+        824,
+        486
+      ],
+      "terrain": "river",
+      "population": 58,
+      "economy": 62,
+      "fort": 1.32,
+      "initial_owner": "cao",
+      "neighbors": [
+        "chaishang",
+        "guangling",
+        "jianye",
+        "shouchun"
+      ]
+    },
+    {
+      "id": "guangling",
+      "name_cn": "广陵",
+      "region_id": "yangzhou",
+      "position": [
+        885,
+        464
+      ],
+      "terrain": "river",
+      "population": 54,
+      "economy": 59,
+      "fort": 1.08,
+      "initial_owner": "cao",
+      "neighbors": [
+        "hefei",
+        "jianye",
+        "xiapi"
+      ]
+    },
+    {
+      "id": "xinye",
+      "name_cn": "新野",
+      "region_id": "jingzhou",
+      "position": [
+        728,
+        442
+      ],
+      "terrain": "plain",
+      "population": 42,
+      "economy": 42,
+      "fort": 1.05,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "luoyang",
+        "runan",
+        "xiangyang",
+        "xuchang"
+      ]
+    },
+    {
+      "id": "xiangyang",
+      "name_cn": "襄阳",
+      "region_id": "jingzhou",
+      "position": [
+        715,
+        486
+      ],
+      "terrain": "river",
+      "population": 72,
+      "economy": 73,
+      "fort": 1.35,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "changsha",
+        "hanzhong",
+        "jiangling",
+        "xinye"
+      ]
+    },
+    {
+      "id": "jiangling",
+      "name_cn": "江陵",
+      "region_id": "jingzhou",
+      "position": [
+        722,
+        536
+      ],
+      "terrain": "river",
+      "population": 68,
+      "economy": 70,
+      "fort": 1.28,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "badong",
+        "changsha",
+        "wuling",
+        "xiangyang",
+        "yongan"
+      ]
+    },
+    {
+      "id": "wuling",
+      "name_cn": "武陵",
+      "region_id": "jingzhou",
+      "position": [
+        695,
+        586
+      ],
+      "terrain": "mountain",
+      "population": 40,
+      "economy": 39,
+      "fort": 1.12,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "changsha",
+        "fuling",
+        "jiangling",
+        "lingling"
+      ]
+    },
+    {
+      "id": "changsha",
+      "name_cn": "长沙",
+      "region_id": "jingzhou",
+      "position": [
+        765,
+        578
+      ],
+      "terrain": "river",
+      "population": 62,
+      "economy": 66,
+      "fort": 1.12,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "chaishang",
+        "guiyang",
+        "jiangling",
+        "lingling",
+        "luling",
+        "nanchang",
+        "wuling",
+        "xiangyang"
+      ]
+    },
+    {
+      "id": "lingling",
+      "name_cn": "零陵",
+      "region_id": "jingzhou",
+      "position": [
+        722,
+        635
+      ],
+      "terrain": "mountain",
+      "population": 38,
+      "economy": 36,
+      "fort": 1.08,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "changsha",
+        "guiyang",
+        "wuling"
+      ]
+    },
+    {
+      "id": "guiyang",
+      "name_cn": "桂阳",
+      "region_id": "jingzhou",
+      "position": [
+        774,
+        640
+      ],
+      "terrain": "mountain",
+      "population": 36,
+      "economy": 36,
+      "fort": 1.05,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "cangwu",
+        "changsha",
+        "lingling",
+        "nanhai"
+      ]
+    },
+    {
+      "id": "hanzhong",
+      "name_cn": "汉中",
+      "region_id": "hanzhong",
+      "position": [
+        606,
+        443
+      ],
+      "terrain": "mountain",
+      "population": 48,
+      "economy": 46,
+      "fort": 1.35,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "baojun",
+        "chengdu",
+        "wudu",
+        "xiangyang"
+      ]
+    },
+    {
+      "id": "chengdu",
+      "name_cn": "成都",
+      "region_id": "yizhou",
+      "position": [
+        566,
+        500
+      ],
+      "terrain": "mountain",
+      "population": 78,
+      "economy": 79,
+      "fort": 1.32,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "baojun",
+        "hanzhong",
+        "jiangzhou",
+        "jianning"
+      ]
+    },
+    {
+      "id": "jiangzhou",
+      "name_cn": "江州",
+      "region_id": "yizhou",
+      "position": [
+        625,
+        538
+      ],
+      "terrain": "river",
+      "population": 56,
+      "economy": 58,
+      "fort": 1.12,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "badong",
+        "chengdu",
+        "fuling",
+        "jianning",
+        "yongan",
+        "yunnan"
+      ]
+    },
+    {
+      "id": "yongan",
+      "name_cn": "永安",
+      "region_id": "yizhou",
+      "position": [
+        665,
+        526
+      ],
+      "terrain": "mountain",
+      "population": 38,
+      "economy": 37,
+      "fort": 1.25,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "badong",
+        "jiangling",
+        "jiangzhou"
+      ]
+    },
+    {
+      "id": "jianning",
+      "name_cn": "建宁",
+      "region_id": "nanzhong",
+      "position": [
+        587,
+        602
+      ],
+      "terrain": "mountain",
+      "population": 35,
+      "economy": 35,
+      "fort": 1.05,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "chengdu",
+        "fuling",
+        "jiangzhou",
+        "yunnan"
+      ]
+    },
+    {
+      "id": "yunnan",
+      "name_cn": "云南",
+      "region_id": "nanzhong",
+      "position": [
+        558,
+        646
+      ],
+      "terrain": "mountain",
+      "population": 32,
+      "economy": 32,
+      "fort": 1.0,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "hepu",
+        "jiangzhou",
+        "jianning"
+      ]
+    },
+    {
+      "id": "jianye",
+      "name_cn": "建业",
+      "region_id": "yangzhou",
+      "position": [
+        887,
+        506
+      ],
+      "terrain": "river",
+      "population": 72,
+      "economy": 80,
+      "fort": 1.25,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "chaishang",
+        "guangling",
+        "hefei",
+        "wujun"
+      ]
+    },
+    {
+      "id": "wujun",
+      "name_cn": "吴郡",
+      "region_id": "yangzhou",
+      "position": [
+        927,
+        526
+      ],
+      "terrain": "river",
+      "population": 65,
+      "economy": 77,
+      "fort": 1.14,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "jianye",
+        "kuaiji"
+      ]
+    },
+    {
+      "id": "kuaiji",
+      "name_cn": "会稽",
+      "region_id": "yangzhou",
+      "position": [
+        954,
+        569
+      ],
+      "terrain": "river",
+      "population": 54,
+      "economy": 61,
+      "fort": 1.06,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "luling",
+        "nanchang",
+        "wujun"
+      ]
+    },
+    {
+      "id": "chaishang",
+      "name_cn": "柴桑",
+      "region_id": "yangzhou",
+      "position": [
+        824,
+        544
+      ],
+      "terrain": "river",
+      "population": 55,
+      "economy": 61,
+      "fort": 1.15,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "changsha",
+        "hefei",
+        "jianye",
+        "nanchang"
+      ]
+    },
+    {
+      "id": "nanchang",
+      "name_cn": "南昌",
+      "region_id": "yangzhou",
+      "position": [
+        846,
+        590
+      ],
+      "terrain": "river",
+      "population": 48,
+      "economy": 55,
+      "fort": 1.05,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "chaishang",
+        "changsha",
+        "kuaiji",
+        "luling"
+      ]
+    },
+    {
+      "id": "nanhai",
+      "name_cn": "南海",
+      "region_id": "jiaozhou",
+      "position": [
+        823,
+        681
+      ],
+      "terrain": "river",
+      "population": 42,
+      "economy": 52,
+      "fort": 1.02,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "cangwu",
+        "guiyang",
+        "hepu"
+      ]
+    },
+    {
+      "id": "hepu",
+      "name_cn": "合浦",
+      "region_id": "jiaozhou",
+      "position": [
+        744,
+        690
+      ],
+      "terrain": "river",
+      "population": 34,
+      "economy": 40,
+      "fort": 1.0,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "cangwu",
+        "nanhai",
+        "yunnan"
+      ]
+    },
+    {
+      "id": "dunhuang",
+      "name_cn": "敦煌",
+      "region_id": "liangzhou",
+      "position": [
+        330,
+        245
+      ],
+      "terrain": "plain",
+      "population": 22,
+      "economy": 28,
+      "fort": 1.02,
+      "initial_owner": "cao",
+      "neighbors": [
+        "gucang"
+      ]
+    },
+    {
+      "id": "shangdang",
+      "name_cn": "上党",
+      "region_id": "bingzhou",
+      "position": [
+        720,
+        318
+      ],
+      "terrain": "mountain",
+      "population": 44,
+      "economy": 43,
+      "fort": 1.18,
+      "initial_owner": "cao",
+      "neighbors": [
+        "jinyang",
+        "luoyang",
+        "ye"
+      ]
+    },
+    {
+      "id": "zhuojun",
+      "name_cn": "涿郡",
+      "region_id": "youzhou",
+      "position": [
+        840,
+        265
+      ],
+      "terrain": "plain",
+      "population": 40,
+      "economy": 42,
+      "fort": 1.08,
+      "initial_owner": "cao",
+      "neighbors": [
+        "beiping",
+        "nanpi"
+      ]
+    },
+    {
+      "id": "pingyuan",
+      "name_cn": "平原",
+      "region_id": "jizhou",
+      "position": [
+        806,
+        338
+      ],
+      "terrain": "plain",
+      "population": 52,
+      "economy": 52,
+      "fort": 1.08,
+      "initial_owner": "cao",
+      "neighbors": [
+        "linzi",
+        "nanpi",
+        "ye"
+      ]
+    },
+    {
+      "id": "chenliu",
+      "name_cn": "陈留",
+      "region_id": "yanzhou",
+      "position": [
+        785,
+        385
+      ],
+      "terrain": "plain",
+      "population": 60,
+      "economy": 62,
+      "fort": 1.12,
+      "initial_owner": "cao",
+      "neighbors": [
+        "linzi",
+        "luoyang",
+        "xuchang"
+      ]
+    },
+    {
+      "id": "runan",
+      "name_cn": "汝南",
+      "region_id": "yuzhou",
+      "position": [
+        780,
+        428
+      ],
+      "terrain": "plain",
+      "population": 59,
+      "economy": 58,
+      "fort": 1.1,
+      "initial_owner": "cao",
+      "neighbors": [
+        "shouchun",
+        "xinye",
+        "xuchang"
+      ]
+    },
+    {
+      "id": "pengcheng",
+      "name_cn": "彭城",
+      "region_id": "xuzhou",
+      "position": [
+        828,
+        410
+      ],
+      "terrain": "plain",
+      "population": 56,
+      "economy": 55,
+      "fort": 1.1,
+      "initial_owner": "cao",
+      "neighbors": [
+        "linzi",
+        "shouchun",
+        "xiapi"
+      ]
+    },
+    {
+      "id": "badong",
+      "name_cn": "巴东",
+      "region_id": "yizhou",
+      "position": [
+        646,
+        510
+      ],
+      "terrain": "mountain",
+      "population": 36,
+      "economy": 36,
+      "fort": 1.18,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "jiangling",
+        "jiangzhou",
+        "yongan"
+      ]
+    },
+    {
+      "id": "fuling",
+      "name_cn": "涪陵",
+      "region_id": "yizhou",
+      "position": [
+        636,
+        565
+      ],
+      "terrain": "river",
+      "population": 34,
+      "economy": 35,
+      "fort": 1.05,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "jiangzhou",
+        "jianning",
+        "wuling"
+      ]
+    },
+    {
+      "id": "luling",
+      "name_cn": "庐陵",
+      "region_id": "yangzhou",
+      "position": [
+        825,
+        620
+      ],
+      "terrain": "river",
+      "population": 40,
+      "economy": 45,
+      "fort": 1.04,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "changsha",
+        "kuaiji",
+        "nanchang"
+      ]
+    },
+    {
+      "id": "cangwu",
+      "name_cn": "苍梧",
+      "region_id": "jiaozhou",
+      "position": [
+        785,
+        675
+      ],
+      "terrain": "mountain",
+      "population": 33,
+      "economy": 37,
+      "fort": 1.02,
+      "initial_owner": "sun_quan",
+      "neighbors": [
+        "guiyang",
+        "hepu",
+        "nanhai"
+      ]
+    },
+    {
+      "id": "baojun",
+      "name_cn": "褒中",
+      "region_id": "hanzhong",
+      "position": [
+        585,
+        426
+      ],
+      "terrain": "mountain",
+      "population": 29,
+      "economy": 28,
+      "fort": 1.16,
+      "initial_owner": "liu_bei",
+      "neighbors": [
+        "chengdu",
+        "hanzhong",
+        "wudu"
+      ]
+    }
+  ],
+  "roads": [
+    {
+      "from_city_id": "badong",
+      "to_city_id": "jiangling",
+      "route_type": "mountain_pass",
+      "distance_km": 173,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 29,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "badong",
+      "to_city_id": "jiangzhou",
+      "route_type": "mountain_pass",
+      "distance_km": 75,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "badong",
+      "to_city_id": "yongan",
+      "route_type": "mountain_pass",
+      "distance_km": 53,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "baojun",
+      "to_city_id": "chengdu",
+      "route_type": "shu_road",
+      "distance_km": 164,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 55,
+      "readiness_cost": 8,
+      "source_note": "金牛道/米仓道方向近似，巴蜀山道。"
+    },
+    {
+      "from_city_id": "baojun",
+      "to_city_id": "hanzhong",
+      "route_type": "shu_road",
+      "distance_km": 58,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 55,
+      "readiness_cost": 8,
+      "source_note": "褒斜道近似，汉中北部栈道。"
+    },
+    {
+      "from_city_id": "baojun",
+      "to_city_id": "wudu",
+      "route_type": "shu_road",
+      "distance_km": 68,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 55,
+      "readiness_cost": 8,
+      "source_note": "陈仓道、褒斜道支线近似，秦岭栈道成本较高。"
+    },
+    {
+      "from_city_id": "beiping",
+      "to_city_id": "nanpi",
+      "route_type": "plain_road",
+      "distance_km": 139,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "beiping",
+      "to_city_id": "xiangping",
+      "route_type": "frontier",
+      "distance_km": 271,
+      "food_cost": 4,
+      "gold_cost": 2,
+      "soldier_loss_bps": 39,
+      "readiness_cost": 7,
+      "source_note": "边郡远道，补给线较长。"
+    },
+    {
+      "from_city_id": "beiping",
+      "to_city_id": "zhuojun",
+      "route_type": "plain_road",
+      "distance_km": 86,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 4,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "cangwu",
+      "to_city_id": "guiyang",
+      "route_type": "mountain_pass",
+      "distance_km": 79,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "cangwu",
+      "to_city_id": "hepu",
+      "route_type": "mountain_pass",
+      "distance_km": 94,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "cangwu",
+      "to_city_id": "nanhai",
+      "route_type": "mountain_pass",
+      "distance_km": 83,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "chaishang",
+      "to_city_id": "changsha",
+      "route_type": "river",
+      "distance_km": 146,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 8,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "chaishang",
+      "to_city_id": "hefei",
+      "route_type": "river",
+      "distance_km": 125,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 7,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "chaishang",
+      "to_city_id": "jianye",
+      "route_type": "river",
+      "distance_km": 158,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 9,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "chaishang",
+      "to_city_id": "nanchang",
+      "route_type": "river",
+      "distance_km": 110,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "changan",
+      "to_city_id": "jinyang",
+      "route_type": "mountain_pass",
+      "distance_km": 185,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 31,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "changan",
+      "to_city_id": "luoyang",
+      "route_type": "mountain_pass",
+      "distance_km": 168,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 28,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "changan",
+      "to_city_id": "tianshui",
+      "route_type": "shu_road",
+      "distance_km": 254,
+      "food_cost": 5,
+      "gold_cost": 2,
+      "soldier_loss_bps": 71,
+      "readiness_cost": 10,
+      "source_note": "关中入陇道，参考祁山道/关陇军事通道。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "guiyang",
+      "route_type": "mountain_pass",
+      "distance_km": 135,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "jiangling",
+      "route_type": "river",
+      "distance_km": 129,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 7,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "lingling",
+      "route_type": "mountain_pass",
+      "distance_km": 154,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 26,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "luling",
+      "route_type": "river",
+      "distance_km": 157,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 9,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "nanchang",
+      "route_type": "river",
+      "distance_km": 176,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 10,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "wuling",
+      "route_type": "mountain_pass",
+      "distance_km": 151,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 25,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "changsha",
+      "to_city_id": "xiangyang",
+      "route_type": "river",
+      "distance_km": 225,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 12,
+      "readiness_cost": 4,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "chengdu",
+      "to_city_id": "hanzhong",
+      "route_type": "shu_road",
+      "distance_km": 150,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 55,
+      "readiness_cost": 8,
+      "source_note": "金牛道近似，汉中至成都蜀道。"
+    },
+    {
+      "from_city_id": "chengdu",
+      "to_city_id": "jiangzhou",
+      "route_type": "mountain_pass",
+      "distance_km": 151,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 25,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "chengdu",
+      "to_city_id": "jianning",
+      "route_type": "mountain_pass",
+      "distance_km": 224,
+      "food_cost": 4,
+      "gold_cost": 2,
+      "soldier_loss_bps": 37,
+      "readiness_cost": 7,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "chenliu",
+      "to_city_id": "linzi",
+      "route_type": "plain_road",
+      "distance_km": 137,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "chenliu",
+      "to_city_id": "luoyang",
+      "route_type": "mountain_pass",
+      "distance_km": 154,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 26,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "chenliu",
+      "to_city_id": "xuchang",
+      "route_type": "plain_road",
+      "distance_km": 69,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 3,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "dunhuang",
+      "to_city_id": "gucang",
+      "route_type": "frontier",
+      "distance_km": 214,
+      "food_cost": 3,
+      "gold_cost": 2,
+      "soldier_loss_bps": 31,
+      "readiness_cost": 5,
+      "source_note": "边郡远道，补给线较长。"
+    },
+    {
+      "from_city_id": "fuling",
+      "to_city_id": "jiangzhou",
+      "route_type": "river",
+      "distance_km": 63,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 4,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "fuling",
+      "to_city_id": "jianning",
+      "route_type": "mountain_pass",
+      "distance_km": 132,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "fuling",
+      "to_city_id": "wuling",
+      "route_type": "mountain_pass",
+      "distance_km": 135,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "guangling",
+      "to_city_id": "hefei",
+      "route_type": "river",
+      "distance_km": 139,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 8,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "guangling",
+      "to_city_id": "jianye",
+      "route_type": "river",
+      "distance_km": 90,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "guangling",
+      "to_city_id": "xiapi",
+      "route_type": "river",
+      "distance_km": 105,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "gucang",
+      "to_city_id": "tianshui",
+      "route_type": "mountain_pass",
+      "distance_km": 264,
+      "food_cost": 4,
+      "gold_cost": 2,
+      "soldier_loss_bps": 44,
+      "readiness_cost": 8,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "guiyang",
+      "to_city_id": "lingling",
+      "route_type": "mountain_pass",
+      "distance_km": 112,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "guiyang",
+      "to_city_id": "nanhai",
+      "route_type": "mountain_pass",
+      "distance_km": 137,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 23,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "hanzhong",
+      "to_city_id": "wudu",
+      "route_type": "mountain_pass",
+      "distance_km": 126,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "hanzhong",
+      "to_city_id": "xiangyang",
+      "route_type": "shu_road",
+      "distance_km": 252,
+      "food_cost": 5,
+      "gold_cost": 2,
+      "soldier_loss_bps": 70,
+      "readiness_cost": 10,
+      "source_note": "汉水东道，汉中通荆襄。"
+    },
+    {
+      "from_city_id": "hefei",
+      "to_city_id": "jianye",
+      "route_type": "river",
+      "distance_km": 142,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 8,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "hefei",
+      "to_city_id": "shouchun",
+      "route_type": "river",
+      "distance_km": 100,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "hepu",
+      "to_city_id": "nanhai",
+      "route_type": "river",
+      "distance_km": 171,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 10,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "hepu",
+      "to_city_id": "yunnan",
+      "route_type": "mountain_pass",
+      "distance_km": 411,
+      "food_cost": 7,
+      "gold_cost": 3,
+      "soldier_loss_bps": 68,
+      "readiness_cost": 12,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jiangling",
+      "to_city_id": "wuling",
+      "route_type": "mountain_pass",
+      "distance_km": 122,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jiangling",
+      "to_city_id": "xiangyang",
+      "route_type": "shu_road",
+      "distance_km": 109,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 55,
+      "readiness_cost": 8,
+      "source_note": "汉水至江陵水陆通道。"
+    },
+    {
+      "from_city_id": "jiangling",
+      "to_city_id": "yongan",
+      "route_type": "mountain_pass",
+      "distance_km": 124,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jiangzhou",
+      "to_city_id": "jianning",
+      "route_type": "mountain_pass",
+      "distance_km": 160,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 27,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jiangzhou",
+      "to_city_id": "yongan",
+      "route_type": "mountain_pass",
+      "distance_km": 90,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jiangzhou",
+      "to_city_id": "yunnan",
+      "route_type": "mountain_pass",
+      "distance_km": 273,
+      "food_cost": 4,
+      "gold_cost": 2,
+      "soldier_loss_bps": 46,
+      "readiness_cost": 8,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jianning",
+      "to_city_id": "yunnan",
+      "route_type": "mountain_pass",
+      "distance_km": 113,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jianye",
+      "to_city_id": "wujun",
+      "route_type": "river",
+      "distance_km": 96,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "jinyang",
+      "to_city_id": "shangdang",
+      "route_type": "mountain_pass",
+      "distance_km": 91,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "jinyang",
+      "to_city_id": "ye",
+      "route_type": "mountain_pass",
+      "distance_km": 162,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 27,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "kuaiji",
+      "to_city_id": "luling",
+      "route_type": "river",
+      "distance_km": 298,
+      "food_cost": 3,
+      "gold_cost": 2,
+      "soldier_loss_bps": 17,
+      "readiness_cost": 5,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "kuaiji",
+      "to_city_id": "nanchang",
+      "route_type": "river",
+      "distance_km": 237,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 13,
+      "readiness_cost": 4,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "kuaiji",
+      "to_city_id": "wujun",
+      "route_type": "river",
+      "distance_km": 109,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "lingling",
+      "to_city_id": "wuling",
+      "route_type": "mountain_pass",
+      "distance_km": 120,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "linzi",
+      "to_city_id": "nanpi",
+      "route_type": "plain_road",
+      "distance_km": 155,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "linzi",
+      "to_city_id": "pengcheng",
+      "route_type": "plain_road",
+      "distance_km": 89,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 4,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "linzi",
+      "to_city_id": "pingyuan",
+      "route_type": "plain_road",
+      "distance_km": 119,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "linzi",
+      "to_city_id": "xiapi",
+      "route_type": "plain_road",
+      "distance_km": 125,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "linzi",
+      "to_city_id": "xuchang",
+      "route_type": "plain_road",
+      "distance_km": 203,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 8,
+      "readiness_cost": 4,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "luling",
+      "to_city_id": "nanchang",
+      "route_type": "river",
+      "distance_km": 79,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 4,
+      "readiness_cost": 3,
+      "source_note": "长江、淮水、汉水等水陆交通近似。"
+    },
+    {
+      "from_city_id": "luoyang",
+      "to_city_id": "shangdang",
+      "route_type": "mountain_pass",
+      "distance_km": 101,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "luoyang",
+      "to_city_id": "xinye",
+      "route_type": "mountain_pass",
+      "distance_km": 168,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 28,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "luoyang",
+      "to_city_id": "xuchang",
+      "route_type": "mountain_pass",
+      "distance_km": 120,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "luoyang",
+      "to_city_id": "ye",
+      "route_type": "mountain_pass",
+      "distance_km": 136,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 23,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "nanpi",
+      "to_city_id": "pingyuan",
+      "route_type": "plain_road",
+      "distance_km": 79,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 3,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "nanpi",
+      "to_city_id": "ye",
+      "route_type": "plain_road",
+      "distance_km": 144,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "nanpi",
+      "to_city_id": "zhuojun",
+      "route_type": "plain_road",
+      "distance_km": 95,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 4,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "pengcheng",
+      "to_city_id": "shouchun",
+      "route_type": "river",
+      "distance_km": 98,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "pengcheng",
+      "to_city_id": "xiapi",
+      "route_type": "river",
+      "distance_km": 64,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "pingyuan",
+      "to_city_id": "ye",
+      "route_type": "plain_road",
+      "distance_km": 112,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "runan",
+      "to_city_id": "shouchun",
+      "route_type": "river",
+      "distance_km": 58,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "runan",
+      "to_city_id": "xinye",
+      "route_type": "river",
+      "distance_km": 116,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 6,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "runan",
+      "to_city_id": "xuchang",
+      "route_type": "plain_road",
+      "distance_km": 73,
+      "food_cost": 1,
+      "gold_cost": 0,
+      "soldier_loss_bps": 3,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "shangdang",
+      "to_city_id": "ye",
+      "route_type": "mountain_pass",
+      "distance_km": 82,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 22,
+      "readiness_cost": 5,
+      "source_note": "山地/关隘道路，依据地形作游戏化成本。"
+    },
+    {
+      "from_city_id": "shouchun",
+      "to_city_id": "xiapi",
+      "route_type": "river",
+      "distance_km": 108,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "shouchun",
+      "to_city_id": "xuchang",
+      "route_type": "plain_road",
+      "distance_km": 131,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "tianshui",
+      "to_city_id": "wudu",
+      "route_type": "shu_road",
+      "distance_km": 134,
+      "food_cost": 3,
+      "gold_cost": 1,
+      "soldier_loss_bps": 55,
+      "readiness_cost": 8,
+      "source_note": "祁山道方向，蜀魏北伐争夺要路。"
+    },
+    {
+      "from_city_id": "xiangyang",
+      "to_city_id": "xinye",
+      "route_type": "river",
+      "distance_km": 99,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 5,
+      "readiness_cost": 3,
+      "source_note": "南方水网和沿江道路近似。"
+    },
+    {
+      "from_city_id": "xinye",
+      "to_city_id": "xuchang",
+      "route_type": "plain_road",
+      "distance_km": 108,
+      "food_cost": 1,
+      "gold_cost": 1,
+      "soldier_loss_bps": 4,
+      "readiness_cost": 3,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    },
+    {
+      "from_city_id": "xuchang",
+      "to_city_id": "ye",
+      "route_type": "plain_road",
+      "distance_km": 181,
+      "food_cost": 2,
+      "gold_cost": 1,
+      "soldier_loss_bps": 8,
+      "readiness_cost": 4,
+      "source_note": "中原平原道路，依据城距作游戏化成本。"
+    }
   ]
 }

@@ -24,12 +24,31 @@ class CityConfig(BaseModel):
     neighbors: list[str] = Field(default_factory=list)
 
 
+class RoadConfig(BaseModel):
+    from_city_id: str
+    to_city_id: str
+    route_type: str = "road"
+    distance_km: int = 80
+    food_cost: int = 2
+    gold_cost: int = 0
+    soldier_loss_bps: int = 0
+    readiness_cost: int = 4
+    source_note: str = ""
+
+    def connects(self, city_a: str, city_b: str) -> bool:
+        return {self.from_city_id, self.to_city_id} == {city_a, city_b}
+
+
 class CityGraphConfig(BaseModel):
     canvas_size: tuple[int, int]
     cities: list[CityConfig]
+    roads: list[RoadConfig] = Field(default_factory=list)
 
     def city_map(self) -> dict[str, CityConfig]:
         return {city.id: city for city in self.cities}
+
+    def road_map(self) -> dict[tuple[str, str], RoadConfig]:
+        return {tuple(sorted((road.from_city_id, road.to_city_id))): road for road in self.roads}
 
 
 class GeneralSeed(BaseModel):
@@ -73,6 +92,7 @@ class GeneralSeed(BaseModel):
 
 def load_city_graph(path: str | Path = CITY_GRAPH_FILE) -> CityGraphConfig:
     graph = CityGraphConfig.model_validate(read_json(resolve_path(path)))
+    _derive_neighbors_from_roads(graph)
     validate_city_graph(graph)
     return graph
 
@@ -87,6 +107,20 @@ def validate_city_graph(graph: CityGraphConfig) -> None:
     cities = graph.city_map()
     if len(cities) != len(graph.cities):
         raise ValueError("city ids must be unique")
+    seen_roads: set[tuple[str, str]] = set()
+    for road in graph.roads:
+        if road.from_city_id == road.to_city_id:
+            raise ValueError(f"Road cannot connect {road.from_city_id} to itself")
+        if road.from_city_id not in cities:
+            raise ValueError(f"Road references missing city {road.from_city_id}")
+        if road.to_city_id not in cities:
+            raise ValueError(f"Road references missing city {road.to_city_id}")
+        key = tuple(sorted((road.from_city_id, road.to_city_id)))
+        if key in seen_roads:
+            raise ValueError(f"Duplicate road {key[0]}-{key[1]}")
+        seen_roads.add(key)
+        if road.distance_km <= 0:
+            raise ValueError(f"Road {key[0]}-{key[1]} needs positive distance")
     for city in graph.cities:
         for neighbor_id in city.neighbors:
             neighbor = cities.get(neighbor_id)
@@ -94,6 +128,19 @@ def validate_city_graph(graph: CityGraphConfig) -> None:
                 raise ValueError(f"City {city.id} references missing neighbor {neighbor_id}")
             if city.id not in neighbor.neighbors:
                 raise ValueError(f"City adjacency must be symmetric: {city.id} -> {neighbor_id}")
+            if tuple(sorted((city.id, neighbor_id))) not in seen_roads:
+                raise ValueError(f"City adjacency must have a road: {city.id} -> {neighbor_id}")
+
+
+def _derive_neighbors_from_roads(graph: CityGraphConfig) -> None:
+    if not graph.roads:
+        return
+    neighbors = {city.id: set[str]() for city in graph.cities}
+    for road in graph.roads:
+        neighbors.setdefault(road.from_city_id, set()).add(road.to_city_id)
+        neighbors.setdefault(road.to_city_id, set()).add(road.from_city_id)
+    for city in graph.cities:
+        city.neighbors = sorted(neighbors.get(city.id, set()))
 
 
 def validate_general_seeds(seeds: list[GeneralSeed], city_ids: set[str] | None = None) -> None:
